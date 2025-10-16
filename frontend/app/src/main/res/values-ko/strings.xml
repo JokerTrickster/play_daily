@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 앱 이름 -->
+    <string name="app_name">일상 메모</string>
+
+    <!-- 인증 -->
+    <string name="auth_signup_title">회원가입</string>
+    <string name="auth_login_title">로그인</string>
+    <string name="auth_username_label">아이디</string>
+    <string name="auth_password_label">비밀번호</string>
+    <string name="auth_code_label">인증 코드</string>
+    <string name="auth_signup_button">가입하기</string>
+    <string name="auth_login_button">로그인</string>
+    <string name="auth_invalid_code">유효하지 않은 인증 코드입니다</string>
+    <string name="auth_invalid_credentials">아이디 또는 비밀번호가 올바르지 않습니다</string>
+
+    <!-- 메모 생성 -->
+    <string name="memory_create_title">메모 추가</string>
+    <string name="memory_location_label">장소 선택</string>
+    <string name="memory_photos_label">사진 (2장 필수)</string>
+    <string name="memory_rating_label">평점</string>
+    <string name="memory_notes_label">메모</string>
+    <string name="memory_date_label">방문 날짜</string>
+    <string name="memory_save_button">저장</string>
+    <string name="memory_photo_limit_error">사진은 정확히 2장을 선택해야 합니다</string>
+    <string name="memory_future_date_error">미래 날짜는 선택할 수 없습니다</string>
+    <string name="memory_notes_limit">%1$d / 1000 자</string>
+
+    <!-- 보기 모드 -->
+    <string name="view_map">지도</string>
+    <string name="view_list">리스트</string>
+    <string name="view_timeline">타임라인</string>
+
+    <!-- 정렬 옵션 -->
+    <string name="sort_recent">최신순</string>
+    <string name="sort_rating">평점순</string>
+    <string name="sort_name">이름순</string>
+    <string name="sort_location">거리순</string>
+
+    <!-- 필터 -->
+    <string name="filter_title">필터</string>
+    <string name="filter_rating_range">평점 범위</string>
+    <string name="filter_date_range">방문 날짜</string>
+    <string name="filter_apply">적용</string>
+    <string name="filter_clear">초기화</string>
+
+    <!-- 협업 -->
+    <string name="collab_search_users">사용자 검색</string>
+    <string name="collab_send_invite">초대</string>
+    <string name="collab_invites_title">받은 초대</string>
+    <string name="collab_accept">수락</string>
+    <string name="collab_decline">거절</string>
+    <string name="collab_no_invites">받은 초대가 없습니다</string>
+
+    <!-- 위치 -->
+    <string name="location_permission_title">위치 권한이 필요합니다</string>
+    <string name="location_permission_rationale">이 앱은 메모를 지도에 표시하고 현재 위치를 확인하기 위해 위치 정보를 사용합니다.</string>
+    <string name="location_denied_message">위치 권한이 거부되었습니다. 현재 위치를 표시하려면 권한을 허용해주세요.</string>
+    <string name="location_settings">설정</string>
+
+    <!-- 오류 -->
+    <string name="error_network">네트워크 연결을 확인해주세요</string>
+    <string name="error_generic">오류가 발생했습니다. 다시 시도해주세요.</string>
+    <string name="error_retry">다시 시도</string>
+    <string name="error_loading_memories">메모를 불러올 수 없습니다</string>
+    <string name="error_saving_memory">메모 저장에 실패했습니다</string>
+
+    <!-- 공통 -->
+    <string name="common_cancel">취소</string>
+    <string name="common_confirm">확인</string>
+    <string name="common_save">저장</string>
+    <string name="common_delete">삭제</string>
+    <string name="common_edit">수정</string>
+    <string name="common_loading">로딩 중...</string>
+</resources>

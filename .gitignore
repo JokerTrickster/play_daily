@@ -1,3 +1,33 @@
 # CCPM (Claude Code PM) 관련
 .claude/epics/
 .claude/settings.local.json
+
+# Android specific
+frontend/*.iml
+frontend/.gradle
+frontend/local.properties
+frontend/.idea/
+frontend/.DS_Store
+frontend/build
+frontend/captures
+frontend/.externalNativeBuild
+frontend/.cxx
+frontend/*.apk
+frontend/*.ap_
+frontend/*.aab
+
+# Gradle
+frontend/.gradle/
+frontend/build/
+frontend/*/build/
+
+# Kakao API Key (보안)
+frontend/kakao_app_key.txt
+frontend/**/local.properties
+
+# Log files
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db

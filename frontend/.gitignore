@@ -1,0 +1,34 @@
+# Android specific
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Local configuration file
+local.properties
+
+# Kakao API Key (보안)
+kakao_app_key.txt
+**/local.properties
+
+# Log files
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
