@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/luxrobo/project/dev-environment-setup/scripts/**)",
+      "Read(//tmp/**)",
+      "Bash(git clone:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
