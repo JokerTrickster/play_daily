@@ -1,0 +1,311 @@
+basePath: /
+definitions:
+  request.ReqCreateMemo:
+    properties:
+      content:
+        type: string
+      image_url:
+        type: string
+      is_pinned:
+        type: boolean
+      rating:
+        type: integer
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  request.ReqSignIn:
+    properties:
+      account_id:
+        type: string
+      password:
+        type: string
+    required:
+    - account_id
+    - password
+    type: object
+  request.ReqSignUp:
+    properties:
+      account_id:
+        type: string
+      auth_code:
+        type: string
+      nickname:
+        type: string
+      password:
+        type: string
+    required:
+    - account_id
+    - auth_code
+    - nickname
+    - password
+    type: object
+  request.ReqUpdateMemo:
+    properties:
+      content:
+        type: string
+      image_url:
+        type: string
+      is_pinned:
+        type: boolean
+      rating:
+        type: integer
+      title:
+        type: string
+    type: object
+  response.ResMemo:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_pinned:
+        type: boolean
+      rating:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  response.ResMemoList:
+    properties:
+      memos:
+        items:
+          $ref: '#/definitions/response.ResMemo'
+        type: array
+      total:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Daily Memo API Server
+  title: Play Daily API
+  version: "1.0"
+paths:
+  /v0.1/auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: 로그인 api
+      parameters:
+      - description: 로그인 요청 데이
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqSignIn'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 로그인 api
+      tags:
+      - auth
+  /v0.1/auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: 회원가입 api
+      parameters:
+      - description: 회원가입 요청 데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqSignUp'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 회원가입 api
+      tags:
+      - auth
+  /v0.1/memo:
+    get:
+      description: 사용자의 모든 메모를 조회합니다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResMemoList'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 메모 목록 조회 API
+      tags:
+      - memo
+    post:
+      consumes:
+      - application/json
+      description: 새로운 메모를 생성합니다
+      parameters:
+      - description: 메모 생성 데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqCreateMemo'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResMemo'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 메모 생성 API
+      tags:
+      - memo
+  /v0.1/memo/{id}:
+    delete:
+      description: 메모를 삭제합니다
+      parameters:
+      - description: 메모 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 메모 삭제 API
+      tags:
+      - memo
+    get:
+      description: 특정 메모를 조회합니다
+      parameters:
+      - description: 메모 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResMemo'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 메모 조회 API
+      tags:
+      - memo
+    put:
+      consumes:
+      - application/json
+      description: 메모를 수정합니다
+      parameters:
+      - description: 메모 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 메모 수정 데이터
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqUpdateMemo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResMemo'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 메모 수정 API
+      tags:
+      - memo
+swagger: "2.0"

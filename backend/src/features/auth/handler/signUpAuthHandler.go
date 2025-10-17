@@ -27,7 +27,7 @@ func NewSignUpAuthHandler(c *echo.Echo, useCase _interface.ISignUpAuthUseCase) _
 // @Accept json
 // @Produce json
 // @Param request body request.ReqSignUp true "회원가입 요청 데이터"
-// @Success 200 {object} response.ResLiveLearning
+// @Success 200 {object} bool
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Tags auth
