@@ -26,9 +26,10 @@ func NewSignInAuthHandler(c *echo.Echo, useCase _interface.ISignInAuthUseCase) _
 // @Description 로그인 api
 // @Accept json
 // @Produce json
-// @Param request body request.ReqSignIn true "로그인 요청 데이"
-// @Success 200 {object} bool
+// @Param request body request.ReqSignIn true "로그인 요청 데이터"
+// @Success 200 {object} response.ResAuth
 // @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Tags auth
 func (h *SignInAuthHandler) SignIn(c echo.Context) error {
@@ -38,10 +39,10 @@ func (h *SignInAuthHandler) SignIn(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	err := h.UseCase.SignIn(ctx, req)
+	res, err := h.UseCase.SignIn(ctx, req)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "authentication failed"})
 	}
 
-	return nil
+	return c.JSON(http.StatusOK, res)
 }

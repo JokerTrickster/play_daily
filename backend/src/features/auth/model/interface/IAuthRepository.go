@@ -6,10 +6,10 @@ import (
 )
 
 type ISignInAuthRepository interface {
-	CheckPassword(ctx context.Context, id, password string) error
+	CheckPassword(ctx context.Context, id, password string) (*mysql.User, error)
 }
 
 type ISignUpAuthRepository interface {
 	CheckAccountIDDuplicate(ctx context.Context, accountID string) error
-	CreateUser(ctx context.Context, userDTO *mysql.User) error
+	CreateUser(ctx context.Context, userDTO *mysql.User) (*mysql.User, error)
 }

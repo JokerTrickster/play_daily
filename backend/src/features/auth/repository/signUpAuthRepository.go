@@ -36,10 +36,14 @@ func (r *SignUpAuthRepository) CheckAccountIDDuplicate(ctx context.Context, acco
 	return nil
 }
 
-func (r *SignUpAuthRepository) CreateUser(ctx context.Context, userDTO *mysql.User) error {
+func (r *SignUpAuthRepository) CreateUser(ctx context.Context, userDTO *mysql.User) (*mysql.User, error) {
 	// 사용자 생성
 	result := r.GormDB.WithContext(ctx).Create(userDTO)
 
-	// 에러 반환
-	return result.Error
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	// 생성된 사용자 정보 반환 (ID가 자동 할당됨)
+	return userDTO, nil
 }

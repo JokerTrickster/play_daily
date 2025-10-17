@@ -19,7 +19,7 @@ func NewSignInAuthRepository(gormDB *gorm.DB) _interface.ISignInAuthRepository {
 }
 
 // CheckPassword account_id와 password로 사용자 조회
-func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, password string) error {
+func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, password string) (*mysql.User, error) {
 	var user mysql.User
 
 	// account_id와 password로 사용자 조회
@@ -29,9 +29,9 @@ func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, pas
 
 	// 사용자가 없으면 에러 반환
 	if result.Error != nil {
-		return result.Error
+		return nil, result.Error
 	}
 
-	// 사용자가 있으면 nil 반환
-	return nil
+	// 사용자 정보 반환
+	return &user, nil
 }

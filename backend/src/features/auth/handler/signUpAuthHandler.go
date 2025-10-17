@@ -27,7 +27,7 @@ func NewSignUpAuthHandler(c *echo.Echo, useCase _interface.ISignUpAuthUseCase) _
 // @Accept json
 // @Produce json
 // @Param request body request.ReqSignUp true "회원가입 요청 데이터"
-// @Success 200 {object} bool
+// @Success 200 {object} response.ResAuth
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Tags auth
@@ -38,10 +38,10 @@ func (h *SignUpAuthHandler) SignUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	err := h.UseCase.SignUp(ctx, req)
+	res, err := h.UseCase.SignUp(ctx, req)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "authentication failed"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	return nil
+	return c.JSON(http.StatusOK, res)
 }
