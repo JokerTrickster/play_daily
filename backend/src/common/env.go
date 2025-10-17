@@ -87,7 +87,7 @@ func LoadConfig() error {
 	Env = &Config{
 		// Server Configuration
 		Host:  getEnv("HOST", "192.168.0.102"),
-		Port:  getEnv("PORT", "5000"),
+		Port:  getEnv("PORT", "7000"),
 		Env:   getEnv("ENV", "local"),
 		Debug: getEnvAsBool("DEBUG", true),
 

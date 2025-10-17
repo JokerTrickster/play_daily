@@ -26,9 +26,8 @@ func NewSignInAuthHandler(c *echo.Echo, useCase _interface.ISignInAuthUseCase) _
 // @Description 로그인 api
 // @Accept json
 // @Produce json
-// @Param projectId path string true "프로젝트 ID"
-// @Param request body request.ReqLiveLearning true "학습 요청 데이터"
-// @Success 200 {object} response.ResLiveLearning
+// @Param request body request.ReqSignIn true "로그인 요청 데이"
+// @Success 200 {object} bool
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Tags auth
