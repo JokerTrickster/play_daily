@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dailymemo.presentation.auth.LoginScreen
 import com.dailymemo.presentation.auth.SignupScreen
+import com.dailymemo.presentation.memo.CreateMemoScreen
 
 @Composable
 fun NavGraph(
@@ -76,8 +77,14 @@ fun NavGraph(
 
         // Memory screens
         composable(Screen.Memory.Create.route) {
-            // MemoryCreateScreen placeholder
-            Text("Memory Create Screen - 메모리 생성")
+            CreateMemoScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onMemoCreated = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable("${Screen.Memory.Detail.route}/{memoryId}") { backStackEntry ->
