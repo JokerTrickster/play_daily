@@ -1,0 +1,24 @@
+package com.dailymemo.data.models.response
+
+import com.google.gson.annotations.SerializedName
+
+data class MemoDto(
+    @SerializedName("id")
+    val id: Long,
+    @SerializedName("user_id")
+    val userId: Long,
+    @SerializedName("title")
+    val title: String,
+    @SerializedName("content")
+    val content: String,
+    @SerializedName("image_url")
+    val imageUrl: String?,
+    @SerializedName("rating")
+    val rating: Int,
+    @SerializedName("is_pinned")
+    val isPinned: Boolean,
+    @SerializedName("created_at")
+    val createdAt: String,
+    @SerializedName("updated_at")
+    val updatedAt: String
+)

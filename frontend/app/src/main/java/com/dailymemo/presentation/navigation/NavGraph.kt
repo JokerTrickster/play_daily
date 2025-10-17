@@ -47,13 +47,26 @@ fun NavGraph(
 
         // Main screens
         composable(Screen.Main.Map.route) {
-            // MapScreen placeholder
-            Text("Map Screen - 지도 화면")
+            // Redirect to List for now
+            com.dailymemo.presentation.memo.MemoListScreen(
+                onNavigateToCreate = {
+                    navController.navigate(Screen.Memory.Create.route)
+                },
+                onNavigateToDetail = { memoId ->
+                    navController.navigate("${Screen.Memory.Detail.route}/$memoId")
+                }
+            )
         }
 
         composable(Screen.Main.List.route) {
-            // ListScreen placeholder
-            Text("List Screen - 리스트 화면")
+            com.dailymemo.presentation.memo.MemoListScreen(
+                onNavigateToCreate = {
+                    navController.navigate(Screen.Memory.Create.route)
+                },
+                onNavigateToDetail = { memoId ->
+                    navController.navigate("${Screen.Memory.Detail.route}/$memoId")
+                }
+            )
         }
 
         composable(Screen.Main.Timeline.route) {

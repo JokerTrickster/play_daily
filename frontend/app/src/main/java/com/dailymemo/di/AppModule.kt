@@ -57,6 +57,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideMemoApiService(retrofit: Retrofit): com.dailymemo.data.datasources.remote.api.MemoApiService {
+        return retrofit.create(com.dailymemo.data.datasources.remote.api.MemoApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideAuthLocalDataSource(
         @ApplicationContext context: Context
     ): AuthLocalDataSource {
@@ -78,5 +84,13 @@ object AppModule {
         remoteDataSource: AuthRemoteDataSource
     ): AuthRepository {
         return AuthRepositoryImpl(localDataSource, remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMemoRepository(
+        memoApiService: com.dailymemo.data.datasources.remote.api.MemoApiService
+    ): com.dailymemo.domain.repositories.MemoRepository {
+        return com.dailymemo.data.repositories.MemoRepositoryImpl(memoApiService)
     }
 }
