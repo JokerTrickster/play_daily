@@ -1,10 +1,6 @@
 package _middleware
 
 import (
-	"fmt"
-	"main/common"
-
-	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -30,29 +26,6 @@ func InitMiddleware(e *echo.Echo) error {
 	e.Use(Logger)
 
 	//jwt 검증 미들웨어
-
-	signingKey := common.AccessTokenSecretKey
-	common.JwtConfig = middleware.JWTConfig{
-		TokenLookup:   "cookie:accessToken",
-		SigningKey:    signingKey,
-		SigningMethod: "HS256",
-		ParseTokenFunc: func(auth string, c echo.Context) (interface{}, error) {
-			keyFunc := func(t *jwt.Token) (interface{}, error) {
-				if t.Method.Alg() != "HS256" {
-					return nil, fmt.Errorf("unexpected jwt signing method=%v", t.Header["alg"])
-				}
-				return signingKey, nil
-			}
-			// claims are of type `jwt.MapClaims` when token is created with `jwt.Parse`
-			token, err := jwt.Parse(auth, keyFunc)
-			if err != nil {
-				return nil, err
-			}
-			if !token.Valid {
-				return nil, fmt.Errorf("invalid token")
-			}
-			return token, nil
-		},
-	}
+	// JWT 설정은 각 핸들러에서 필요시 middleware.JWTWithConfig()를 사용하여 적용
 	return nil
 }

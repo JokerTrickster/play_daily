@@ -1,13 +1,11 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"context"
-
 	"github.com/golang-jwt/jwt"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 type JwtCustomClaims struct {
@@ -19,7 +17,6 @@ type JwtCustomClaims struct {
 
 var AccessTokenSecretKey []byte
 var RefreshTokenSecretKey []byte
-var JwtConfig middleware.JWTConfig
 
 const (
 	AccessTokenExpiredTime  = 24         //hours

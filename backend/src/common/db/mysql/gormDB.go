@@ -4,28 +4,33 @@ import (
 	"gorm.io/gorm"
 )
 
-type ExperimentSessions struct {
+// User 사용자 정보 테이블
+type User struct {
 	gorm.Model
-	VarThreshold  float64 `json:"var_threshold" gorm:"column:var_threshold"`
-	LearningRate  float64 `json:"learning_rate" gorm:"column:learning_rate"`
-	Iterations    int     `json:"iterations" gorm:"column:iterations"`
-	LearningPath  string  `json:"learning_path" gorm:"column:learning_path"`
-	TestImagePath string  `json:"test_image_path" gorm:"column:test_image_path"`
-	RoiPath       string  `json:"roi_path" gorm:"column:roi_path"`
-	Name          string  `json:"name" gorm:"column:name"`
-	ProjectId     string  `json:"project_id" gorm:"column:project_id"`
+	AccountID string  `json:"account_id" gorm:"column:account_id;type:varchar(255);uniqueIndex;not null;comment:계정 아이디"`
+	Password  string  `json:"password" gorm:"column:password;type:varchar(255);not null;comment:암호화된 비밀번호"`
+	Nickname  string  `json:"nickname" gorm:"column:nickname;type:varchar(100);comment:사용자 닉네임"`
+	Memos     []Memo  `json:"memos,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
-type CctvResults struct {
-	gorm.Model
-	ExperimentSessionId int    `json:"experiment_session_id" gorm:"column:experiment_session_id"`
-	CctvId              string `json:"cctv_id" gorm:"column:cctv_id"`
-	LearningDataSize    int    `json:"learning_data_size" gorm:"column:learning_data_size"`
+// TableName User 테이블명 지정
+func (User) TableName() string {
+	return "users"
 }
 
-type RoiResults struct {
+// Memo 메모 정보 테이블
+type Memo struct {
 	gorm.Model
-	CctvResultId int     `json:"cctv_result_id" gorm:"column:cctv_result_id"`
-	RoiId        int     `json:"roi_id" gorm:"column:roi_id"`
-	Rate         float64 `json:"rate" gorm:"column:rate"`
+	UserID   uint   `json:"user_id" gorm:"column:user_id;not null;index;comment:작성자 ID"`
+	Title    string `json:"title" gorm:"column:title;type:varchar(200);not null;comment:메모 제목"`
+	Content  string `json:"content" gorm:"column:content;type:text;comment:메모 내용"`
+	ImageURL string `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
+	Rating   uint8  `json:"rating" gorm:"column:rating;type:tinyint unsigned;default:0;index;comment:평점 (0-5)"`
+	IsPinned bool   `json:"is_pinned" gorm:"column:is_pinned;default:false;index;comment:고정 여부"`
+	User     *User  `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}
+
+// TableName Memo 테이블명 지정
+func (Memo) TableName() string {
+	return "memos"
 }
