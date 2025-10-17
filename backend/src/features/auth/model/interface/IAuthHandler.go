@@ -5,3 +5,7 @@ import "github.com/labstack/echo/v4"
 type ISignInAuthHandler interface {
 	SignIn(c echo.Context) error
 }
+
+type ISignUpAuthHandler interface {
+	SignUp(c echo.Context) error
+}
