@@ -39,7 +39,7 @@ func (uc *SignUpAuthUseCase) SignUp(ctx context.Context, req request.ReqSignUp) 
 	userDTO := createUserDTO(req)
 
 	// 디비 저장
-	err = uc.Repository.CreateUser(ctx, *userDTO)
+	err = uc.Repository.CreateUser(ctx, userDTO)
 	if err != nil {
 		return err
 	}
