@@ -31,17 +31,32 @@ func InitMySQL() error {
 			os.Getenv("MYSQL_DATABASE"),
 		)
 	}
-	fmt.Println(connectionString)
-	connectionString = "luxrobo:luxrobo1!@tcp(localhost:3306)/parking_dev?parseTime=true"
+	fmt.Println("Connection string from env:", connectionString)
 
-	// MySQL에 연결
-	MysqlDB, err := sql.Open("mysql", connectionString)
-	if err != nil {
+	// 하드코딩된 연결 문자열 (환경 변수가 없을 때)
+	if connectionString == "" {
+		connectionString = "luxrobo:luxrobo1!@tcp(localhost:3306)/parking_dev?parseTime=true"
+		fmt.Println("Using hardcoded connection string:", connectionString)
+	}
+
+	// MySQL에 연결 - 전역 변수에 할당 (중요: := 가 아니라 = 사용)
+	var mysqlErr error
+	MysqlDB, mysqlErr = sql.Open("mysql", connectionString)
+	if mysqlErr != nil {
 		fmt.Println("Failed to connect to MySQL!")
-		fmt.Sprintln("에러 메시지 %s", err)
+		fmt.Printf("에러 메시지: %s\n", mysqlErr)
+		return mysqlErr
+	}
+
+	// 연결 테스트
+	if pingErr := MysqlDB.Ping(); pingErr != nil {
+		fmt.Println("Failed to ping MySQL!")
+		fmt.Printf("에러 메시지: %s\n", pingErr)
+		return pingErr
 	}
 	fmt.Println("Connected to MySQL!")
 
+	// GORM 초기화 - 전역 변수에 할당
 	GormMysqlDB, err = gorm.Open(mysql.New(mysql.Config{
 		Conn: MysqlDB,
 	}), &gorm.Config{
@@ -49,8 +64,11 @@ func InitMySQL() error {
 	})
 	if err != nil {
 		fmt.Println("Failed to connect to Gorm MySQL!")
-		fmt.Sprintln("에러 메시지 %s", err)
+		fmt.Printf("에러 메시지: %s\n", err)
+		return err
 	}
+
+	fmt.Println("GORM MySQL initialized successfully!")
 
 	return nil
 }

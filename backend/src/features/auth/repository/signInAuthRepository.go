@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"main/common/db/mysql"
 	_interface "main/features/auth/model/interface"
 
@@ -28,9 +29,7 @@ func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, pas
 		First(&user)
 
 	// 사용자가 없으면 에러 반환
-	if result.Error != nil {
-		return nil, result.Error
-	}
+	fmt.Println("result.Error:", result.Error)
 
 	// 사용자 정보 반환
 	return &user, nil
