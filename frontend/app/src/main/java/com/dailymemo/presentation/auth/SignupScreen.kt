@@ -132,7 +132,7 @@ fun SignupScreen(
                         viewModel.signup()
                     }
                 ),
-                supportingText = { Text("테스트 코드: TEST123, DEMO456, AUTH789, CODE000") },
+                supportingText = { Text("테스트 인증 코드: 5508") },
                 isError = state is AuthState.Error
             )
 
