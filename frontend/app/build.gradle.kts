@@ -93,7 +93,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
     // Kakao Maps & Location
-    implementation("com.kakao.sdk:v2-all:2.19.0")
+    implementation("com.kakao.maps.open:android:2.9.5")
     implementation("com.google.android.gms:play-services-location:21.1.0")
 
     // Image Loading

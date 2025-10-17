@@ -18,7 +18,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.kakao.vectormap.KakaoMap
+import com.kakao.vectormap.KakaoMapReadyCallback
+import com.kakao.vectormap.LatLng
+import com.kakao.vectormap.MapLifeCycleCallback
+import com.kakao.vectormap.MapView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,33 +63,32 @@ fun MapScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         if (hasLocationPermission) {
-            // Map Placeholder - 카카오 맵 연동 예정
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "🗺️",
-                        style = MaterialTheme.typography.displayLarge
-                    )
-                    Text(
-                        text = "지도 화면",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "카카오 맵 연동 예정",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            // Kakao Map View
+            AndroidView(
+                factory = { context ->
+                    MapView(context).apply {
+                        start(object : MapLifeCycleCallback() {
+                            override fun onMapDestroy() {
+                                // Map destroyed
+                            }
+
+                            override fun onMapError(error: Exception) {
+                                // Map error occurred
+                            }
+                        }, object : KakaoMapReadyCallback() {
+                            override fun onMapReady(map: KakaoMap) {
+                                // 서울 중심으로 설정 (위도: 37.5665, 경도: 126.9780)
+                                map.moveCamera(
+                                    com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                        LatLng.from(37.5665, 126.9780)
+                                    )
+                                )
+                            }
+                        })
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
 
             // Top Bar
             Surface(
