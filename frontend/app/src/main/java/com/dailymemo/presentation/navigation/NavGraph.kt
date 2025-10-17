@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dailymemo.presentation.auth.LoginScreen
 import com.dailymemo.presentation.auth.SignupScreen
+import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 
@@ -49,13 +50,9 @@ fun NavGraph(
 
         // Main screens
         composable(Screen.Main.Map.route) {
-            // Redirect to List for now
-            com.dailymemo.presentation.memo.MemoListScreen(
-                onNavigateToCreate = {
+            MapScreen(
+                onNavigateToCreateMemo = {
                     navController.navigate(Screen.Memory.Create.route)
-                },
-                onNavigateToDetail = { memoId ->
-                    navController.navigate("${Screen.Memory.Detail.route}/$memoId")
                 }
             )
         }
