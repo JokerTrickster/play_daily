@@ -7,14 +7,14 @@ import (
 
 	_middleware "main/middleware"
 
-	swaggerDocs "main/docs"
-
 	"github.com/labstack/echo/v4"
-
-	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-//export PATH=$PATH:~/go/bin
+// @title Play Daily API
+// @version 1.0
+// @description Daily Memo API Server
+// @host localhost:8080
+// @BasePath /
 func main() {
 
 	e := echo.New()
@@ -47,18 +47,18 @@ func main() {
 		return
 	}
 
-	// swagger 초기화
+	// swagger 초기화 - swag init 실행 후 활성화
+	// swag init 명령어 실행 방법:
+	// cd /Users/luxrobo/project/play_daily/backend/src
+	// swag init
 
-	if common.Env.IsLocal {
-		swaggerDocs.SwaggerInfo_swagger.Host = common.Env.Host + ":" + common.Env.Port
-		e.GET("/swagger/*", echoSwagger.WrapHandler)
-	} else {
-		// swaggerDocs.SwaggerInfo.Host = fmt.Sprintf("dev-board-api.boardgame.com")
-		e.GET("/swagger/*", echoSwagger.WrapHandler)
-	}
+	// if common.Env.IsLocal {
+	// 	swaggerDocs.SwaggerInfo_swagger.Host = common.Env.Host + ":" + common.Env.Port
+	// 	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	// } else {
+	// 	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	// }
+
 	e.HideBanner = true
 	e.Logger.Fatal(e.Start(":" + common.Env.Port))
-	// e.Logger.Fatal(e.Start(":8080"))
-
-	return
 }
