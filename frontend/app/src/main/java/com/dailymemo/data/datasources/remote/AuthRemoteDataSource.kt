@@ -4,7 +4,6 @@ import com.dailymemo.data.datasources.remote.api.AuthApiService
 import com.dailymemo.data.models.AuthTokenDto
 import com.dailymemo.data.models.request.SignInRequestDto
 import com.dailymemo.data.models.request.SignUpRequestDto
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,16 +27,15 @@ class AuthRemoteDataSource @Inject constructor(
 
             val response = authApiService.signup(request)
 
-            if (response.isSuccessful) {
-                // TODO: Backend will return JWT tokens in the future
-                // For now, create a temporary token structure
+            if (response.isSuccessful && response.body() != null) {
+                val authResponse = response.body()!!
                 Result.success(
                     AuthTokenDto(
-                        accessToken = "temp_access_token_${UUID.randomUUID()}",
-                        refreshToken = "temp_refresh_token_${UUID.randomUUID()}",
-                        userId = username, // Using accountId as userId for now
-                        username = username,
-                        memoSpaceId = UUID.randomUUID().toString()
+                        accessToken = authResponse.accessToken,
+                        refreshToken = authResponse.refreshToken,
+                        userId = authResponse.userId.toString(),
+                        username = authResponse.accountId,
+                        memoSpaceId = authResponse.userId.toString() // Using userId as memoSpaceId
                     )
                 )
             } else {
@@ -65,16 +63,15 @@ class AuthRemoteDataSource @Inject constructor(
 
             val response = authApiService.signIn(request)
 
-            if (response.isSuccessful) {
-                // TODO: Backend will return JWT tokens in the future
-                // For now, create a temporary token structure
+            if (response.isSuccessful && response.body() != null) {
+                val authResponse = response.body()!!
                 Result.success(
                     AuthTokenDto(
-                        accessToken = "temp_access_token_${UUID.randomUUID()}",
-                        refreshToken = "temp_refresh_token_${UUID.randomUUID()}",
-                        userId = username, // Using accountId as userId for now
-                        username = username,
-                        memoSpaceId = UUID.randomUUID().toString()
+                        accessToken = authResponse.accessToken,
+                        refreshToken = authResponse.refreshToken,
+                        userId = authResponse.userId.toString(),
+                        username = authResponse.accountId,
+                        memoSpaceId = authResponse.userId.toString() // Using userId as memoSpaceId
                     )
                 )
             } else {

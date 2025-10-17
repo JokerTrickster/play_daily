@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -45,6 +46,12 @@ class AuthLocalDataSource @Inject constructor(
 
     suspend fun getAccessToken(): String? {
         return dataStore.data.first()[ACCESS_TOKEN_KEY]
+    }
+
+    fun getAccessTokenSync(): String? {
+        return runBlocking {
+            dataStore.data.first()[ACCESS_TOKEN_KEY]
+        }
     }
 
     suspend fun getUserId(): String? {

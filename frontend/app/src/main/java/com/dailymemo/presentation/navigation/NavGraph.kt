@@ -8,6 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dailymemo.presentation.auth.LoginScreen
 import com.dailymemo.presentation.auth.SignupScreen
+import com.dailymemo.presentation.memo.CreateMemoScreen
+import com.dailymemo.presentation.memo.MemoDetailScreen
 
 @Composable
 fun NavGraph(
@@ -76,13 +78,25 @@ fun NavGraph(
 
         // Memory screens
         composable(Screen.Memory.Create.route) {
-            // MemoryCreateScreen placeholder
-            Text("Memory Create Screen - 메모리 생성")
+            CreateMemoScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onMemoCreated = {
+                    navController.popBackStack()
+                }
+            )
         }
 
-        composable("${Screen.Memory.Detail.route}/{memoryId}") { backStackEntry ->
-            // MemoryDetailScreen placeholder
-            Text("Memory Detail Screen - 메모리 상세")
+        composable("${Screen.Memory.Detail.route}/{memoId}") {
+            MemoDetailScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onMemoDeleted = {
+                    navController.popBackStack(Screen.Main.Map.route, inclusive = false)
+                }
+            )
         }
 
         // Collaboration screens
