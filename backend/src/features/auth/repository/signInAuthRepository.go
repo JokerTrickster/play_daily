@@ -30,7 +30,9 @@ func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, pas
 
 	// 사용자가 없으면 에러 반환
 	fmt.Println("result.Error:", result.Error)
-
+	if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
+		return nil, fmt.Errorf("invalid account ID or password")
+	}
 	// 사용자 정보 반환
 	return &user, nil
 }
