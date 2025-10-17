@@ -26,12 +26,35 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(
+        authLocalDataSource: AuthLocalDataSource
+    ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
+        val authInterceptor = okhttp3.Interceptor { chain ->
+            val originalRequest = chain.request()
+
+            // Auth API는 토큰 없이 요청
+            if (originalRequest.url.encodedPath.contains("/auth/")) {
+                return@Interceptor chain.proceed(originalRequest)
+            }
+
+            // 다른 API는 토큰 추가
+            val token = authLocalDataSource.getAccessTokenSync()
+            if (token != null) {
+                val newRequest = originalRequest.newBuilder()
+                    .header("Authorization", "Bearer $token")
+                    .build()
+                chain.proceed(newRequest)
+            } else {
+                chain.proceed(originalRequest)
+            }
+        }
+
         return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
