@@ -31,7 +31,7 @@ func (r *SignUpAuthRepository) CheckAccountIDDuplicate(ctx context.Context, acco
 	if result.Error == nil {
 		return errors.New("account ID already exists")
 	}
-
+	
 	// 사용자가 없으면 nil 반환
 	return nil
 }

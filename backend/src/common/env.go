@@ -86,28 +86,28 @@ func LoadConfig() error {
 
 	Env = &Config{
 		// Server Configuration
-		Host:  getEnv("HOST", "192.168.0.102"),
-		Port:  getEnv("PORT", "7000"),
+		Host:  getEnv("HOST", "localhost"),
+		Port:  getEnv("PORT", "7001"),
 		Env:   getEnv("ENV", "local"),
 		Debug: getEnvAsBool("DEBUG", true),
 
 		// Database Configuration
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "3307"),
-		DBName:     getEnv("DB_NAME", "parking_manage"),
-		DBUser:     getEnv("DB_USER", "luxrobo"),
-		DBPassword: getEnv("DB_PASSWORD", "luxrobo1!"),
+		DBHost:     getEnv("DB_HOST", "13.203.37.93"),
+		DBPort:     getEnv("DB_PORT", "3306"),
+		DBName:     getEnv("DB_NAME", "daily_dev"),
+		DBUser:     getEnv("DB_USER", "root"),
+		DBPassword: getEnv("DB_PASSWORD", "examplepassword"),
 
 		// JWT Configuration
-		JWTSecret:      getEnv("JWT_SECRET", "your-secret-key"),
+		JWTSecret:      getEnv("JWT_SECRET", "play-daily-secret-key-2024"),
 		JWTExpireHours: getEnvAsInt("JWT_EXPIRE_HOURS", 24),
 
 		// File Upload Configuration
-		UploadPath:  getEnv("UPLOAD_PATH", "../shared"),
+		UploadPath:  getEnv("UPLOAD_PATH", "./uploads"),
 		MaxFileSize: getEnvAsInt64("MAX_FILE_SIZE", 10485760), // 10MB
 
 		// CORS Configuration
-		AllowedOrigins: getEnvAsSlice("ALLOWED_ORIGINS", []string{"http://localhost:5050"}),
+		AllowedOrigins: getEnvAsSlice("ALLOWED_ORIGINS", []string{"http://localhost:3000", "http://localhost:5173"}),
 
 		// Logging Configuration
 		LogLevel: getEnv("LOG_LEVEL", "debug"),

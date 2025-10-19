@@ -25,6 +25,11 @@ frontend/*/build/
 frontend/kakao_app_key.txt
 frontend/**/local.properties
 
+# Backend specific
+backend/src/.env
+backend/**/*.log
+backend/**/logs/
+
 # Log files
 *.log
 

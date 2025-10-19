@@ -37,3 +37,9 @@ CREATE TABLE IF NOT EXISTS memos (
     INDEX idx_rating (rating)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='메모 정보 테이블';
 
+-- Test User Data
+INSERT INTO users (account_id, password, nickname)
+VALUES ('jhj485', '456123', 'jhj485')
+ON DUPLICATE KEY UPDATE account_id=account_id;
+
+

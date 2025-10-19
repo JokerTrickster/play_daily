@@ -20,6 +20,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Kakao Maps NDK 라이브러리 지원
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+        }
     }
 
     buildTypes {
@@ -95,6 +100,7 @@ dependencies {
     // Kakao Maps & Location
     implementation("com.kakao.maps.open:android:2.9.5")
     implementation("com.google.android.gms:play-services-location:21.1.0")
+    implementation("com.google.android.gms:play-services-maps:18.2.0") // Google Maps (임시 개발용)
 
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.5.0")

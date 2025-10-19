@@ -35,7 +35,7 @@ func InitMySQL() error {
 
 	// 하드코딩된 연결 문자열 (환경 변수가 없을 때)
 	if connectionString == "" {
-		connectionString = "luxrobo:luxrobo1!@tcp(localhost:3306)/parking_dev?parseTime=true"
+		connectionString = "root:examplepassword@tcp(13.203.37.93:3306)/daily_dev?parseTime=true"
 		fmt.Println("Using hardcoded connection string:", connectionString)
 	}
 

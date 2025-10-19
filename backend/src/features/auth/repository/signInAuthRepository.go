@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"main/common/db/mysql"
 	_interface "main/features/auth/model/interface"
@@ -28,11 +29,14 @@ func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, pas
 		Where("account_id = ? AND password = ?", accountID, password).
 		First(&user)
 
-	// 사용자가 없으면 에러 반환
-	fmt.Println("result.Error:", result.Error)
-	if result.Error.Error() == gorm.ErrRecordNotFound.Error() {
-		return nil, fmt.Errorf("invalid account ID or password")
+	// 에러 체크
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("invalid account ID or password")
+		}
+		return nil, result.Error
 	}
+
 	// 사용자 정보 반환
 	return &user, nil
 }

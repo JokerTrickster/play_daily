@@ -2,6 +2,7 @@ package com.dailymemo.presentation.map
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -16,10 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.LatLng
@@ -32,6 +36,8 @@ fun MapScreen(
     onNavigateToCreateMemo: () -> Unit
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     var hasLocationPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -46,6 +52,7 @@ fun MapScreen(
     ) { permissions ->
         hasLocationPermission = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
                 permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        Log.d("MapScreen", "Permission result: $hasLocationPermission")
     }
 
     LaunchedEffect(Unit) {
@@ -65,27 +72,37 @@ fun MapScreen(
         if (hasLocationPermission) {
             // Kakao Map View
             AndroidView(
-                factory = { context ->
-                    MapView(context).apply {
+                factory = { ctx ->
+                    Log.d("MapScreen", "MapView factory called")
+                    MapView(ctx).apply {
                         start(object : MapLifeCycleCallback() {
                             override fun onMapDestroy() {
-                                // Map destroyed
+                                Log.d("MapScreen", "onMapDestroy")
                             }
 
                             override fun onMapError(error: Exception) {
-                                // Map error occurred
+                                Log.e("MapScreen", "onMapError: ${error.message}", error)
                             }
                         }, object : KakaoMapReadyCallback() {
                             override fun onMapReady(map: KakaoMap) {
-                                // 서울 중심으로 설정 (위도: 37.5665, 경도: 126.9780)
-                                map.moveCamera(
-                                    com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
-                                        LatLng.from(37.5665, 126.9780)
+                                Log.d("MapScreen", "onMapReady - Map is ready!")
+                                try {
+                                    // 서울 중심으로 설정 (위도: 37.5665, 경도: 126.9780)
+                                    map.moveCamera(
+                                        com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                            LatLng.from(37.5665, 126.9780)
+                                        )
                                     )
-                                )
+                                    Log.d("MapScreen", "Camera moved successfully")
+                                } catch (e: Exception) {
+                                    Log.e("MapScreen", "Error moving camera: ${e.message}", e)
+                                }
                             }
                         })
                     }
+                },
+                update = { view ->
+                    Log.d("MapScreen", "MapView update called")
                 },
                 modifier = Modifier.fillMaxSize()
             )
