@@ -25,7 +25,7 @@ fun NavGraph(
         composable(Screen.Auth.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.Main.Map.route) {
+                    navController.navigate("main") {
                         popUpTo(Screen.Auth.Login.route) { inclusive = true }
                     }
                 },
@@ -38,7 +38,7 @@ fun NavGraph(
         composable(Screen.Auth.Signup.route) {
             SignupScreen(
                 onSignupSuccess = {
-                    navController.navigate(Screen.Main.Map.route) {
+                    navController.navigate("main") {
                         popUpTo(Screen.Auth.Login.route) { inclusive = true }
                     }
                 },
@@ -48,29 +48,11 @@ fun NavGraph(
             )
         }
 
-        // Main screens
-        composable(Screen.Main.Map.route) {
-            MapScreen(
-                onNavigateToCreateMemo = {
-                    navController.navigate(Screen.Memory.Create.route)
-                }
+        // Main screen with bottom navigation
+        composable("main") {
+            MainScreen(
+                mainNavController = navController
             )
-        }
-
-        composable(Screen.Main.List.route) {
-            com.dailymemo.presentation.memo.MemoListScreen(
-                onNavigateToCreate = {
-                    navController.navigate(Screen.Memory.Create.route)
-                },
-                onNavigateToDetail = { memoId ->
-                    navController.navigate("${Screen.Memory.Detail.route}/$memoId")
-                }
-            )
-        }
-
-        composable(Screen.Main.Timeline.route) {
-            // TimelineScreen placeholder
-            Text("Timeline Screen - 타임라인 화면")
         }
 
         // Memory screens
@@ -91,7 +73,7 @@ fun NavGraph(
                     navController.popBackStack()
                 },
                 onMemoDeleted = {
-                    navController.popBackStack(Screen.Main.Map.route, inclusive = false)
+                    navController.popBackStack("main", inclusive = false)
                 }
             )
         }
