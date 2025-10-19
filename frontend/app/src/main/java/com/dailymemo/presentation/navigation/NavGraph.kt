@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dailymemo.presentation.auth.LoginScreen
 import com.dailymemo.presentation.auth.SignupScreen
+import com.dailymemo.presentation.collaboration.CollaborationScreen
 import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
@@ -80,8 +81,7 @@ fun NavGraph(
 
         // Collaboration screens
         composable(Screen.Collaboration.route) {
-            // CollaborationScreen placeholder
-            Text("Collaboration Screen - 협업 화면")
+            CollaborationScreen()
         }
     }
 }
