@@ -2,7 +2,9 @@ package com.dailymemo.presentation.memo
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailymemo.domain.models.Location
 import com.dailymemo.domain.usecases.CreateMemoUseCase
+import com.dailymemo.domain.usecases.location.GetCurrentLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreateMemoViewModel @Inject constructor(
-    private val createMemoUseCase: CreateMemoUseCase
+    private val createMemoUseCase: CreateMemoUseCase,
+    private val getCurrentLocationUseCase: GetCurrentLocationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CreateMemoUiState>(CreateMemoUiState.Initial)
@@ -32,6 +35,36 @@ class CreateMemoViewModel @Inject constructor(
 
     private val _isPinned = MutableStateFlow(false)
     val isPinned: StateFlow<Boolean> = _isPinned.asStateFlow()
+
+    private val _currentLocation = MutableStateFlow<Location?>(null)
+    val currentLocation: StateFlow<Location?> = _currentLocation.asStateFlow()
+
+    private val _locationName = MutableStateFlow("")
+    val locationName: StateFlow<String> = _locationName.asStateFlow()
+
+    init {
+        // Automatically get current location when creating memo
+        getCurrentLocation()
+    }
+
+    fun getCurrentLocation() {
+        viewModelScope.launch {
+            getCurrentLocationUseCase().fold(
+                onSuccess = { location ->
+                    _currentLocation.value = location
+                    // You can add reverse geocoding here to get location name
+                    _locationName.value = "현재 위치" // Placeholder
+                },
+                onFailure = {
+                    // Silently fail - location is optional
+                }
+            )
+        }
+    }
+
+    fun onLocationNameChange(newName: String) {
+        _locationName.value = newName
+    }
 
     fun onTitleChange(newTitle: String) {
         _title.value = newTitle
@@ -69,7 +102,10 @@ class CreateMemoViewModel @Inject constructor(
                 content = _content.value.trim(),
                 imageUrl = if (_imageUrl.value.isNotBlank()) _imageUrl.value.trim() else null,
                 rating = _rating.value,
-                isPinned = _isPinned.value
+                isPinned = _isPinned.value,
+                latitude = _currentLocation.value?.latitude,
+                longitude = _currentLocation.value?.longitude,
+                locationName = if (_locationName.value.isNotBlank()) _locationName.value.trim() else null
             ).fold(
                 onSuccess = {
                     _uiState.value = CreateMemoUiState.Success

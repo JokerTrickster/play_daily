@@ -34,6 +34,8 @@ fun CreateMemoScreen(
     val imageUrl by viewModel.imageUrl.collectAsState()
     val rating by viewModel.rating.collectAsState()
     val isPinned by viewModel.isPinned.collectAsState()
+    val currentLocation by viewModel.currentLocation.collectAsState()
+    val locationName by viewModel.locationName.collectAsState()
 
     val scrollState = rememberScrollState()
 
@@ -145,6 +147,54 @@ fun CreateMemoScreen(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
+
+                // Location Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "위치",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (currentLocation != null) {
+                                Text(
+                                    text = "📍 ${currentLocation?.latitude?.let { "%.4f".format(it) }}, ${currentLocation?.longitude?.let { "%.4f".format(it) }}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                TextButton(onClick = { viewModel.getCurrentLocation() }) {
+                                    Text("위치 가져오기")
+                                }
+                            }
+                        }
+                        if (currentLocation != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = locationName,
+                                onValueChange = viewModel::onLocationNameChange,
+                                label = { Text("위치 이름 (선택)") },
+                                placeholder = { Text("예: 우리집, 카페") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+                }
 
                 // Rating Section
                 Card(
