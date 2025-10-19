@@ -18,6 +18,7 @@ import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 import com.dailymemo.presentation.memo.MemoListScreen
+import com.dailymemo.presentation.memo.TimelineScreen
 
 @Composable
 fun MainScreen(
@@ -83,8 +84,11 @@ fun MainScreen(
             }
 
             composable(Screen.Main.Timeline.route) {
-                // TimelineScreen placeholder
-                Text("Timeline Screen - 타임라인 화면")
+                TimelineScreen(
+                    onNavigateToDetail = { memoId ->
+                        mainNavController.navigate("${Screen.Memory.Detail.route}/$memoId")
+                    }
+                )
             }
         }
     }
