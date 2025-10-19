@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS memos (
     image_url VARCHAR(500) COMMENT '메모 이미지 URL',
     rating TINYINT UNSIGNED DEFAULT 0 COMMENT '평점 (0-5)',
     is_pinned BOOLEAN DEFAULT FALSE COMMENT '고정 여부',
+    latitude DOUBLE COMMENT '위도',
+    longitude DOUBLE COMMENT '경도',
+    location_name VARCHAR(255) COMMENT '위치 이름',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시간',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시간',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '삭제 시간 (soft delete)',
@@ -34,7 +37,8 @@ CREATE TABLE IF NOT EXISTS memos (
     INDEX idx_created_at (created_at),
     INDEX idx_deleted_at (deleted_at),
     INDEX idx_is_pinned (is_pinned),
-    INDEX idx_rating (rating)
+    INDEX idx_rating (rating),
+    INDEX idx_location (latitude, longitude)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='메모 정보 테이블';
 
 -- Test User Data

@@ -28,11 +28,14 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 	defer cancel()
 
 	updateMemo := &mysql.Memo{
-		Title:    req.Title,
-		Content:  req.Content,
-		ImageURL: req.ImageURL,
-		Rating:   req.Rating,
-		IsPinned: req.IsPinned,
+		Title:        req.Title,
+		Content:      req.Content,
+		ImageURL:     req.ImageURL,
+		Rating:       req.Rating,
+		IsPinned:     req.IsPinned,
+		Latitude:     req.Latitude,
+		Longitude:    req.Longitude,
+		LocationName: req.LocationName,
 	}
 
 	err := uc.Repository.Update(ctx, memoID, userID, updateMemo)

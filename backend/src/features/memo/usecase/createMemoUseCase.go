@@ -27,12 +27,15 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 	defer cancel()
 
 	memo := &mysql.Memo{
-		UserID:   userID,
-		Title:    req.Title,
-		Content:  req.Content,
-		ImageURL: req.ImageURL,
-		Rating:   req.Rating,
-		IsPinned: req.IsPinned,
+		UserID:       userID,
+		Title:        req.Title,
+		Content:      req.Content,
+		ImageURL:     req.ImageURL,
+		Rating:       req.Rating,
+		IsPinned:     req.IsPinned,
+		Latitude:     req.Latitude,
+		Longitude:    req.Longitude,
+		LocationName: req.LocationName,
 	}
 
 	err := uc.Repository.Create(ctx, memo)
