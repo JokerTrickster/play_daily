@@ -10,6 +10,9 @@ data class Memo(
     val imageUrl: String?,
     val rating: Int,
     val isPinned: Boolean,
+    val latitude: Double?,
+    val longitude: Double?,
+    val locationName: String?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

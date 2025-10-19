@@ -2,10 +2,13 @@ package com.dailymemo.di
 
 import android.content.Context
 import com.dailymemo.data.datasources.local.AuthLocalDataSource
+import com.dailymemo.data.datasources.local.LocationDataSource
 import com.dailymemo.data.datasources.remote.AuthRemoteDataSource
 import com.dailymemo.data.datasources.remote.api.AuthApiService
 import com.dailymemo.data.repositories.AuthRepositoryImpl
+import com.dailymemo.data.repositories.LocationRepositoryImpl
 import com.dailymemo.domain.repositories.AuthRepository
+import com.dailymemo.domain.repositories.LocationRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -117,5 +120,21 @@ object AppModule {
         memoApiService: com.dailymemo.data.datasources.remote.api.MemoApiService
     ): com.dailymemo.domain.repositories.MemoRepository {
         return com.dailymemo.data.repositories.MemoRepositoryImpl(memoApiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationDataSource(
+        @ApplicationContext context: Context
+    ): LocationDataSource {
+        return LocationDataSource(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationRepository(
+        locationDataSource: LocationDataSource
+    ): LocationRepository {
+        return LocationRepositoryImpl(locationDataSource)
     }
 }

@@ -13,8 +13,14 @@ class UpdateMemoUseCase @Inject constructor(
         content: String,
         imageUrl: String? = null,
         rating: Int = 0,
-        isPinned: Boolean = false
+        isPinned: Boolean = false,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
     ): Result<Memo> {
-        return repository.updateMemo(id, title, content, imageUrl, rating, isPinned)
+        return repository.updateMemo(
+            id, title, content, imageUrl, rating, isPinned,
+            latitude, longitude, locationName
+        )
     }
 }

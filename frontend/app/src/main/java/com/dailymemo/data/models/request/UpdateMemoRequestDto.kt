@@ -12,5 +12,11 @@ data class UpdateMemoRequestDto(
     @SerializedName("rating")
     val rating: Int = 0,
     @SerializedName("is_pinned")
-    val isPinned: Boolean = false
+    val isPinned: Boolean = false,
+    @SerializedName("latitude")
+    val latitude: Double? = null,
+    @SerializedName("longitude")
+    val longitude: Double? = null,
+    @SerializedName("location_name")
+    val locationName: String? = null
 )

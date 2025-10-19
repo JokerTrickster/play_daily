@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.kakao.vectormap.KakaoMap
@@ -33,10 +34,14 @@ import com.kakao.vectormap.MapView
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
-    onNavigateToCreateMemo: () -> Unit
+    onNavigateToCreateMemo: () -> Unit,
+    viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val currentLocation by viewModel.currentLocation.collectAsState()
+
+    var kakaoMap: KakaoMap? by remember { mutableStateOf(null) }
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -86,6 +91,7 @@ fun MapScreen(
                         }, object : KakaoMapReadyCallback() {
                             override fun onMapReady(map: KakaoMap) {
                                 Log.d("MapScreen", "onMapReady - Map is ready!")
+                                kakaoMap = map
                                 try {
                                     // 서울 중심으로 설정 (위도: 37.5665, 경도: 126.9780)
                                     map.moveCamera(
@@ -106,6 +112,24 @@ fun MapScreen(
                 },
                 modifier = Modifier.fillMaxSize()
             )
+
+            // Move camera when current location changes
+            LaunchedEffect(currentLocation) {
+                currentLocation?.let { location ->
+                    kakaoMap?.let { map ->
+                        try {
+                            map.moveCamera(
+                                com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                    LatLng.from(location.latitude, location.longitude)
+                                )
+                            )
+                            Log.d("MapScreen", "Camera moved to current location: ${location.latitude}, ${location.longitude}")
+                        } catch (e: Exception) {
+                            Log.e("MapScreen", "Error moving camera to current location: ${e.message}", e)
+                        }
+                    }
+                }
+            }
 
             // Top Bar
             Surface(
@@ -141,7 +165,7 @@ fun MapScreen(
                 // My Location Button
                 FloatingActionButton(
                     onClick = {
-                        // TODO: Move to current location
+                        viewModel.getCurrentLocation()
                     },
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary,

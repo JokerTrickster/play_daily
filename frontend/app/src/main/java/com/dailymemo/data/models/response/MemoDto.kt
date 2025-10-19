@@ -17,6 +17,12 @@ data class MemoDto(
     val rating: Int,
     @SerializedName("is_pinned")
     val isPinned: Boolean,
+    @SerializedName("latitude")
+    val latitude: Double?,
+    @SerializedName("longitude")
+    val longitude: Double?,
+    @SerializedName("location_name")
+    val locationName: String?,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")

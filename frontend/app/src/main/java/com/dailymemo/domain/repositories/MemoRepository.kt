@@ -10,7 +10,10 @@ interface MemoRepository {
         content: String,
         imageUrl: String? = null,
         rating: Int = 0,
-        isPinned: Boolean = false
+        isPinned: Boolean = false,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
     ): Result<Memo>
     suspend fun updateMemo(
         id: Long,
@@ -18,7 +21,10 @@ interface MemoRepository {
         content: String,
         imageUrl: String? = null,
         rating: Int = 0,
-        isPinned: Boolean = false
+        isPinned: Boolean = false,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        locationName: String? = null
     ): Result<Memo>
     suspend fun deleteMemo(id: Long): Result<Unit>
 }

@@ -48,7 +48,10 @@ class MemoRepositoryImpl @Inject constructor(
         content: String,
         imageUrl: String?,
         rating: Int,
-        isPinned: Boolean
+        isPinned: Boolean,
+        latitude: Double?,
+        longitude: Double?,
+        locationName: String?
     ): Result<Memo> {
         return try {
             val request = CreateMemoRequestDto(
@@ -56,7 +59,10 @@ class MemoRepositoryImpl @Inject constructor(
                 content = content,
                 imageUrl = imageUrl,
                 rating = rating,
-                isPinned = isPinned
+                isPinned = isPinned,
+                latitude = latitude,
+                longitude = longitude,
+                locationName = locationName
             )
             val response = memoApiService.createMemo(request)
             if (response.isSuccessful && response.body() != null) {
@@ -75,7 +81,10 @@ class MemoRepositoryImpl @Inject constructor(
         content: String,
         imageUrl: String?,
         rating: Int,
-        isPinned: Boolean
+        isPinned: Boolean,
+        latitude: Double?,
+        longitude: Double?,
+        locationName: String?
     ): Result<Memo> {
         return try {
             val request = UpdateMemoRequestDto(
@@ -83,7 +92,10 @@ class MemoRepositoryImpl @Inject constructor(
                 content = content,
                 imageUrl = imageUrl,
                 rating = rating,
-                isPinned = isPinned
+                isPinned = isPinned,
+                latitude = latitude,
+                longitude = longitude,
+                locationName = locationName
             )
             val response = memoApiService.updateMemo(id, request)
             if (response.isSuccessful && response.body() != null) {
@@ -119,6 +131,9 @@ class MemoRepositoryImpl @Inject constructor(
             imageUrl = imageUrl,
             rating = rating,
             isPinned = isPinned,
+            latitude = latitude,
+            longitude = longitude,
+            locationName = locationName,
             createdAt = LocalDateTime.parse(createdAt, formatter),
             updatedAt = LocalDateTime.parse(updatedAt, formatter)
         )
