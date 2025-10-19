@@ -68,6 +68,9 @@ fun MainScreen(
                 MapScreen(
                     onNavigateToCreateMemo = {
                         mainNavController.navigate(Screen.Memory.Create.route)
+                    },
+                    onNavigateToDetail = { memoId ->
+                        mainNavController.navigate("${Screen.Memory.Detail.route}/$memoId")
                     }
                 )
             }

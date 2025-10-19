@@ -30,16 +30,21 @@ import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.LatLng
 import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.MapView
+import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelStyles
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     onNavigateToCreateMemo: () -> Unit,
+    onNavigateToDetail: (Long) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentLocation by viewModel.currentLocation.collectAsState()
+    val memos by viewModel.memos.collectAsState()
 
     var kakaoMap: KakaoMap? by remember { mutableStateOf(null) }
 
@@ -68,6 +73,19 @@ fun MapScreen(
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 )
             )
+        }
+    }
+
+    // Reload memos when screen comes back to foreground
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshMemos()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -127,6 +145,44 @@ fun MapScreen(
                         } catch (e: Exception) {
                             Log.e("MapScreen", "Error moving camera to current location: ${e.message}", e)
                         }
+                    }
+                }
+            }
+
+            // Add memo markers when memos or map changes
+            LaunchedEffect(kakaoMap, memos) {
+                kakaoMap?.let { map ->
+                    try {
+                        val labelManager = map.labelManager
+                        val layer = labelManager?.layer
+
+                        // Clear existing labels
+                        layer?.removeAll()
+
+                        // Add markers for memos with location
+                        memos.filter { it.latitude != null && it.longitude != null }
+                            .forEach { memo ->
+                                val position = LatLng.from(memo.latitude!!, memo.longitude!!)
+
+                                // Create label style with icon
+                                val styles = LabelStyles.from(
+                                    LabelStyle.from(android.R.drawable.ic_dialog_map)
+                                )
+
+                                // Create label options
+                                val options = LabelOptions.from(position)
+                                    .setStyles(styles)
+                                    .setTag(memo.id.toString())
+                                    .setTexts(memo.title) // Set memo title as label text
+
+                                val label = layer?.addLabel(options)
+
+                                Log.d("MapScreen", "Added marker for memo: ${memo.title} at ${memo.latitude}, ${memo.longitude}")
+                            }
+
+                        Log.d("MapScreen", "Added ${memos.filter { it.latitude != null && it.longitude != null }.size} markers")
+                    } catch (e: Exception) {
+                        Log.e("MapScreen", "Error adding markers: ${e.message}", e)
                     }
                 }
             }
