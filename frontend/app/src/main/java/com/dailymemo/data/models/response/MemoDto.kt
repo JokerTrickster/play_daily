@@ -28,3 +28,10 @@ data class MemoDto(
     @SerializedName("updated_at")
     val updatedAt: String
 )
+
+data class MemoListDto(
+    @SerializedName("memos")
+    val memos: List<MemoDto>,
+    @SerializedName("total")
+    val total: Long
+)

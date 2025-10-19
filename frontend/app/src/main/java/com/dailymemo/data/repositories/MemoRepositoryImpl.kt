@@ -20,7 +20,7 @@ class MemoRepositoryImpl @Inject constructor(
         return try {
             val response = memoApiService.getMemos()
             if (response.isSuccessful && response.body() != null) {
-                val memos = response.body()!!.map { it.toDomain() }
+                val memos = response.body()!!.memos.map { it.toDomain() }
                 Result.success(memos)
             } else {
                 Result.failure(Exception("메모 목록 조회에 실패했습니다"))

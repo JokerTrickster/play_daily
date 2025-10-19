@@ -3,13 +3,14 @@ package com.dailymemo.data.datasources.remote.api
 import com.dailymemo.data.models.request.CreateMemoRequestDto
 import com.dailymemo.data.models.request.UpdateMemoRequestDto
 import com.dailymemo.data.models.response.MemoDto
+import com.dailymemo.data.models.response.MemoListDto
 import retrofit2.Response
 import retrofit2.http.*
 
 interface MemoApiService {
 
     @GET("/v0.1/memo")
-    suspend fun getMemos(): Response<List<MemoDto>>
+    suspend fun getMemos(): Response<MemoListDto>
 
     @GET("/v0.1/memo/{id}")
     suspend fun getMemo(
