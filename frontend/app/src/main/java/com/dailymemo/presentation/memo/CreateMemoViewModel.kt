@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dailymemo.domain.models.Location
 import com.dailymemo.domain.usecases.CreateMemoUseCase
 import com.dailymemo.domain.usecases.location.GetCurrentLocationUseCase
+import com.dailymemo.utils.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -111,9 +112,7 @@ class CreateMemoViewModel @Inject constructor(
                     _uiState.value = CreateMemoUiState.Success
                 },
                 onFailure = { error ->
-                    _uiState.value = CreateMemoUiState.Error(
-                        error.message ?: "메모 생성에 실패했습니다"
-                    )
+                    _uiState.value = CreateMemoUiState.Error(ErrorHandler.Memo.createError(error))
                 }
             )
         }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.dailymemo.domain.usecases.DeleteMemoUseCase
 import com.dailymemo.domain.usecases.GetMemoByIdUseCase
 import com.dailymemo.domain.usecases.UpdateMemoUseCase
+import com.dailymemo.utils.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,9 +63,7 @@ class MemoDetailViewModel @Inject constructor(
                     _uiState.value = MemoDetailUiState.Loaded
                 },
                 onFailure = { error ->
-                    _uiState.value = MemoDetailUiState.Error(
-                        error.message ?: "메모를 불러오는데 실패했습니다"
-                    )
+                    _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.loadError(error))
                 }
             )
         }
@@ -116,9 +115,7 @@ class MemoDetailViewModel @Inject constructor(
                     _uiState.value = MemoDetailUiState.Updated
                 },
                 onFailure = { error ->
-                    _uiState.value = MemoDetailUiState.Error(
-                        error.message ?: "메모 수정에 실패했습니다"
-                    )
+                    _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.updateError(error))
                 }
             )
         }
@@ -133,9 +130,7 @@ class MemoDetailViewModel @Inject constructor(
                     _uiState.value = MemoDetailUiState.Deleted
                 },
                 onFailure = { error ->
-                    _uiState.value = MemoDetailUiState.Error(
-                        error.message ?: "메모 삭제에 실패했습니다"
-                    )
+                    _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.deleteError(error))
                 }
             )
         }

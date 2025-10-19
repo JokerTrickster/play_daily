@@ -17,11 +17,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -354,7 +357,7 @@ fun MemoDetailScreen(
                                 )
                             }
 
-                            // Image URL (if exists)
+                            // Image (if exists)
                             if (imageUrl.isNotBlank()) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
@@ -368,11 +371,15 @@ fun MemoDetailScreen(
                                             style = MaterialTheme.typography.titleSmall,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = imageUrl,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.primary
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        AsyncImage(
+                                            model = imageUrl,
+                                            contentDescription = "메모 이미지",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(max = 400.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
                                         )
                                     }
                                 }

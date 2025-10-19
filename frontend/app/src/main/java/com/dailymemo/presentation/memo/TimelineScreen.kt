@@ -17,8 +17,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +29,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import coil.compose.AsyncImage
 import com.dailymemo.domain.models.Memo
+import com.dailymemo.presentation.components.TimelineSkeletonDateHeader
+import com.dailymemo.presentation.components.TimelineSkeletonItem
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -76,13 +81,21 @@ fun TimelineScreen(
         ) {
             when (val state = uiState) {
                 is TimelineUiState.Loading -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("타임라인을 불러오는 중...", style = MaterialTheme.typography.bodyMedium)
+                        repeat(2) { groupIndex ->
+                            item {
+                                TimelineSkeletonDateHeader()
+                            }
+                            items(3) { itemIndex ->
+                                TimelineSkeletonItem(
+                                    isLast = groupIndex == 1 && itemIndex == 2
+                                )
+                            }
+                        }
                     }
                 }
                 is TimelineUiState.Success -> {
@@ -332,6 +345,22 @@ fun TimelineItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+                }
+
+                // Image thumbnail (if available)
+                memo.imageUrl?.let { imageUrl ->
+                    if (imageUrl.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = "메모 이미지",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
             }
         }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.usecases.DeleteMemoUseCase
 import com.dailymemo.domain.usecases.GetMemosUseCase
+import com.dailymemo.utils.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ class MemoListViewModel @Inject constructor(
                     _uiState.value = MemoListUiState.Success(memos)
                 },
                 onFailure = { error ->
-                    _uiState.value = MemoListUiState.Error(error.message ?: "메모 로드 실패")
+                    _uiState.value = MemoListUiState.Error(ErrorHandler.Memo.loadError(error))
                 }
             )
         }
@@ -46,7 +47,7 @@ class MemoListViewModel @Inject constructor(
                     loadMemos() // Reload after delete
                 },
                 onFailure = { error ->
-                    _uiState.value = MemoListUiState.Error(error.message ?: "메모 삭제 실패")
+                    _uiState.value = MemoListUiState.Error(ErrorHandler.Memo.deleteError(error))
                 }
             )
         }

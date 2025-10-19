@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.usecases.GetMemosUseCase
+import com.dailymemo.utils.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ class TimelineViewModel @Inject constructor(
                     _uiState.value = TimelineUiState.Success(groupedMemos)
                 },
                 onFailure = { error ->
-                    _uiState.value = TimelineUiState.Error(error.message ?: "메모 로드 실패")
+                    _uiState.value = TimelineUiState.Error(ErrorHandler.Memo.loadError(error))
                 }
             )
         }
