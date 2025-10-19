@@ -243,7 +243,7 @@ fun MemoDetailScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceEvenly
                                     ) {
-                                        (0..5).forEach { star ->
+                                        (1..5).forEach { star ->
                                             IconButton(
                                                 onClick = { viewModel.onRatingChange(star) }
                                             ) {
