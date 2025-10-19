@@ -27,7 +27,7 @@ object AppModule {
 
     // 에뮬레이터: http://10.0.2.2:7001
     // 실제 기기: Mac의 IP 주소 사용
-    private const val BASE_URL = "http://192.168.0.40:7001"
+    private const val BASE_URL = "http://192.168.0.10:7001"
 
     @Provides
     @Singleton
