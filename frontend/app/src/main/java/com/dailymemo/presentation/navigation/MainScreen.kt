@@ -18,7 +18,7 @@ import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 import com.dailymemo.presentation.memo.MemoListScreen
-import com.dailymemo.presentation.memo.TimelineScreen
+import com.dailymemo.presentation.profile.ProfileScreen
 
 @Composable
 fun MainScreen(
@@ -69,6 +69,11 @@ fun MainScreen(
                     onNavigateToCreateMemo = {
                         mainNavController.navigate(Screen.Memory.Create.route)
                     },
+                    onNavigateToCreateMemoWithPlace = { placeName, address, latitude, longitude, categoryName ->
+                        mainNavController.navigate(
+                            "${Screen.Memory.Create.route}?placeName=$placeName&address=$address&latitude=$latitude&longitude=$longitude&category=$categoryName"
+                        )
+                    },
                     onNavigateToDetail = { memoId ->
                         mainNavController.navigate("${Screen.Memory.Detail.route}/$memoId")
                     }
@@ -87,9 +92,12 @@ fun MainScreen(
             }
 
             composable(Screen.Main.Timeline.route) {
-                TimelineScreen(
-                    onNavigateToDetail = { memoId ->
-                        mainNavController.navigate("${Screen.Memory.Detail.route}/$memoId")
+                ProfileScreen(
+                    onLogout = {
+                        // Navigate to login screen
+                        mainNavController.navigate(Screen.Auth.Login.route) {
+                            popUpTo("main") { inclusive = true }
+                        }
                     }
                 )
             }
@@ -116,7 +124,7 @@ val bottomNavItems = listOf(
     ),
     BottomNavItem(
         route = Screen.Main.Timeline.route,
-        icon = Icons.Filled.Timeline,
-        label = "타임라인"
+        icon = Icons.Filled.Person,
+        label = "내 정보"
     )
 )

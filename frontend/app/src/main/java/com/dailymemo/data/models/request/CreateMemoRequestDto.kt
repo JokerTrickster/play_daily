@@ -18,5 +18,7 @@ data class CreateMemoRequestDto(
     @SerializedName("longitude")
     val longitude: Double? = null,
     @SerializedName("location_name")
-    val locationName: String? = null
+    val locationName: String? = null,
+    @SerializedName("category")
+    val category: String? = null
 )

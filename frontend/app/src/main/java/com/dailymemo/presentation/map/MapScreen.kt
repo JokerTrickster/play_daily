@@ -6,16 +6,22 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.dailymemo.domain.models.PlaceCategory
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.LatLng
@@ -38,6 +45,7 @@ import com.kakao.vectormap.label.LabelStyles
 @Composable
 fun MapScreen(
     onNavigateToCreateMemo: () -> Unit,
+    onNavigateToCreateMemoWithPlace: (String, String, Double, Double, String?) -> Unit,
     onNavigateToDetail: (Long) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
@@ -45,6 +53,12 @@ fun MapScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentLocation by viewModel.currentLocation.collectAsState()
     val memos by viewModel.memos.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val showSearchResults by viewModel.showSearchResults.collectAsState()
+
+    var showPlaceDialog by remember { mutableStateOf(false) }
+    var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
 
     var kakaoMap: KakaoMap? by remember { mutableStateOf(null) }
 
@@ -111,13 +125,16 @@ fun MapScreen(
                                 Log.d("MapScreen", "onMapReady - Map is ready!")
                                 kakaoMap = map
                                 try {
-                                    // 서울 중심으로 설정 (위도: 37.5665, 경도: 126.9780)
-                                    map.moveCamera(
-                                        com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
-                                            LatLng.from(37.5665, 126.9780)
+                                    // 현재 위치로 바로 이동
+                                    currentLocation?.let { loc ->
+                                        map.moveCamera(
+                                            com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                                LatLng.from(loc.latitude, loc.longitude)
+                                            )
                                         )
-                                    )
-                                    Log.d("MapScreen", "Camera moved successfully")
+                                        Log.d("MapScreen", "Camera moved to current location: ${loc.latitude}, ${loc.longitude}")
+                                        viewModel.searchNearbyPlaces(loc.latitude, loc.longitude)
+                                    }
                                 } catch (e: Exception) {
                                     Log.e("MapScreen", "Error moving camera: ${e.message}", e)
                                 }
@@ -131,8 +148,8 @@ fun MapScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Move camera when current location changes
-            LaunchedEffect(currentLocation) {
+            // Move camera when current location changes and search nearby places
+            LaunchedEffect(kakaoMap, currentLocation) {
                 currentLocation?.let { location ->
                     kakaoMap?.let { map ->
                         try {
@@ -142,6 +159,10 @@ fun MapScreen(
                                 )
                             )
                             Log.d("MapScreen", "Camera moved to current location: ${location.latitude}, ${location.longitude}")
+
+                            // Search nearby places
+                            viewModel.searchNearbyPlaces(location.latitude, location.longitude)
+                            Log.d("MapScreen", "searchNearbyPlaces called with lat: ${location.latitude}, lng: ${location.longitude}")
                         } catch (e: Exception) {
                             Log.e("MapScreen", "Error moving camera to current location: ${e.message}", e)
                         }
@@ -149,64 +170,168 @@ fun MapScreen(
                 }
             }
 
-            // Add memo markers when memos or map changes
-            LaunchedEffect(kakaoMap, memos) {
+            // Add all markers (current location, places, memos)
+            LaunchedEffect(kakaoMap, searchResults, memos) {
                 kakaoMap?.let { map ->
                     try {
                         val labelManager = map.labelManager
                         val layer = labelManager?.layer
 
-                        // Clear existing labels
+                        // Remove all markers first, then re-add them in correct order
                         layer?.removeAll()
 
-                        // Add markers for memos with location
+                        // 1. Add current location marker first (use current value from state)
+                        currentLocation?.let { location ->
+                            val position = LatLng.from(location.latitude, location.longitude)
+                            val styles = LabelStyles.from(
+                                LabelStyle.from(android.R.drawable.ic_menu_mylocation)
+                                    .setTextStyles(32, android.graphics.Color.parseColor("#2196F3"), 2, android.graphics.Color.WHITE)
+                            )
+
+                            val options = LabelOptions.from(position)
+                                .setStyles(styles)
+                                .setTag("current_location")
+                                .setTexts("내 위치")
+
+                            layer?.addLabel(options)
+                            Log.d("MapScreen", "Added current location marker at ${location.latitude}, ${location.longitude}")
+                        }
+
+                        // 2. Add markers for search results (nearby places)
+                        searchResults.forEach { place ->
+                            val position = LatLng.from(place.latitude, place.longitude)
+
+                            val styles = LabelStyles.from(
+                                LabelStyle.from(android.R.drawable.ic_menu_mapmode)
+                                    .setTextStyles(28, android.graphics.Color.parseColor("#FF5252"), 1, android.graphics.Color.WHITE)
+                            )
+
+                            val options = LabelOptions.from(position)
+                                .setStyles(styles)
+                                .setTag("place_${place.id}")
+                                .setTexts(place.name)
+
+                            layer?.addLabel(options)
+
+                            Log.d("MapScreen", "Added place marker: ${place.name} at ${place.latitude}, ${place.longitude}")
+                        }
+
+                        // Set label click listener for all labels
+                        map.setOnLabelClickListener { _, _, label ->
+                            val tag = label.tag.toString()
+                            if (tag.startsWith("place_")) {
+                                val placeId = tag.removePrefix("place_")
+                                val place = searchResults.find { it.id == placeId }
+                                if (place != null) {
+                                    selectedPlace = place
+                                    showPlaceDialog = true
+                                }
+                            }
+                        }
+
+                        // Add markers for saved memos
                         memos.filter { it.latitude != null && it.longitude != null }
                             .forEach { memo ->
                                 val position = LatLng.from(memo.latitude!!, memo.longitude!!)
 
-                                // Create label style with icon
                                 val styles = LabelStyles.from(
-                                    LabelStyle.from(android.R.drawable.ic_dialog_map)
+                                    LabelStyle.from(android.R.drawable.star_on)
+                                        .setTextStyles(30, android.graphics.Color.parseColor("#FFC107"), 2, android.graphics.Color.WHITE)
                                 )
 
-                                // Create label options
+                                val labelText = "${memo.category.icon} ${memo.title}"
+
                                 val options = LabelOptions.from(position)
                                     .setStyles(styles)
-                                    .setTag(memo.id.toString())
-                                    .setTexts(memo.title) // Set memo title as label text
+                                    .setTag("memo_${memo.id}")
+                                    .setTexts(labelText)
 
-                                val label = layer?.addLabel(options)
+                                layer?.addLabel(options)
 
-                                Log.d("MapScreen", "Added marker for memo: ${memo.title} at ${memo.latitude}, ${memo.longitude}")
+                                Log.d("MapScreen", "Added memo marker: ${memo.title}")
                             }
 
-                        Log.d("MapScreen", "Added ${memos.filter { it.latitude != null && it.longitude != null }.size} markers")
+                        Log.d("MapScreen", "Added ${searchResults.size} place markers and ${memos.filter { it.latitude != null && it.longitude != null }.size} memo markers")
                     } catch (e: Exception) {
                         Log.e("MapScreen", "Error adding markers: ${e.message}", e)
                     }
                 }
             }
 
-            // Top Bar
-            Surface(
+            // Search and Filter UI
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                tonalElevation = 3.dp,
-                shadowElevation = 3.dp
+                    .padding(16.dp)
             ) {
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, RoundedCornerShape(28.dp)),
+                    placeholder = { Text("장소 검색...") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Search, contentDescription = "검색")
+                    },
+                    shape = RoundedCornerShape(28.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Category Filter Chips
+                val selectedCategory by viewModel.selectedCategory.collectAsState()
+                val categories = listOf(
+                    PlaceCategory.ALL,
+                    PlaceCategory.CAFE,
+                    PlaceCategory.RESTAURANT,
+                    PlaceCategory.CONVENIENCE,
+                    PlaceCategory.ENTERTAINMENT,
+                    PlaceCategory.CULTURAL,
+                    PlaceCategory.ACCOMMODATION
+                )
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    categories.forEach { category ->
+                        val isSelected = selectedCategory == category
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.selectCategory(category) },
+                            label = {
+                                Text(
+                                    text = "${category.icon} ${category.displayName}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
+                }
+
+                // Result count
+                if (searchResults.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "📍 일상 지도",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        text = "📍 ${searchResults.size}개 장소",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 4.dp)
                     )
                 }
             }
@@ -301,5 +426,81 @@ fun MapScreen(
                 }
             }
         }
+
+        // Place Selection Dialog
+        if (showPlaceDialog && selectedPlace != null) {
+            PlaceSelectionDialog(
+                place = selectedPlace!!,
+                onDismiss = {
+                    showPlaceDialog = false
+                    selectedPlace = null
+                },
+                onConfirm = {
+                    selectedPlace?.let { place ->
+                        onNavigateToCreateMemoWithPlace(
+                            place.name,
+                            place.address,
+                            place.latitude,
+                            place.longitude,
+                            place.toPlaceCategory().name
+                        )
+                    }
+                    showPlaceDialog = false
+                    selectedPlace = null
+                    viewModel.clearSearch()
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun PlaceSelectionDialog(
+    place: com.dailymemo.domain.models.Place,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = "이 장소로 메모를 작성하시겠습니까?")
+        },
+        text = {
+            Column {
+                Text(
+                    text = place.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = place.category,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = place.address,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (place.phone != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "전화: ${place.phone}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text("메모 작성")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
 }

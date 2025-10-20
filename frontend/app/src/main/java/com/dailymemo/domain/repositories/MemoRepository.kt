@@ -1,6 +1,7 @@
 package com.dailymemo.domain.repositories
 
 import com.dailymemo.domain.models.Memo
+import com.dailymemo.domain.models.PlaceCategory
 
 interface MemoRepository {
     suspend fun getMemos(): Result<List<Memo>>
@@ -9,17 +10,20 @@ interface MemoRepository {
         title: String,
         content: String,
         imageUrl: String? = null,
+        imageUrls: List<String> = emptyList(),
         rating: Int = 0,
         isPinned: Boolean = false,
         latitude: Double? = null,
         longitude: Double? = null,
-        locationName: String? = null
+        locationName: String? = null,
+        category: PlaceCategory? = null
     ): Result<Memo>
     suspend fun updateMemo(
         id: Long,
         title: String,
         content: String,
         imageUrl: String? = null,
+        imageUrls: List<String> = emptyList(),
         rating: Int = 0,
         isPinned: Boolean = false,
         latitude: Double? = null,
@@ -27,4 +31,5 @@ interface MemoRepository {
         locationName: String? = null
     ): Result<Memo>
     suspend fun deleteMemo(id: Long): Result<Unit>
+    suspend fun uploadImage(imageUri: android.net.Uri): Result<String> // 이미지 업로드 후 URL 반환
 }

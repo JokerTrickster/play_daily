@@ -9,4 +9,5 @@ type ReqCreateMemo struct {
 	Latitude     *float64 `json:"latitude"`
 	Longitude    *float64 `json:"longitude"`
 	LocationName *string  `json:"location_name"`
+	Category     *string  `json:"category"`
 }

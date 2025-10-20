@@ -23,6 +23,8 @@ data class MemoDto(
     val longitude: Double?,
     @SerializedName("location_name")
     val locationName: String?,
+    @SerializedName("category")
+    val category: String?,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")

@@ -2,6 +2,8 @@ package com.dailymemo.presentation.memo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.StarOutline
@@ -25,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dailymemo.domain.models.Comment
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +45,8 @@ fun MemoDetailScreen(
     val rating by viewModel.rating.collectAsState()
     val isPinned by viewModel.isPinned.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
+    val comments by viewModel.comments.collectAsState()
+    val commentInput by viewModel.commentInput.collectAsState()
 
     val scrollState = rememberScrollState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -422,11 +429,171 @@ fun MemoDetailScreen(
                                     }
                                 }
                             }
+
+                            // Comments Section (view mode only)
+                            if (!isEditing) {
+                                Spacer(modifier = Modifier.height(24.dp))
+                                CommentsSection(
+                                    comments = comments,
+                                    commentInput = commentInput,
+                                    onCommentInputChange = viewModel::onCommentInputChange,
+                                    onPostComment = viewModel::postComment,
+                                    onDeleteComment = viewModel::deleteComment
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CommentsSection(
+    comments: List<Comment>,
+    commentInput: String,
+    onCommentInputChange: (String) -> Unit,
+    onPostComment: () -> Unit,
+    onDeleteComment: (Long) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "댓글",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${comments.size}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Comment Input
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = commentInput,
+                    onValueChange = onCommentInputChange,
+                    placeholder = { Text("댓글을 입력하세요...") },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    maxLines = 3,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = onPostComment,
+                    enabled = commentInput.isNotBlank()
+                ) {
+                    Icon(
+                        Icons.Filled.Send,
+                        contentDescription = "댓글 작성",
+                        tint = if (commentInput.isNotBlank()) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        }
+                    )
+                }
+            }
+
+            // Comments List
+            if (comments.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                comments.forEach { comment ->
+                    CommentItem(
+                        comment = comment,
+                        onDelete = { onDeleteComment(comment.id) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CommentItem(
+    comment: Comment,
+    onDelete: () -> Unit
+) {
+    val timeFormatter = DateTimeFormatter.ofPattern("MM/dd HH:mm")
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = comment.userName,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = comment.createdAt.format(timeFormatter),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = comment.content,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "댓글 삭제",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

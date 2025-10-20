@@ -12,6 +12,7 @@ class UpdateMemoUseCase @Inject constructor(
         title: String,
         content: String,
         imageUrl: String? = null,
+        imageUrls: List<String> = emptyList(),
         rating: Int = 0,
         isPinned: Boolean = false,
         latitude: Double? = null,
@@ -19,7 +20,7 @@ class UpdateMemoUseCase @Inject constructor(
         locationName: String? = null
     ): Result<Memo> {
         return repository.updateMemo(
-            id, title, content, imageUrl, rating, isPinned,
+            id, title, content, imageUrl, imageUrls, rating, isPinned,
             latitude, longitude, locationName
         )
     }

@@ -18,6 +18,7 @@ func convertMemoToResponse(memo *mysql.Memo) *response.ResMemo {
 		Latitude:     memo.Latitude,
 		Longitude:    memo.Longitude,
 		LocationName: memo.LocationName,
+		Category:     memo.Category,
 		CreatedAt:    memo.CreatedAt,
 		UpdatedAt:    memo.UpdatedAt,
 	}

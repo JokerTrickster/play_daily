@@ -30,6 +30,7 @@ type Memo struct {
 	Latitude     *float64 `json:"latitude" gorm:"column:latitude;type:double;comment:위도"`
 	Longitude    *float64 `json:"longitude" gorm:"column:longitude;type:double;comment:경도"`
 	LocationName *string  `json:"location_name" gorm:"column:location_name;type:varchar(255);comment:위치 이름"`
+	Category     *string  `json:"category" gorm:"column:category;type:varchar(50);comment:장소 카테고리"`
 	User         *User    `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }
 

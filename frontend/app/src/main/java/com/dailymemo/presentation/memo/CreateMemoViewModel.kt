@@ -3,6 +3,7 @@ package com.dailymemo.presentation.memo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailymemo.domain.models.Location
+import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.usecases.CreateMemoUseCase
 import com.dailymemo.domain.usecases.location.GetCurrentLocationUseCase
 import com.dailymemo.utils.ErrorHandler
@@ -42,6 +43,9 @@ class CreateMemoViewModel @Inject constructor(
 
     private val _locationName = MutableStateFlow("")
     val locationName: StateFlow<String> = _locationName.asStateFlow()
+
+    private val _category = MutableStateFlow<PlaceCategory?>(null)
+    val category: StateFlow<PlaceCategory?> = _category.asStateFlow()
 
     init {
         // Automatically get current location when creating memo
@@ -89,6 +93,14 @@ class CreateMemoViewModel @Inject constructor(
         _isPinned.value = !_isPinned.value
     }
 
+    fun onCategoryChange(newCategory: PlaceCategory?) {
+        _category.value = newCategory
+    }
+
+    fun setPlaceLocation(latitude: Double, longitude: Double) {
+        _currentLocation.value = Location(latitude, longitude)
+    }
+
     fun createMemo() {
         if (_title.value.isBlank() || _content.value.isBlank()) {
             _uiState.value = CreateMemoUiState.Error("제목과 내용을 입력해주세요")
@@ -106,7 +118,8 @@ class CreateMemoViewModel @Inject constructor(
                 isPinned = _isPinned.value,
                 latitude = _currentLocation.value?.latitude,
                 longitude = _currentLocation.value?.longitude,
-                locationName = if (_locationName.value.isNotBlank()) _locationName.value.trim() else null
+                locationName = if (_locationName.value.isNotBlank()) _locationName.value.trim() else null,
+                category = _category.value
             ).fold(
                 onSuccess = {
                     _uiState.value = CreateMemoUiState.Success

@@ -60,5 +60,5 @@ func main() {
 	// }
 
 	e.HideBanner = true
-	e.Logger.Fatal(e.Start(":" + common.Env.Port))
+	e.Logger.Fatal(e.Start("0.0.0.0:" + common.Env.Port))
 }

@@ -7,8 +7,10 @@ import com.dailymemo.data.datasources.remote.AuthRemoteDataSource
 import com.dailymemo.data.datasources.remote.api.AuthApiService
 import com.dailymemo.data.repositories.AuthRepositoryImpl
 import com.dailymemo.data.repositories.LocationRepositoryImpl
+import com.dailymemo.data.repositories.PlaceRepositoryImpl
 import com.dailymemo.domain.repositories.AuthRepository
 import com.dailymemo.domain.repositories.LocationRepository
+import com.dailymemo.domain.repositories.PlaceRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +29,9 @@ object AppModule {
 
     // 에뮬레이터: http://10.0.2.2:7001
     // 실제 기기: Mac의 IP 주소 사용
-    private const val BASE_URL = "http://192.168.0.10:7001"
+    private const val BASE_URL = "http://192.168.0.5:7001"
+    private const val KAKAO_API_BASE_URL = "https://dapi.kakao.com/"
+    private const val KAKAO_REST_API_KEY = "b707af9016b2d598ce8cc4313c7adda1"
 
     @Provides
     @Singleton
@@ -136,5 +140,37 @@ object AppModule {
         locationDataSource: LocationDataSource
     ): LocationRepository {
         return LocationRepositoryImpl(locationDataSource)
+    }
+
+    // Kakao Local API
+    @Provides
+    @Singleton
+    fun provideKakaoLocalApiService(): com.dailymemo.data.datasources.remote.api.KakaoLocalApiService {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        val kakaoOkHttpClient = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+
+        val kakaoRetrofit = Retrofit.Builder()
+            .baseUrl(KAKAO_API_BASE_URL)
+            .client(kakaoOkHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        return kakaoRetrofit.create(com.dailymemo.data.datasources.remote.api.KakaoLocalApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlaceRepository(
+        kakaoLocalApiService: com.dailymemo.data.datasources.remote.api.KakaoLocalApiService
+    ): PlaceRepository {
+        return PlaceRepositoryImpl(kakaoLocalApiService)
     }
 }

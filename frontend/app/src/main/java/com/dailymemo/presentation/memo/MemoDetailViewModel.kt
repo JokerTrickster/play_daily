@@ -3,6 +3,7 @@ package com.dailymemo.presentation.memo
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailymemo.domain.models.Comment
 import com.dailymemo.domain.usecases.DeleteMemoUseCase
 import com.dailymemo.domain.usecases.GetMemoByIdUseCase
 import com.dailymemo.domain.usecases.UpdateMemoUseCase
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -45,8 +47,65 @@ class MemoDetailViewModel @Inject constructor(
     private val _isEditing = MutableStateFlow(false)
     val isEditing: StateFlow<Boolean> = _isEditing.asStateFlow()
 
+    private val _comments = MutableStateFlow<List<Comment>>(emptyList())
+    val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
+
+    private val _commentInput = MutableStateFlow("")
+    val commentInput: StateFlow<String> = _commentInput.asStateFlow()
+
     init {
         loadMemo()
+        loadComments()
+    }
+
+    private fun loadComments() {
+        // TODO: 백엔드 연동 시 실제 댓글 로드
+        _comments.value = listOf(
+            Comment(
+                id = 1,
+                memoId = memoId,
+                userId = 1,
+                userName = "테스트 사용자",
+                content = "좋은 장소네요!",
+                createdAt = LocalDateTime.now().minusHours(2),
+                updatedAt = LocalDateTime.now().minusHours(2)
+            ),
+            Comment(
+                id = 2,
+                memoId = memoId,
+                userId = 2,
+                userName = "김철수",
+                content = "다음에 꼭 가봐야겠어요",
+                createdAt = LocalDateTime.now().minusMinutes(30),
+                updatedAt = LocalDateTime.now().minusMinutes(30)
+            )
+        )
+    }
+
+    fun onCommentInputChange(newInput: String) {
+        _commentInput.value = newInput
+    }
+
+    fun postComment() {
+        if (_commentInput.value.isBlank()) return
+
+        // TODO: 백엔드 연동 시 실제 댓글 작성
+        val newComment = Comment(
+            id = System.currentTimeMillis(),
+            memoId = memoId,
+            userId = 1,
+            userName = "현재 사용자",
+            content = _commentInput.value.trim(),
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now()
+        )
+        _comments.value = _comments.value + newComment
+        _commentInput.value = ""
+    }
+
+    fun deleteComment(commentId: Long) {
+        // TODO: 백엔드 연동 시 실제 댓글 삭제
+        _comments.value = _comments.value.filter { it.id != commentId }
     }
 
     private fun loadMemo() {

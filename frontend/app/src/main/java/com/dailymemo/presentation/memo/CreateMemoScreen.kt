@@ -29,14 +29,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dailymemo.domain.models.PlaceCategory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateMemoScreen(
     onNavigateBack: () -> Unit,
     onMemoCreated: () -> Unit,
+    placeName: String? = null,
+    address: String? = null,
+    latitude: Double? = null,
+    longitude: Double? = null,
+    categoryName: String? = null,
     viewModel: CreateMemoViewModel = hiltViewModel()
 ) {
+    // Initialize place data if provided
+    LaunchedEffect(placeName, address, latitude, longitude, categoryName) {
+        if (placeName != null && address != null) {
+            viewModel.onLocationNameChange(placeName)
+        }
+        if (latitude != null && longitude != null) {
+            viewModel.setPlaceLocation(latitude, longitude)
+        }
+        if (categoryName != null) {
+            PlaceCategory.values().find { it.name == categoryName }?.let {
+                viewModel.onCategoryChange(it)
+            }
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
     val title by viewModel.title.collectAsState()
     val content by viewModel.content.collectAsState()
@@ -45,6 +65,7 @@ fun CreateMemoScreen(
     val isPinned by viewModel.isPinned.collectAsState()
     val currentLocation by viewModel.currentLocation.collectAsState()
     val locationName by viewModel.locationName.collectAsState()
+    val category by viewModel.category.collectAsState()
 
     val scrollState = rememberScrollState()
 
@@ -223,6 +244,61 @@ fun CreateMemoScreen(
                                         tint = MaterialTheme.colorScheme.error
                                     )
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // Category Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "장소 카테고리 (선택)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Category chips
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PlaceCategory.values().take(4).forEach { cat ->
+                                FilterChip(
+                                    selected = category == cat,
+                                    onClick = {
+                                        viewModel.onCategoryChange(if (category == cat) null else cat)
+                                    },
+                                    label = {
+                                        Text("${cat.icon} ${cat.displayName}")
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            PlaceCategory.values().drop(4).forEach { cat ->
+                                FilterChip(
+                                    selected = category == cat,
+                                    onClick = {
+                                        viewModel.onCategoryChange(if (category == cat) null else cat)
+                                    },
+                                    label = {
+                                        Text("${cat.icon} ${cat.displayName}")
+                                    }
+                                )
                             }
                         }
                     }

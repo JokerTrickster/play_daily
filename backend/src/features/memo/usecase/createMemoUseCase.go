@@ -36,6 +36,7 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		Latitude:     req.Latitude,
 		Longitude:    req.Longitude,
 		LocationName: req.LocationName,
+		Category:     req.Category,
 	}
 
 	err := uc.Repository.Create(ctx, memo)

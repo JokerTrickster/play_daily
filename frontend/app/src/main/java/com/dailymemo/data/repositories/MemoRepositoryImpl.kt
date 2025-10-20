@@ -5,6 +5,7 @@ import com.dailymemo.data.models.request.CreateMemoRequestDto
 import com.dailymemo.data.models.request.UpdateMemoRequestDto
 import com.dailymemo.data.models.response.MemoDto
 import com.dailymemo.domain.models.Memo
+import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.repositories.MemoRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -47,11 +48,13 @@ class MemoRepositoryImpl @Inject constructor(
         title: String,
         content: String,
         imageUrl: String?,
+        imageUrls: List<String>,
         rating: Int,
         isPinned: Boolean,
         latitude: Double?,
         longitude: Double?,
-        locationName: String?
+        locationName: String?,
+        category: PlaceCategory?
     ): Result<Memo> {
         return try {
             val request = CreateMemoRequestDto(
@@ -62,7 +65,8 @@ class MemoRepositoryImpl @Inject constructor(
                 isPinned = isPinned,
                 latitude = latitude,
                 longitude = longitude,
-                locationName = locationName
+                locationName = locationName,
+                category = category?.name
             )
             val response = memoApiService.createMemo(request)
             if (response.isSuccessful && response.body() != null) {
@@ -80,6 +84,7 @@ class MemoRepositoryImpl @Inject constructor(
         title: String,
         content: String,
         imageUrl: String?,
+        imageUrls: List<String>,
         rating: Int,
         isPinned: Boolean,
         latitude: Double?,
@@ -121,6 +126,11 @@ class MemoRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun uploadImage(imageUri: android.net.Uri): Result<String> {
+        // TODO: 백엔드 연동 시 실제 이미지 업로드 구현
+        return Result.success("https://example.com/image/${System.currentTimeMillis()}.jpg")
+    }
+
     private fun MemoDto.toDomain(): Memo {
         val formatter = DateTimeFormatter.ISO_DATE_TIME
         return Memo(
@@ -134,6 +144,7 @@ class MemoRepositoryImpl @Inject constructor(
             latitude = latitude,
             longitude = longitude,
             locationName = locationName,
+            category = PlaceCategory.fromString(category),
             createdAt = LocalDateTime.parse(createdAt, formatter),
             updatedAt = LocalDateTime.parse(updatedAt, formatter)
         )
