@@ -55,8 +55,6 @@ fun MapScreen(
     val memos by viewModel.memos.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val showSearchResults by viewModel.showSearchResults.collectAsState()
-
     var showPlaceDialog by remember { mutableStateOf(false) }
     var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
 
@@ -133,7 +131,6 @@ fun MapScreen(
                                             )
                                         )
                                         Log.d("MapScreen", "Camera moved to current location: ${loc.latitude}, ${loc.longitude}")
-                                        viewModel.searchNearbyPlaces(loc.latitude, loc.longitude)
                                     }
                                 } catch (e: Exception) {
                                     Log.e("MapScreen", "Error moving camera: ${e.message}", e)
@@ -148,8 +145,8 @@ fun MapScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Move camera when current location changes and search nearby places
-            LaunchedEffect(kakaoMap, currentLocation) {
+            // Move camera when current location changes
+            LaunchedEffect(currentLocation) {
                 currentLocation?.let { location ->
                     kakaoMap?.let { map ->
                         try {
@@ -159,10 +156,6 @@ fun MapScreen(
                                 )
                             )
                             Log.d("MapScreen", "Camera moved to current location: ${location.latitude}, ${location.longitude}")
-
-                            // Search nearby places
-                            viewModel.searchNearbyPlaces(location.latitude, location.longitude)
-                            Log.d("MapScreen", "searchNearbyPlaces called with lat: ${location.latitude}, lng: ${location.longitude}")
                         } catch (e: Exception) {
                             Log.e("MapScreen", "Error moving camera to current location: ${e.message}", e)
                         }
@@ -170,8 +163,8 @@ fun MapScreen(
                 }
             }
 
-            // Add all markers (current location, places, memos)
-            LaunchedEffect(kakaoMap, searchResults, memos) {
+            // Add all markers (current location and memos)
+            LaunchedEffect(kakaoMap, memos) {
                 kakaoMap?.let { map ->
                     try {
                         val labelManager = map.labelManager
@@ -197,39 +190,7 @@ fun MapScreen(
                             Log.d("MapScreen", "Added current location marker at ${location.latitude}, ${location.longitude}")
                         }
 
-                        // 2. Add markers for search results (nearby places)
-                        searchResults.forEach { place ->
-                            val position = LatLng.from(place.latitude, place.longitude)
-
-                            val styles = LabelStyles.from(
-                                LabelStyle.from(android.R.drawable.ic_menu_mapmode)
-                                    .setTextStyles(28, android.graphics.Color.parseColor("#FF5252"), 1, android.graphics.Color.WHITE)
-                            )
-
-                            val options = LabelOptions.from(position)
-                                .setStyles(styles)
-                                .setTag("place_${place.id}")
-                                .setTexts(place.name)
-
-                            layer?.addLabel(options)
-
-                            Log.d("MapScreen", "Added place marker: ${place.name} at ${place.latitude}, ${place.longitude}")
-                        }
-
-                        // Set label click listener for all labels
-                        map.setOnLabelClickListener { _, _, label ->
-                            val tag = label.tag.toString()
-                            if (tag.startsWith("place_")) {
-                                val placeId = tag.removePrefix("place_")
-                                val place = searchResults.find { it.id == placeId }
-                                if (place != null) {
-                                    selectedPlace = place
-                                    showPlaceDialog = true
-                                }
-                            }
-                        }
-
-                        // Add markers for saved memos
+                        // 2. Add markers for saved memos
                         memos.filter { it.latitude != null && it.longitude != null }
                             .forEach { memo ->
                                 val position = LatLng.from(memo.latitude!!, memo.longitude!!)
@@ -251,14 +212,25 @@ fun MapScreen(
                                 Log.d("MapScreen", "Added memo marker: ${memo.title}")
                             }
 
-                        Log.d("MapScreen", "Added ${searchResults.size} place markers and ${memos.filter { it.latitude != null && it.longitude != null }.size} memo markers")
+                        // Set label click listener for memo markers
+                        map.setOnLabelClickListener { _, _, label ->
+                            val tag = label.tag.toString()
+                            if (tag.startsWith("memo_")) {
+                                val memoId = tag.removePrefix("memo_").toLongOrNull()
+                                if (memoId != null) {
+                                    onNavigateToDetail(memoId)
+                                }
+                            }
+                        }
+
+                        Log.d("MapScreen", "Added ${memos.filter { it.latitude != null && it.longitude != null }.size} memo markers")
                     } catch (e: Exception) {
                         Log.e("MapScreen", "Error adding markers: ${e.message}", e)
                     }
                 }
             }
 
-            // Search and Filter UI
+            // Search UI - No category filters, just search bar
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -285,54 +257,59 @@ fun MapScreen(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Category Filter Chips
-                val selectedCategory by viewModel.selectedCategory.collectAsState()
-                val categories = listOf(
-                    PlaceCategory.ALL,
-                    PlaceCategory.CAFE,
-                    PlaceCategory.RESTAURANT,
-                    PlaceCategory.CONVENIENCE,
-                    PlaceCategory.ENTERTAINMENT,
-                    PlaceCategory.CULTURAL,
-                    PlaceCategory.ACCOMMODATION
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    categories.forEach { category ->
-                        val isSelected = selectedCategory == category
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.selectCategory(category) },
-                            label = {
-                                Text(
-                                    text = "${category.icon} ${category.displayName}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        )
-                    }
-                }
-
-                // Result count
+                // Search Results List (below search bar)
                 if (searchResults.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "📍 ${searchResults.size}개 장소",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(4.dp, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            searchResults.take(5).forEach { place ->
+                                Surface(
+                                    onClick = {
+                                        selectedPlace = place
+                                        showPlaceDialog = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Search,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = place.name,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = place.address,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                                if (place != searchResults.take(5).last()) {
+                                    HorizontalDivider()
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

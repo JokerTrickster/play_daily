@@ -145,9 +145,9 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "새로운 메모를 생성합니다",
+                "description": "새로운 메모를 생성합니다 (이미지 파일 포함 가능)",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -158,13 +158,59 @@ const docTemplate = `{
                 "summary": "메모 생성 API",
                 "parameters": [
                     {
-                        "description": "메모 생성 데이터",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.ReqCreateMemo"
-                        }
+                        "type": "string",
+                        "description": "메모 제목",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "메모 내용",
+                        "name": "content",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "이미지 파일",
+                        "name": "image",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "평점 (0-5)",
+                        "name": "rating",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "고정 여부",
+                        "name": "is_pinned",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "위도",
+                        "name": "latitude",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "경도",
+                        "name": "longitude",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "장소명",
+                        "name": "location_name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "카테고리",
+                        "name": "category",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -241,9 +287,9 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "메모를 수정합니다",
+                "description": "메모를 수정합니다 (이미지 파일 포함 가능)",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -261,13 +307,58 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "메모 수정 데이터",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.ReqUpdateMemo"
-                        }
+                        "type": "string",
+                        "description": "메모 제목",
+                        "name": "title",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "메모 내용",
+                        "name": "content",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "이미지 파일",
+                        "name": "image",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "평점 (0-5)",
+                        "name": "rating",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "고정 여부",
+                        "name": "is_pinned",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "위도",
+                        "name": "latitude",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "경도",
+                        "name": "longitude",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "장소명",
+                        "name": "location_name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "카테고리",
+                        "name": "category",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -345,29 +436,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "request.ReqCreateMemo": {
-            "type": "object",
-            "required": [
-                "title"
-            ],
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "is_pinned": {
-                    "type": "boolean"
-                },
-                "rating": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
         "request.ReqSignIn": {
             "type": "object",
             "required": [
@@ -406,26 +474,6 @@ const docTemplate = `{
                 }
             }
         },
-        "request.ReqUpdateMemo": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "is_pinned": {
-                    "type": "boolean"
-                },
-                "rating": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
         "response.ResAuth": {
             "type": "object",
             "properties": {
@@ -455,6 +503,9 @@ const docTemplate = `{
         "response.ResMemo": {
             "type": "object",
             "properties": {
+                "category": {
+                    "type": "string"
+                },
                 "content": {
                     "type": "string"
                 },
@@ -469,6 +520,15 @@ const docTemplate = `{
                 },
                 "is_pinned": {
                     "type": "boolean"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "location_name": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "number"
                 },
                 "rating": {
                     "type": "integer"

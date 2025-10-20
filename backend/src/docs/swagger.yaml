@@ -1,20 +1,5 @@
 basePath: /
 definitions:
-  request.ReqCreateMemo:
-    properties:
-      content:
-        type: string
-      image_url:
-        type: string
-      is_pinned:
-        type: boolean
-      rating:
-        type: integer
-      title:
-        type: string
-    required:
-    - title
-    type: object
   request.ReqSignIn:
     properties:
       account_id:
@@ -41,19 +26,6 @@ definitions:
     - nickname
     - password
     type: object
-  request.ReqUpdateMemo:
-    properties:
-      content:
-        type: string
-      image_url:
-        type: string
-      is_pinned:
-        type: boolean
-      rating:
-        type: integer
-      title:
-        type: string
-    type: object
   response.ResAuth:
     properties:
       access_token:
@@ -73,6 +45,8 @@ definitions:
     type: object
   response.ResMemo:
     properties:
+      category:
+        type: string
       content:
         type: string
       created_at:
@@ -83,6 +57,12 @@ definitions:
         type: string
       is_pinned:
         type: boolean
+      latitude:
+        type: number
+      location_name:
+        type: string
+      longitude:
+        type: number
       rating:
         type: integer
       title:
@@ -197,15 +177,46 @@ paths:
       - memo
     post:
       consumes:
-      - application/json
-      description: 새로운 메모를 생성합니다
+      - multipart/form-data
+      description: 새로운 메모를 생성합니다 (이미지 파일 포함 가능)
       parameters:
-      - description: 메모 생성 데이터
-        in: body
-        name: request
+      - description: 메모 제목
+        in: formData
+        name: title
         required: true
-        schema:
-          $ref: '#/definitions/request.ReqCreateMemo'
+        type: string
+      - description: 메모 내용
+        in: formData
+        name: content
+        type: string
+      - description: 이미지 파일
+        in: formData
+        name: image
+        type: file
+      - description: 평점 (0-5)
+        in: formData
+        name: rating
+        type: integer
+      - description: 고정 여부
+        in: formData
+        name: is_pinned
+        type: boolean
+      - description: 위도
+        in: formData
+        name: latitude
+        type: number
+      - description: 경도
+        in: formData
+        name: longitude
+        type: number
+      - description: 장소명
+        in: formData
+        name: location_name
+        type: string
+      - description: 카테고리
+        in: formData
+        name: category
+        type: string
       produces:
       - application/json
       responses:
@@ -291,20 +302,50 @@ paths:
       - memo
     put:
       consumes:
-      - application/json
-      description: 메모를 수정합니다
+      - multipart/form-data
+      description: 메모를 수정합니다 (이미지 파일 포함 가능)
       parameters:
       - description: 메모 ID
         in: path
         name: id
         required: true
         type: integer
-      - description: 메모 수정 데이터
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.ReqUpdateMemo'
+      - description: 메모 제목
+        in: formData
+        name: title
+        type: string
+      - description: 메모 내용
+        in: formData
+        name: content
+        type: string
+      - description: 이미지 파일
+        in: formData
+        name: image
+        type: file
+      - description: 평점 (0-5)
+        in: formData
+        name: rating
+        type: integer
+      - description: 고정 여부
+        in: formData
+        name: is_pinned
+        type: boolean
+      - description: 위도
+        in: formData
+        name: latitude
+        type: number
+      - description: 경도
+        in: formData
+        name: longitude
+        type: number
+      - description: 장소명
+        in: formData
+        name: location_name
+        type: string
+      - description: 카테고리
+        in: formData
+        name: category
+        type: string
       produces:
       - application/json
       responses:
