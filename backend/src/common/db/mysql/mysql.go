@@ -18,26 +18,29 @@ var GormMysqlDB *gorm.DB
 const DBTimeOut = 8 * time.Second
 
 func InitMySQL() error {
-	var connectionString string
 	var err error
-	isLocal := os.Getenv("IS_LOCAL")
-	if isLocal == "true" {
-		// MySQL 연결 문자열
-		connectionString = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-			os.Getenv("MYSQL_USER"),
-			os.Getenv("MYSQL_PASSWORD"),
-			os.Getenv("MYSQL_HOST"),
-			os.Getenv("MYSQL_PORT"),
-			os.Getenv("MYSQL_DATABASE"),
-		)
-	}
-	fmt.Println("Connection string from env:", connectionString)
 
-	// 하드코딩된 연결 문자열 (환경 변수가 없을 때)
-	if connectionString == "" {
-		connectionString = "root:examplepassword@tcp(13.203.37.93:3306)/daily_dev?parseTime=true"
-		fmt.Println("Using hardcoded connection string:", connectionString)
+	// 환경 변수에서 DB 설정 읽기
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	// 필수 환경 변수 검증
+	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
+		return fmt.Errorf("missing required database environment variables (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)")
 	}
+
+	// MySQL 연결 문자열 생성
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		dbUser,
+		dbPassword,
+		dbHost,
+		dbPort,
+		dbName,
+	)
+	fmt.Printf("Connecting to MySQL at %s:%s/%s\n", dbHost, dbPort, dbName)
 
 	// MySQL에 연결 - 전역 변수에 할당 (중요: := 가 아니라 = 사용)
 	var mysqlErr error
