@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Build artifacts
+src/app
+src/main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/
+
+# Documentation
+docs/
+*.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

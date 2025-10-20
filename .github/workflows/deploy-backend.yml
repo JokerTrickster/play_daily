@@ -1,0 +1,107 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Stop existing container
+        run: |
+          docker stop play-daily-backend || true
+          docker rm play-daily-backend || true
+        continue-on-error: true
+
+      - name: Remove old image
+        run: |
+          docker rmi play-daily-backend:latest || true
+        continue-on-error: true
+
+      - name: Create .env file
+        working-directory: ./backend
+        run: |
+          cat > .env.production << EOF
+          HOST=0.0.0.0
+          PORT=7001
+          ENV=production
+          DEBUG=false
+
+          DB_HOST=localhost
+          DB_PORT=3306
+          DB_NAME=daily_dev
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRE_HOURS=24
+
+          UPLOAD_PATH=./uploads
+          MAX_FILE_SIZE=10485760
+
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+          S3_ENDPOINT=
+
+          ALLOWED_ORIGINS=*
+
+          LOG_LEVEL=info
+          LOG_FILE=logs/app.log
+          EOF
+
+      - name: Build Docker image
+        working-directory: ./backend
+        run: |
+          docker build -t play-daily-backend:latest .
+
+      - name: Run Docker container
+        run: |
+          docker run -d \
+            --name play-daily-backend \
+            --network host \
+            --restart unless-stopped \
+            --env-file ./backend/.env.production \
+            -v $(pwd)/backend/logs:/root/logs \
+            -v $(pwd)/backend/uploads:/root/uploads \
+            play-daily-backend:latest
+
+      - name: Wait for container to start
+        run: sleep 5
+
+      - name: Check container status
+        run: |
+          docker ps | grep play-daily-backend
+          docker logs play-daily-backend
+
+      - name: Health check
+        run: |
+          max_attempts=10
+          attempt=0
+          until curl -f http://localhost:7001/health || [ $attempt -eq $max_attempts ]; do
+            attempt=$((attempt+1))
+            echo "Health check attempt $attempt/$max_attempts failed, retrying in 3s..."
+            sleep 3
+          done
+
+          if [ $attempt -eq $max_attempts ]; then
+            echo "Health check failed after $max_attempts attempts"
+            docker logs play-daily-backend
+            exit 1
+          fi
+
+          echo "Backend is healthy!"
+
+      - name: Cleanup
+        run: |
+          rm -f ./backend/.env.production
