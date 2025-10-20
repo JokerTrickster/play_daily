@@ -7,6 +7,8 @@ import com.dailymemo.data.models.response.MemoDto
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.repositories.MemoRepository
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -57,18 +59,27 @@ class MemoRepositoryImpl @Inject constructor(
         category: PlaceCategory?
     ): Result<Memo> {
         return try {
-            val request = CreateMemoRequestDto(
-                title = title,
-                content = content,
-                imageUrl = imageUrl,
-                rating = rating,
-                isPinned = isPinned,
-                latitude = latitude,
-                longitude = longitude,
-                locationName = locationName,
-                category = category?.name
+            // multipart/form-data 요청 파라미터 생성
+            val titlePart = title.toRequestBody("text/plain".toMediaTypeOrNull())
+            val contentPart = content.toRequestBody("text/plain".toMediaTypeOrNull())
+            val ratingPart = rating.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val isPinnedPart = isPinned.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val latitudePart = latitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val longitudePart = longitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val locationNamePart = locationName?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val categoryPart = category?.name?.toRequestBody("text/plain".toMediaTypeOrNull())
+
+            val response = memoApiService.createMemo(
+                title = titlePart,
+                content = contentPart,
+                rating = ratingPart,
+                isPinned = isPinnedPart,
+                latitude = latitudePart,
+                longitude = longitudePart,
+                locationName = locationNamePart,
+                category = categoryPart,
+                image = null // TODO: 이미지 업로드 구현 시 추가
             )
-            val response = memoApiService.createMemo(request)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {

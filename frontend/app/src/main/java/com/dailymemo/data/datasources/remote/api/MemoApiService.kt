@@ -4,6 +4,8 @@ import com.dailymemo.data.models.request.CreateMemoRequestDto
 import com.dailymemo.data.models.request.UpdateMemoRequestDto
 import com.dailymemo.data.models.response.MemoDto
 import com.dailymemo.data.models.response.MemoListDto
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -17,9 +19,18 @@ interface MemoApiService {
         @Path("id") id: Long
     ): Response<MemoDto>
 
+    @Multipart
     @POST("/v0.1/memo")
     suspend fun createMemo(
-        @Body request: CreateMemoRequestDto
+        @Part("title") title: RequestBody,
+        @Part("content") content: RequestBody?,
+        @Part("rating") rating: RequestBody?,
+        @Part("is_pinned") isPinned: RequestBody?,
+        @Part("latitude") latitude: RequestBody?,
+        @Part("longitude") longitude: RequestBody?,
+        @Part("location_name") locationName: RequestBody?,
+        @Part("category") category: RequestBody?,
+        @Part image: MultipartBody.Part?
     ): Response<MemoDto>
 
     @PUT("/v0.1/memo/{id}")
