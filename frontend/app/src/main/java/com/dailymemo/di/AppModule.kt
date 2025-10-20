@@ -29,7 +29,7 @@ object AppModule {
 
     // 에뮬레이터: http://10.0.2.2:7001
     // 실제 기기: Mac의 IP 주소 사용
-    private const val BASE_URL = "http://192.168.0.5:7001"
+    private const val BASE_URL = "http://172.16.74.245:7001"
     private const val KAKAO_API_BASE_URL = "https://dapi.kakao.com/"
     private const val KAKAO_REST_API_KEY = "b707af9016b2d598ce8cc4313c7adda1"
 
