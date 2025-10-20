@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS memos (
     latitude DOUBLE COMMENT '위도',
     longitude DOUBLE COMMENT '경도',
     location_name VARCHAR(255) COMMENT '위치 이름',
+    category VARCHAR(50) COMMENT '장소 카테고리',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시간',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시간',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '삭제 시간 (soft delete)',
