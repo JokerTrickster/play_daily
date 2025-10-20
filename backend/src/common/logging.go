@@ -52,15 +52,20 @@ type ErrorInfo struct {
 }
 
 func InitLogging() error {
-	infoFile, err := os.OpenFile("../logs/info.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	// logs 디렉토리가 없으면 생성
+	if err := os.MkdirAll("logs", 0755); err != nil {
+		return fmt.Errorf("failed to create logs directory: %v", err)
+	}
+
+	infoFile, err := os.OpenFile("logs/info.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("failed to open info log file: %v", err)
 	}
-	errorFile, err := os.OpenFile("../logs/error.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	errorFile, err := os.OpenFile("logs/error.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("failed to open error log file: %v", err)
 	}
-	warningFile, err := os.OpenFile("../logs/warning.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	warningFile, err := os.OpenFile("logs/warning.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("failed to open error log file: %v", err)
 	}
