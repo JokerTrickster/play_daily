@@ -52,3 +52,24 @@ func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint) (*respon
 		Total: int64(len(resMemos)),
 	}, nil
 }
+
+// GetMemoListWithFilters 필터 조건을 적용하여 메모 목록 조회
+func (uc *GetMemoUseCase) GetMemoListWithFilters(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) (*response.ResMemoList, error) {
+	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
+	defer cancel()
+
+	memos, err := uc.Repository.GetListWithFilters(ctx, userID, roomID, isWishlist)
+	if err != nil {
+		return nil, err
+	}
+
+	resMemos := make([]response.ResMemo, len(memos))
+	for i, memo := range memos {
+		resMemos[i] = *convertMemoToResponse(&memo)
+	}
+
+	return &response.ResMemoList{
+		Memos: resMemos,
+		Total: int64(len(resMemos)),
+	}, nil
+}
