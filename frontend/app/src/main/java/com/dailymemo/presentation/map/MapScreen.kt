@@ -239,7 +239,10 @@ fun MapScreen(
                 // Search Bar
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    onValueChange = { newQuery ->
+                        viewModel.onSearchQueryChange(newQuery)
+                        viewModel.searchPlaces(newQuery)
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .shadow(4.dp, RoundedCornerShape(28.dp)),
@@ -323,7 +326,18 @@ fun MapScreen(
                 // My Location Button
                 FloatingActionButton(
                     onClick = {
-                        viewModel.getCurrentLocation()
+                        currentLocation?.let { location ->
+                            kakaoMap?.moveCamera(
+                                com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                    LatLng.from(location.latitude, location.longitude),
+                                    15 // zoom level
+                                )
+                            )
+                            Log.d("MapScreen", "Move to current location button clicked")
+                        } ?: run {
+                            // If no location yet, request it
+                            viewModel.getCurrentLocation()
+                        }
                     },
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary,
