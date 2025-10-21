@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.presentation.components.BusinessInfoSection
 import com.dailymemo.presentation.components.InterestLevelPicker
+import com.dailymemo.presentation.components.PlaceSearchDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +74,10 @@ fun CreateMemoScreen(
     val businessName by viewModel.businessName.collectAsState()
     val businessPhone by viewModel.businessPhone.collectAsState()
     val businessAddress by viewModel.businessAddress.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+    val showSearchDialog by viewModel.showSearchDialog.collectAsState()
 
     val scrollState = rememberScrollState()
 
@@ -338,10 +343,26 @@ fun CreateMemoScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
-                            } else {
-                                TextButton(onClick = { viewModel.getCurrentLocation() }) {
-                                    Text("위치 가져오기")
-                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.getCurrentLocation() },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("현재 위치")
+                            }
+                            Button(
+                                onClick = { viewModel.openSearchDialog() },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("장소 검색")
                             }
                         }
                         if (currentLocation != null) {
@@ -349,7 +370,7 @@ fun CreateMemoScreen(
                             OutlinedTextField(
                                 value = locationName,
                                 onValueChange = viewModel::onLocationNameChange,
-                                label = { Text("위치 이름 (선택)") },
+                                label = { Text("위치 이름") },
                                 placeholder = { Text("예: 우리집, 카페") },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
@@ -474,6 +495,19 @@ fun CreateMemoScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
+        }
+
+        // Place Search Dialog
+        if (showSearchDialog) {
+            PlaceSearchDialog(
+                searchQuery = searchQuery,
+                searchResults = searchResults,
+                isSearching = isSearching,
+                onSearchQueryChange = viewModel::onSearchQueryChange,
+                onSearch = viewModel::searchPlaces,
+                onSelectPlace = viewModel::selectPlace,
+                onDismiss = viewModel::closeSearchDialog
+            )
         }
     }
 }

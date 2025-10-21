@@ -43,17 +43,51 @@ class LocationDataSource(
         }
 
         try {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    if (continuation.isActive) {
-                        continuation.resume(location)
+            // Request fresh location with high accuracy
+            val locationRequest = LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                0L // Single update
+            ).apply {
+                setMaxUpdates(1) // Only get one update
+                setMaxUpdateDelayMillis(5000L) // Timeout after 5 seconds
+            }.build()
+
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    result.lastLocation?.let { location ->
+                        if (continuation.isActive) {
+                            fusedLocationClient.removeLocationUpdates(this)
+                            continuation.resume(location)
+                        }
                     }
                 }
-                .addOnFailureListener { exception ->
-                    if (continuation.isActive) {
-                        continuation.resumeWithException(exception)
+            }
+
+            // Request fresh location
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.getMainLooper()
+            )
+
+            // Fallback to last known location if fresh location takes too long
+            continuation.invokeOnCancellation {
+                fusedLocationClient.removeLocationUpdates(locationCallback)
+            }
+
+            // Also try to get last known location as fallback
+            fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
+                if (continuation.isActive && lastLocation != null) {
+                    // Only use last location if it's recent (within 30 seconds) and accurate
+                    val isRecent = (System.currentTimeMillis() - lastLocation.time) < 30_000
+                    val isAccurate = lastLocation.accuracy < 50 // meters
+
+                    if (!isRecent || !isAccurate) {
+                        // Wait for fresh location from requestLocationUpdates
+                        return@addOnSuccessListener
                     }
                 }
+            }
         } catch (e: SecurityException) {
             if (continuation.isActive) {
                 continuation.resumeWithException(e)

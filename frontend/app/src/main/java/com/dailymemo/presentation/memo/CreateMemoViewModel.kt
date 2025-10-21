@@ -17,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateMemoViewModel @Inject constructor(
     private val createMemoUseCase: CreateMemoUseCase,
-    private val getCurrentLocationUseCase: GetCurrentLocationUseCase
+    private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
+    private val searchPlacesUseCase: com.dailymemo.domain.usecases.place.SearchPlacesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CreateMemoUiState>(CreateMemoUiState.Initial)
@@ -58,6 +59,18 @@ class CreateMemoViewModel @Inject constructor(
 
     private val _businessAddress = MutableStateFlow("")
     val businessAddress: StateFlow<String> = _businessAddress.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<com.dailymemo.domain.models.Place>>(emptyList())
+    val searchResults: StateFlow<List<com.dailymemo.domain.models.Place>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    private val _showSearchDialog = MutableStateFlow(false)
+    val showSearchDialog: StateFlow<Boolean> = _showSearchDialog.asStateFlow()
 
     init {
         // Automatically get current location when creating memo
@@ -127,6 +140,51 @@ class CreateMemoViewModel @Inject constructor(
 
     fun setPlaceLocation(latitude: Double, longitude: Double) {
         _currentLocation.value = Location(latitude, longitude)
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun openSearchDialog() {
+        _showSearchDialog.value = true
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+    }
+
+    fun closeSearchDialog() {
+        _showSearchDialog.value = false
+    }
+
+    fun searchPlaces() {
+        if (_searchQuery.value.isBlank()) return
+
+        viewModelScope.launch {
+            _isSearching.value = true
+            searchPlacesUseCase(
+                query = _searchQuery.value,
+                longitude = _currentLocation.value?.longitude,
+                latitude = _currentLocation.value?.latitude
+            ).fold(
+                onSuccess = { places ->
+                    _searchResults.value = places
+                    _isSearching.value = false
+                },
+                onFailure = { error ->
+                    _isSearching.value = false
+                    _searchResults.value = emptyList()
+                }
+            )
+        }
+    }
+
+    fun selectPlace(place: com.dailymemo.domain.models.Place) {
+        _locationName.value = place.name
+        _currentLocation.value = Location(place.latitude, place.longitude)
+        _businessName.value = place.name
+        _businessPhone.value = place.phone ?: ""
+        _businessAddress.value = place.address
+        closeSearchDialog()
     }
 
     fun createMemo() {
