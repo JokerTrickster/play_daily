@@ -47,9 +47,37 @@ class CreateMemoViewModel @Inject constructor(
     private val _category = MutableStateFlow<PlaceCategory?>(null)
     val category: StateFlow<PlaceCategory?> = _category.asStateFlow()
 
+    private val _isWishlist = MutableStateFlow(false)
+    val isWishlist: StateFlow<Boolean> = _isWishlist.asStateFlow()
+
+    private val _businessName = MutableStateFlow("")
+    val businessName: StateFlow<String> = _businessName.asStateFlow()
+
+    private val _businessPhone = MutableStateFlow("")
+    val businessPhone: StateFlow<String> = _businessPhone.asStateFlow()
+
+    private val _businessAddress = MutableStateFlow("")
+    val businessAddress: StateFlow<String> = _businessAddress.asStateFlow()
+
     init {
         // Automatically get current location when creating memo
         getCurrentLocation()
+    }
+
+    fun setWishlistMode(isWishlist: Boolean) {
+        _isWishlist.value = isWishlist
+    }
+
+    fun onBusinessNameChange(newName: String) {
+        _businessName.value = newName
+    }
+
+    fun onBusinessPhoneChange(newPhone: String) {
+        _businessPhone.value = newPhone
+    }
+
+    fun onBusinessAddressChange(newAddress: String) {
+        _businessAddress.value = newAddress
     }
 
     fun getCurrentLocation() {
@@ -119,7 +147,11 @@ class CreateMemoViewModel @Inject constructor(
                 latitude = _currentLocation.value?.latitude,
                 longitude = _currentLocation.value?.longitude,
                 locationName = if (_locationName.value.isNotBlank()) _locationName.value.trim() else null,
-                category = _category.value
+                category = _category.value,
+                isWishlist = _isWishlist.value,
+                businessName = if (_businessName.value.isNotBlank()) _businessName.value.trim() else null,
+                businessPhone = if (_businessPhone.value.isNotBlank()) _businessPhone.value.trim() else null,
+                businessAddress = if (_businessAddress.value.isNotBlank()) _businessAddress.value.trim() else null
             ).fold(
                 onSuccess = {
                     _uiState.value = CreateMemoUiState.Success

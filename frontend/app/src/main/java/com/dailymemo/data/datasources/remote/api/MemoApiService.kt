@@ -13,7 +13,6 @@ interface MemoApiService {
 
     @GET("/v0.1/memo")
     suspend fun getMemos(
-        @Query("room_id") roomId: Long? = null,
         @Query("is_wishlist") isWishlist: Boolean? = null
     ): Response<MemoListDto>
 

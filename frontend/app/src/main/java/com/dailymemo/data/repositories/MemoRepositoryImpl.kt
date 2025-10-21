@@ -19,9 +19,11 @@ class MemoRepositoryImpl @Inject constructor(
     private val memoApiService: MemoApiService
 ) : MemoRepository {
 
-    override suspend fun getMemos(roomId: Long?, isWishlist: Boolean?): Result<List<Memo>> {
+    override suspend fun getMemos(
+        isWishlist: Boolean?
+    ): Result<List<Memo>> {
         return try {
-            val response = memoApiService.getMemos(roomId = roomId, isWishlist = isWishlist)
+            val response = memoApiService.getMemos(isWishlist)
             if (response.isSuccessful && response.body() != null) {
                 val memos = response.body()!!.memos.map { it.toDomain() }
                 Result.success(memos)
@@ -112,7 +114,11 @@ class MemoRepositoryImpl @Inject constructor(
         isPinned: Boolean,
         latitude: Double?,
         longitude: Double?,
-        locationName: String?
+        locationName: String?,
+        isWishlist: Boolean,
+        businessName: String?,
+        businessPhone: String?,
+        businessAddress: String?
     ): Result<Memo> {
         return try {
             val request = UpdateMemoRequestDto(
@@ -123,7 +129,11 @@ class MemoRepositoryImpl @Inject constructor(
                 isPinned = isPinned,
                 latitude = latitude,
                 longitude = longitude,
-                locationName = locationName
+                locationName = locationName,
+                isWishlist = isWishlist,
+                businessName = businessName,
+                businessPhone = businessPhone,
+                businessAddress = businessAddress
             )
             val response = memoApiService.updateMemo(id, request)
             if (response.isSuccessful && response.body() != null) {

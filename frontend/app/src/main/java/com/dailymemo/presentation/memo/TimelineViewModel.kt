@@ -21,14 +21,41 @@ class TimelineViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<TimelineUiState>(TimelineUiState.Loading)
     val uiState: StateFlow<TimelineUiState> = _uiState.asStateFlow()
 
+    private val _currentTab = MutableStateFlow(MemoTab.VISITED)
+    val currentTab: StateFlow<MemoTab> = _currentTab.asStateFlow()
+
+    private val _currentRoomId = MutableStateFlow<Long?>(null)
+    val currentRoomId: StateFlow<Long?> = _currentRoomId.asStateFlow()
+
+    private val _isOwnRoom = MutableStateFlow(true)
+    val isOwnRoom: StateFlow<Boolean> = _isOwnRoom.asStateFlow()
+
     init {
         loadMemos()
     }
 
     fun loadMemos() {
+        reloadCurrentRoomData()
+    }
+
+    fun switchTab(tab: MemoTab) {
+        _currentTab.value = tab
+        reloadCurrentRoomData()
+    }
+
+    fun switchRoom(roomId: Long?, isOwn: Boolean = false) {
+        _currentRoomId.value = roomId
+        _isOwnRoom.value = isOwn
+        reloadCurrentRoomData()
+    }
+
+    private fun reloadCurrentRoomData() {
         viewModelScope.launch {
             _uiState.value = TimelineUiState.Loading
-            getMemosUseCase().fold(
+
+            val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
+
+            getMemosUseCase(isWishlist = isWishlist).fold(
                 onSuccess = { memos ->
                     val groupedMemos = groupMemosByDate(memos)
                     _uiState.value = TimelineUiState.Success(groupedMemos)

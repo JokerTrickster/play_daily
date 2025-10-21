@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dailymemo.domain.models.PlaceCategory
+import com.dailymemo.presentation.components.BusinessInfoSection
+import com.dailymemo.presentation.components.InterestLevelPicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,10 +43,11 @@ fun CreateMemoScreen(
     latitude: Double? = null,
     longitude: Double? = null,
     categoryName: String? = null,
+    isWishlist: Boolean = false,
     viewModel: CreateMemoViewModel = hiltViewModel()
 ) {
     // Initialize place data if provided
-    LaunchedEffect(placeName, address, latitude, longitude, categoryName) {
+    LaunchedEffect(placeName, address, latitude, longitude, categoryName, isWishlist) {
         if (placeName != null && address != null) {
             viewModel.onLocationNameChange(placeName)
         }
@@ -56,6 +59,7 @@ fun CreateMemoScreen(
                 viewModel.onCategoryChange(it)
             }
         }
+        viewModel.setWishlistMode(isWishlist)
     }
     val uiState by viewModel.uiState.collectAsState()
     val title by viewModel.title.collectAsState()
@@ -66,6 +70,9 @@ fun CreateMemoScreen(
     val currentLocation by viewModel.currentLocation.collectAsState()
     val locationName by viewModel.locationName.collectAsState()
     val category by viewModel.category.collectAsState()
+    val businessName by viewModel.businessName.collectAsState()
+    val businessPhone by viewModel.businessPhone.collectAsState()
+    val businessAddress by viewModel.businessAddress.collectAsState()
 
     val scrollState = rememberScrollState()
 
@@ -352,7 +359,7 @@ fun CreateMemoScreen(
                     }
                 }
 
-                // Rating Section
+                // Rating Section (normal mode) or Interest Level (wishlist mode)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -360,40 +367,69 @@ fun CreateMemoScreen(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "별점",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
+                    if (isWishlist) {
+                        InterestLevelPicker(
+                            currentLevel = rating,
+                            onLevelChange = viewModel::onRatingChange,
+                            modifier = Modifier.padding(16.dp)
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                    } else {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
                         ) {
-                            (1..5).forEach { star ->
-                                IconButton(
-                                    onClick = { viewModel.onRatingChange(star) }
-                                ) {
-                                    Icon(
-                                        imageVector = if (star <= rating) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                                        contentDescription = "$star 점",
-                                        tint = if (star <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(32.dp)
-                                    )
+                            Text(
+                                text = "별점",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                (1..5).forEach { star ->
+                                    IconButton(
+                                        onClick = { viewModel.onRatingChange(star) }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (star <= rating) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                                            contentDescription = "$star 점",
+                                            tint = if (star <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
                                 }
                             }
+                            if (rating > 0) {
+                                Text(
+                                    text = "선택: ${rating}점",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                )
+                            }
                         }
-                        if (rating > 0) {
-                            Text(
-                                text = "선택: ${rating}점",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            )
-                        }
+                    }
+                }
+
+                // Business Info Section (only for wishlist mode)
+                if (isWishlist) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        BusinessInfoSection(
+                            businessName = businessName,
+                            businessPhone = businessPhone,
+                            businessAddress = businessAddress,
+                            onBusinessNameChange = viewModel::onBusinessNameChange,
+                            onBusinessPhoneChange = viewModel::onBusinessPhoneChange,
+                            onBusinessAddressChange = viewModel::onBusinessAddressChange,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                 }
 

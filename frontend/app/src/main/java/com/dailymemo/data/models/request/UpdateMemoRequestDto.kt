@@ -18,5 +18,13 @@ data class UpdateMemoRequestDto(
     @SerializedName("longitude")
     val longitude: Double? = null,
     @SerializedName("location_name")
-    val locationName: String? = null
+    val locationName: String? = null,
+    @SerializedName("is_wishlist")
+    val isWishlist: Boolean = false,
+    @SerializedName("business_name")
+    val businessName: String? = null,
+    @SerializedName("business_phone")
+    val businessPhone: String? = null,
+    @SerializedName("business_address")
+    val businessAddress: String? = null
 )
