@@ -32,33 +32,12 @@ func (uc *GetMemoUseCase) GetMemo(ctx context.Context, memoID uint, userID uint)
 	return convertMemoToResponse(memo), nil
 }
 
-// GetMemoList 메모 목록 조회
-func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint) (*response.ResMemoList, error) {
+// GetMemoList 메모 목록 조회 (위시리스트 필터 옵션 포함)
+func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint, isWishlist *bool) (*response.ResMemoList, error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
 	defer cancel()
 
-	memos, err := uc.Repository.GetListByUserID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	resMemos := make([]response.ResMemo, len(memos))
-	for i, memo := range memos {
-		resMemos[i] = *convertMemoToResponse(&memo)
-	}
-
-	return &response.ResMemoList{
-		Memos: resMemos,
-		Total: int64(len(resMemos)),
-	}, nil
-}
-
-// GetMemoListWithFilters 필터 조건을 적용하여 메모 목록 조회
-func (uc *GetMemoUseCase) GetMemoListWithFilters(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) (*response.ResMemoList, error) {
-	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
-	defer cancel()
-
-	memos, err := uc.Repository.GetListWithFilters(ctx, userID, roomID, isWishlist)
+	memos, err := uc.Repository.GetListByUserID(ctx, userID, isWishlist)
 	if err != nil {
 		return nil, err
 	}

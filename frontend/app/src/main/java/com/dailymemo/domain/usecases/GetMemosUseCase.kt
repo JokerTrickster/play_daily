@@ -8,9 +8,8 @@ class GetMemosUseCase @Inject constructor(
     private val repository: MemoRepository
 ) {
     suspend operator fun invoke(
-        roomId: Long? = null,
         isWishlist: Boolean? = null
     ): Result<List<Memo>> {
-        return repository.getMemos(roomId, isWishlist)
+        return repository.getMemos(isWishlist)
     }
 }

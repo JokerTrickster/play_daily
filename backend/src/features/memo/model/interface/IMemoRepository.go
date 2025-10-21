@@ -11,8 +11,7 @@ type ICreateMemoRepository interface {
 
 type IGetMemoRepository interface {
 	GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error)
-	GetListByUserID(ctx context.Context, userID uint) ([]mysql.Memo, error)
-	GetListWithFilters(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) ([]mysql.Memo, error)
+	GetListByUserID(ctx context.Context, userID uint, isWishlist *bool) ([]mysql.Memo, error)
 }
 
 type IUpdateMemoRepository interface {
