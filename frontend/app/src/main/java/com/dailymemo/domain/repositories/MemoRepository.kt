@@ -16,7 +16,11 @@ interface MemoRepository {
         latitude: Double? = null,
         longitude: Double? = null,
         locationName: String? = null,
-        category: PlaceCategory? = null
+        category: PlaceCategory? = null,
+        isWishlist: Boolean = false,
+        businessName: String? = null,
+        businessPhone: String? = null,
+        businessAddress: String? = null
     ): Result<Memo>
     suspend fun updateMemo(
         id: Long,
@@ -28,7 +32,11 @@ interface MemoRepository {
         isPinned: Boolean = false,
         latitude: Double? = null,
         longitude: Double? = null,
-        locationName: String? = null
+        locationName: String? = null,
+        isWishlist: Boolean = false,
+        businessName: String? = null,
+        businessPhone: String? = null,
+        businessAddress: String? = null
     ): Result<Memo>
     suspend fun deleteMemo(id: Long): Result<Unit>
     suspend fun uploadImage(imageUri: android.net.Uri): Result<String> // 이미지 업로드 후 URL 반환

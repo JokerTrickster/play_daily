@@ -56,7 +56,11 @@ class MemoRepositoryImpl @Inject constructor(
         latitude: Double?,
         longitude: Double?,
         locationName: String?,
-        category: PlaceCategory?
+        category: PlaceCategory?,
+        isWishlist: Boolean,
+        businessName: String?,
+        businessPhone: String?,
+        businessAddress: String?
     ): Result<Memo> {
         return try {
             // multipart/form-data 요청 파라미터 생성
@@ -100,7 +104,11 @@ class MemoRepositoryImpl @Inject constructor(
         isPinned: Boolean,
         latitude: Double?,
         longitude: Double?,
-        locationName: String?
+        locationName: String?,
+        isWishlist: Boolean,
+        businessName: String?,
+        businessPhone: String?,
+        businessAddress: String?
     ): Result<Memo> {
         return try {
             val request = UpdateMemoRequestDto(
@@ -111,7 +119,11 @@ class MemoRepositoryImpl @Inject constructor(
                 isPinned = isPinned,
                 latitude = latitude,
                 longitude = longitude,
-                locationName = locationName
+                locationName = locationName,
+                isWishlist = isWishlist,
+                businessName = businessName,
+                businessPhone = businessPhone,
+                businessAddress = businessAddress
             )
             val response = memoApiService.updateMemo(id, request)
             if (response.isSuccessful && response.body() != null) {
@@ -156,6 +168,10 @@ class MemoRepositoryImpl @Inject constructor(
             longitude = longitude,
             locationName = locationName,
             category = PlaceCategory.fromString(category),
+            isWishlist = isWishlist,
+            businessName = businessName,
+            businessPhone = businessPhone,
+            businessAddress = businessAddress,
             createdAt = LocalDateTime.parse(createdAt, formatter),
             updatedAt = LocalDateTime.parse(updatedAt, formatter)
         )

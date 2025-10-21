@@ -20,5 +20,13 @@ data class CreateMemoRequestDto(
     @SerializedName("location_name")
     val locationName: String? = null,
     @SerializedName("category")
-    val category: String? = null
+    val category: String? = null,
+    @SerializedName("is_wishlist")
+    val isWishlist: Boolean = false,
+    @SerializedName("business_name")
+    val businessName: String? = null,
+    @SerializedName("business_phone")
+    val businessPhone: String? = null,
+    @SerializedName("business_address")
+    val businessAddress: String? = null
 )
