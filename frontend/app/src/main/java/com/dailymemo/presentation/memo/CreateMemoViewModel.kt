@@ -78,7 +78,9 @@ class CreateMemoViewModel @Inject constructor(
     }
 
     fun setWishlistMode(isWishlist: Boolean) {
+        android.util.Log.d("CreateMemoVM", "setWishlistMode called with: $isWishlist")
         _isWishlist.value = isWishlist
+        android.util.Log.d("CreateMemoVM", "_isWishlist.value is now: ${_isWishlist.value}")
     }
 
     fun onBusinessNameChange(newName: String) {
@@ -201,6 +203,8 @@ class CreateMemoViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = CreateMemoUiState.Loading
 
+            android.util.Log.d("CreateMemoVM", "createMemo called - isWishlist: ${_isWishlist.value}")
+
             createMemoUseCase(
                 title = _title.value.trim(),
                 content = _content.value.trim(),
@@ -218,9 +222,11 @@ class CreateMemoViewModel @Inject constructor(
                 naverPlaceUrl = if (_naverPlaceUrl.value.isNotBlank()) _naverPlaceUrl.value.trim() else null
             ).fold(
                 onSuccess = {
+                    android.util.Log.d("CreateMemoVM", "Memo created successfully")
                     _uiState.value = CreateMemoUiState.Success
                 },
                 onFailure = { error ->
+                    android.util.Log.e("CreateMemoVM", "Failed to create memo: ${error.message}")
                     _uiState.value = CreateMemoUiState.Error(ErrorHandler.Memo.createError(error))
                 }
             )

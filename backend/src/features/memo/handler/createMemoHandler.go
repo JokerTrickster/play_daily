@@ -92,6 +92,33 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 		req.Category = &category
 	}
 
+	// IsWishlist 파싱
+	if wishlistStr := c.FormValue("is_wishlist"); wishlistStr != "" {
+		if wishlist, err := strconv.ParseBool(wishlistStr); err == nil {
+			req.IsWishlist = wishlist
+		}
+	}
+
+	// BusinessName 파싱
+	if businessName := c.FormValue("business_name"); businessName != "" {
+		req.BusinessName = &businessName
+	}
+
+	// BusinessPhone 파싱
+	if businessPhone := c.FormValue("business_phone"); businessPhone != "" {
+		req.BusinessPhone = &businessPhone
+	}
+
+	// BusinessAddress 파싱
+	if businessAddress := c.FormValue("business_address"); businessAddress != "" {
+		req.BusinessAddress = &businessAddress
+	}
+
+	// NaverPlaceURL 파싱
+	if naverPlaceURL := c.FormValue("naver_place_url"); naverPlaceURL != "" {
+		req.NaverPlaceURL = &naverPlaceURL
+	}
+
 	// 이미지 파일 검증 및 처리
 	fileHeader, err := c.FormFile("image")
 	if err == nil && fileHeader != nil {

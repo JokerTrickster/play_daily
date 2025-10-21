@@ -60,13 +60,14 @@ fun NavGraph(
 
         // Memory screens
         composable(
-            route = "${Screen.Memory.Create.route}?placeName={placeName}&address={address}&latitude={latitude}&longitude={longitude}&category={category}",
+            route = "${Screen.Memory.Create.route}?placeName={placeName}&address={address}&latitude={latitude}&longitude={longitude}&category={category}&isWishlist={isWishlist}",
             arguments = listOf(
                 navArgument("placeName") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("address") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("latitude") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("longitude") { type = NavType.StringType; nullable = true; defaultValue = null },
-                navArgument("category") { type = NavType.StringType; nullable = true; defaultValue = null }
+                navArgument("category") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("isWishlist") { type = NavType.BoolType; defaultValue = false }
             )
         ) { backStackEntry ->
             val placeName = backStackEntry.arguments?.getString("placeName")
@@ -74,6 +75,7 @@ fun NavGraph(
             val latitude = backStackEntry.arguments?.getString("latitude")?.toDoubleOrNull()
             val longitude = backStackEntry.arguments?.getString("longitude")?.toDoubleOrNull()
             val categoryName = backStackEntry.arguments?.getString("category")
+            val isWishlist = backStackEntry.arguments?.getBoolean("isWishlist") ?: false
 
             CreateMemoScreen(
                 onNavigateBack = {
@@ -86,7 +88,8 @@ fun NavGraph(
                 address = address,
                 latitude = latitude,
                 longitude = longitude,
-                categoryName = categoryName
+                categoryName = categoryName,
+                isWishlist = isWishlist
             )
         }
 

@@ -36,6 +36,7 @@ interface MemoApiService {
         @Part("business_name") businessName: RequestBody?,
         @Part("business_phone") businessPhone: RequestBody?,
         @Part("business_address") businessAddress: RequestBody?,
+        @Part("naver_place_url") naverPlaceUrl: RequestBody?,
         @Part image: MultipartBody.Part?
     ): Response<MemoDto>
 

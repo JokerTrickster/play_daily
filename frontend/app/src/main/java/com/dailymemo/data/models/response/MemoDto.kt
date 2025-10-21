@@ -33,6 +33,8 @@ data class MemoDto(
     val businessPhone: String? = null,
     @SerializedName("business_address")
     val businessAddress: String? = null,
+    @SerializedName("naver_place_url")
+    val naverPlaceUrl: String? = null,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")

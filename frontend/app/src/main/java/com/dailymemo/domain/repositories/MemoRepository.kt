@@ -22,7 +22,8 @@ interface MemoRepository {
         isWishlist: Boolean = false,
         businessName: String? = null,
         businessPhone: String? = null,
-        businessAddress: String? = null
+        businessAddress: String? = null,
+        naverPlaceUrl: String? = null
     ): Result<Memo>
     suspend fun updateMemo(
         id: Long,

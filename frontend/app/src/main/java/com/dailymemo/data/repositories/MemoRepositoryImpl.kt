@@ -62,7 +62,8 @@ class MemoRepositoryImpl @Inject constructor(
         isWishlist: Boolean,
         businessName: String?,
         businessPhone: String?,
-        businessAddress: String?
+        businessAddress: String?,
+        naverPlaceUrl: String?
     ): Result<Memo> {
         return try {
             // multipart/form-data 요청 파라미터 생성
@@ -78,6 +79,7 @@ class MemoRepositoryImpl @Inject constructor(
             val businessNamePart = businessName?.toRequestBody("text/plain".toMediaTypeOrNull())
             val businessPhonePart = businessPhone?.toRequestBody("text/plain".toMediaTypeOrNull())
             val businessAddressPart = businessAddress?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val naverPlaceUrlPart = naverPlaceUrl?.toRequestBody("text/plain".toMediaTypeOrNull())
 
             val response = memoApiService.createMemo(
                 title = titlePart,
@@ -92,6 +94,7 @@ class MemoRepositoryImpl @Inject constructor(
                 businessName = businessNamePart,
                 businessPhone = businessPhonePart,
                 businessAddress = businessAddressPart,
+                naverPlaceUrl = naverPlaceUrlPart,
                 image = null // TODO: 이미지 업로드 구현 시 추가
             )
             if (response.isSuccessful && response.body() != null) {
@@ -182,6 +185,7 @@ class MemoRepositoryImpl @Inject constructor(
             businessName = businessName,
             businessPhone = businessPhone,
             businessAddress = businessAddress,
+            naverPlaceUrl = naverPlaceUrl,
             createdAt = LocalDateTime.parse(createdAt, formatter),
             updatedAt = LocalDateTime.parse(updatedAt, formatter)
         )

@@ -26,10 +26,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dailymemo.domain.models.Comment
 import java.time.format.DateTimeFormatter
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,9 +50,11 @@ fun MemoDetailScreen(
     val isEditing by viewModel.isEditing.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val commentInput by viewModel.commentInput.collectAsState()
+    val naverPlaceUrl by viewModel.naverPlaceUrl.collectAsState()
 
     val scrollState = rememberScrollState()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(uiState) {
         when (uiState) {
@@ -427,6 +432,30 @@ fun MemoDetailScreen(
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                     }
+                                }
+                            }
+
+                            // Naver Place Button
+                            if (!naverPlaceUrl.isNullOrBlank()) {
+                                Button(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(naverPlaceUrl))
+                                        context.startActivity(intent)
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                    )
+                                ) {
+                                    Text(
+                                        "네이버에서 보기",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
                                 }
                             }
 

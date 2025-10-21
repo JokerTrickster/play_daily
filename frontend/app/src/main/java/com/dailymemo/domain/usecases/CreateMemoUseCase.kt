@@ -22,7 +22,8 @@ class CreateMemoUseCase @Inject constructor(
         isWishlist: Boolean = false,
         businessName: String? = null,
         businessPhone: String? = null,
-        businessAddress: String? = null
+        businessAddress: String? = null,
+        naverPlaceUrl: String? = null
     ): Result<Memo> {
         return repository.createMemo(
             title = title,
@@ -38,7 +39,8 @@ class CreateMemoUseCase @Inject constructor(
             isWishlist = isWishlist,
             businessName = businessName,
             businessPhone = businessPhone,
-            businessAddress = businessAddress
+            businessAddress = businessAddress,
+            naverPlaceUrl = naverPlaceUrl
         )
     }
 }

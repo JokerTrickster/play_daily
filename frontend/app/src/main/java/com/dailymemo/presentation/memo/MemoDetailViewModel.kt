@@ -53,6 +53,9 @@ class MemoDetailViewModel @Inject constructor(
     private val _commentInput = MutableStateFlow("")
     val commentInput: StateFlow<String> = _commentInput.asStateFlow()
 
+    private val _naverPlaceUrl = MutableStateFlow<String?>(null)
+    val naverPlaceUrl: StateFlow<String?> = _naverPlaceUrl.asStateFlow()
+
     init {
         loadMemo()
         loadComments()
@@ -119,6 +122,7 @@ class MemoDetailViewModel @Inject constructor(
                     _imageUrl.value = memo.imageUrl ?: ""
                     _rating.value = memo.rating
                     _isPinned.value = memo.isPinned
+                    _naverPlaceUrl.value = memo.naverPlaceUrl
                     _uiState.value = MemoDetailUiState.Loaded
                 },
                 onFailure = { error ->
