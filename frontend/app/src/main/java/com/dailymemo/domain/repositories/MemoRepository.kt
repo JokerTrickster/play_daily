@@ -4,7 +4,10 @@ import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
 
 interface MemoRepository {
-    suspend fun getMemos(): Result<List<Memo>>
+    suspend fun getMemos(
+        roomId: Long? = null,
+        isWishlist: Boolean? = null
+    ): Result<List<Memo>>
     suspend fun getMemo(id: Long): Result<Memo>
     suspend fun createMemo(
         title: String,

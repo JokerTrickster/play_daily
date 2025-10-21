@@ -12,7 +12,10 @@ import retrofit2.http.*
 interface MemoApiService {
 
     @GET("/v0.1/memo")
-    suspend fun getMemos(): Response<MemoListDto>
+    suspend fun getMemos(
+        @Query("room_id") roomId: Long? = null,
+        @Query("is_wishlist") isWishlist: Boolean? = null
+    ): Response<MemoListDto>
 
     @GET("/v0.1/memo/{id}")
     suspend fun getMemo(

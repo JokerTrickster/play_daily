@@ -19,9 +19,12 @@ class MemoRepositoryImpl @Inject constructor(
     private val memoApiService: MemoApiService
 ) : MemoRepository {
 
-    override suspend fun getMemos(): Result<List<Memo>> {
+    override suspend fun getMemos(
+        roomId: Long?,
+        isWishlist: Boolean?
+    ): Result<List<Memo>> {
         return try {
-            val response = memoApiService.getMemos()
+            val response = memoApiService.getMemos(roomId, isWishlist)
             if (response.isSuccessful && response.body() != null) {
                 val memos = response.body()!!.memos.map { it.toDomain() }
                 Result.success(memos)
