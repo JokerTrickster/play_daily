@@ -54,9 +54,11 @@ func (h *GetMemoHandler) GetMemo(c echo.Context) error {
 // GetMemoList 메모 목록 조회 API
 // @Router /v0.1/memo [get]
 // @Summary 메모 목록 조회 API
-// @Description 사용자의 모든 메모를 조회합니다
+// @Description 사용자의 모든 메모를 조회합니다 (is_wishlist 필터 지원)
 // @Produce json
+// @Param is_wishlist query bool false "Wishlist filter"
 // @Success 200 {object} response.ResMemoList
+// @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Tags memo
 func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
@@ -65,7 +67,19 @@ func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
 	// TODO: JWT에서 userID 추출
 	userID := uint(1)
 
-	memoList, err := h.UseCase.GetMemoList(ctx, userID)
+	// is_wishlist 파싱 및 검증
+	var isWishlist *bool
+	isWishlistStr := c.QueryParam("is_wishlist")
+	if isWishlistStr != "" {
+		parsedIsWishlist, err := strconv.ParseBool(isWishlistStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid is_wishlist format (expected: true or false)"})
+		}
+		isWishlist = &parsedIsWishlist
+	}
+
+	// 메모 목록 조회
+	memoList, err := h.UseCase.GetMemoList(ctx, userID, isWishlist)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

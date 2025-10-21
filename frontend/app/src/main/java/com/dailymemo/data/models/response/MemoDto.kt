@@ -25,6 +25,14 @@ data class MemoDto(
     val locationName: String?,
     @SerializedName("category")
     val category: String?,
+    @SerializedName("is_wishlist")
+    val isWishlist: Boolean = false,
+    @SerializedName("business_name")
+    val businessName: String? = null,
+    @SerializedName("business_phone")
+    val businessPhone: String? = null,
+    @SerializedName("business_address")
+    val businessAddress: String? = null,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")

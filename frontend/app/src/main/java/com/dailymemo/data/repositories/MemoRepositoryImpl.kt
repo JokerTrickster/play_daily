@@ -19,9 +19,9 @@ class MemoRepositoryImpl @Inject constructor(
     private val memoApiService: MemoApiService
 ) : MemoRepository {
 
-    override suspend fun getMemos(): Result<List<Memo>> {
+    override suspend fun getMemos(roomId: Long?, isWishlist: Boolean?): Result<List<Memo>> {
         return try {
-            val response = memoApiService.getMemos()
+            val response = memoApiService.getMemos(roomId = roomId, isWishlist = isWishlist)
             if (response.isSuccessful && response.body() != null) {
                 val memos = response.body()!!.memos.map { it.toDomain() }
                 Result.success(memos)
@@ -56,7 +56,11 @@ class MemoRepositoryImpl @Inject constructor(
         latitude: Double?,
         longitude: Double?,
         locationName: String?,
-        category: PlaceCategory?
+        category: PlaceCategory?,
+        isWishlist: Boolean,
+        businessName: String?,
+        businessPhone: String?,
+        businessAddress: String?
     ): Result<Memo> {
         return try {
             // multipart/form-data 요청 파라미터 생성
@@ -68,6 +72,10 @@ class MemoRepositoryImpl @Inject constructor(
             val longitudePart = longitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val locationNamePart = locationName?.toRequestBody("text/plain".toMediaTypeOrNull())
             val categoryPart = category?.name?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val isWishlistPart = isWishlist.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessNamePart = businessName?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessPhonePart = businessPhone?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessAddressPart = businessAddress?.toRequestBody("text/plain".toMediaTypeOrNull())
 
             val response = memoApiService.createMemo(
                 title = titlePart,
@@ -78,6 +86,10 @@ class MemoRepositoryImpl @Inject constructor(
                 longitude = longitudePart,
                 locationName = locationNamePart,
                 category = categoryPart,
+                isWishlist = isWishlistPart,
+                businessName = businessNamePart,
+                businessPhone = businessPhonePart,
+                businessAddress = businessAddressPart,
                 image = null // TODO: 이미지 업로드 구현 시 추가
             )
             if (response.isSuccessful && response.body() != null) {
@@ -156,6 +168,10 @@ class MemoRepositoryImpl @Inject constructor(
             longitude = longitude,
             locationName = locationName,
             category = PlaceCategory.fromString(category),
+            isWishlist = isWishlist,
+            businessName = businessName,
+            businessPhone = businessPhone,
+            businessAddress = businessAddress,
             createdAt = LocalDateTime.parse(createdAt, formatter),
             updatedAt = LocalDateTime.parse(updatedAt, formatter)
         )
