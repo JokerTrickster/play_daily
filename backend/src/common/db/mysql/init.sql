@@ -42,6 +42,24 @@ CREATE TABLE IF NOT EXISTS memos (
     INDEX idx_location (latitude, longitude)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='메모 정보 테이블';
 
+-- Comments Table: 댓글 정보 관리
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    memo_id BIGINT UNSIGNED NOT NULL COMMENT '메모 ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '작성자 ID',
+    content TEXT NOT NULL COMMENT '댓글 내용',
+    rating TINYINT UNSIGNED DEFAULT 0 COMMENT '댓글 작성자의 평점 (0-5)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '생성 시간',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정 시간',
+    deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '삭제 시간 (soft delete)',
+    FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_memo_id (memo_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_created_at (created_at),
+    INDEX idx_deleted_at (deleted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='댓글 정보 테이블';
+
 -- Test User Data
 INSERT INTO users (account_id, password, nickname)
 VALUES ('jhj485', '456123', 'jhj485')
