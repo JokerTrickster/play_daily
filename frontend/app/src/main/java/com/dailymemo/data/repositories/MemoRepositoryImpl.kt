@@ -4,6 +4,7 @@ import com.dailymemo.data.datasources.remote.api.MemoApiService
 import com.dailymemo.data.models.request.CreateMemoRequestDto
 import com.dailymemo.data.models.request.UpdateMemoRequestDto
 import com.dailymemo.data.models.response.MemoDto
+import com.dailymemo.domain.models.Comment
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.repositories.MemoRepository
@@ -186,6 +187,18 @@ class MemoRepositoryImpl @Inject constructor(
             businessPhone = businessPhone,
             businessAddress = businessAddress,
             naverPlaceUrl = naverPlaceUrl,
+            comments = comments?.map { commentDto ->
+                Comment(
+                    id = commentDto.id,
+                    memoId = commentDto.memo_id,
+                    userId = commentDto.user_id,
+                    userName = commentDto.user_name,
+                    content = commentDto.content,
+                    rating = commentDto.rating,
+                    createdAt = LocalDateTime.parse(commentDto.created_at, formatter),
+                    updatedAt = LocalDateTime.parse(commentDto.updated_at, formatter)
+                )
+            } ?: emptyList(),
             createdAt = LocalDateTime.parse(createdAt, formatter),
             updatedAt = LocalDateTime.parse(updatedAt, formatter)
         )
