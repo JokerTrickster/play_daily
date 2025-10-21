@@ -18,11 +18,27 @@ class CreateMemoUseCase @Inject constructor(
         latitude: Double? = null,
         longitude: Double? = null,
         locationName: String? = null,
-        category: PlaceCategory? = null
+        category: PlaceCategory? = null,
+        isWishlist: Boolean = false,
+        businessName: String? = null,
+        businessPhone: String? = null,
+        businessAddress: String? = null
     ): Result<Memo> {
         return repository.createMemo(
-            title, content, imageUrl, imageUrls, rating, isPinned,
-            latitude, longitude, locationName, category
+            title = title,
+            content = content,
+            imageUrl = imageUrl,
+            imageUrls = imageUrls,
+            rating = rating,
+            isPinned = isPinned,
+            latitude = latitude,
+            longitude = longitude,
+            locationName = locationName,
+            category = category,
+            isWishlist = isWishlist,
+            businessName = businessName,
+            businessPhone = businessPhone,
+            businessAddress = businessAddress
         )
     }
 }
