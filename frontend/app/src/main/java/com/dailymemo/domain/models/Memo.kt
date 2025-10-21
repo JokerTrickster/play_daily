@@ -19,6 +19,7 @@ data class Memo(
     val businessName: String? = null, // 장소/가게명
     val businessPhone: String? = null, // 전화번호
     val businessAddress: String? = null, // 주소
+    val naverPlaceUrl: String? = null, // 네이버 플레이스 URL
     val comments: List<Comment> = emptyList(), // 댓글 목록
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime

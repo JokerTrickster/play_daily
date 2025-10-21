@@ -18,4 +18,5 @@ type ReqCreateMemo struct {
 	BusinessName    *string               `json:"business_name"`
 	BusinessPhone   *string               `json:"business_phone"`
 	BusinessAddress *string               `json:"business_address"`
+	NaverPlaceURL   *string               `json:"naver_place_url"`
 }

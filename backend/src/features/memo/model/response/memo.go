@@ -19,6 +19,7 @@ type ResMemo struct {
 	BusinessName    *string   `json:"business_name,omitempty"`
 	BusinessPhone   *string   `json:"business_phone,omitempty"`
 	BusinessAddress *string   `json:"business_address,omitempty"`
+	NaverPlaceURL   *string   `json:"naver_place_url,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }

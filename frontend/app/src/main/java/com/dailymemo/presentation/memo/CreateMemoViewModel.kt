@@ -178,12 +178,17 @@ class CreateMemoViewModel @Inject constructor(
         }
     }
 
+    private val _naverPlaceUrl = MutableStateFlow("")
+    val naverPlaceUrl: StateFlow<String> = _naverPlaceUrl.asStateFlow()
+
     fun selectPlace(place: com.dailymemo.domain.models.Place) {
         _locationName.value = place.name
         _currentLocation.value = Location(place.latitude, place.longitude)
         _businessName.value = place.name
         _businessPhone.value = place.phone ?: ""
         _businessAddress.value = place.address
+        // Generate Naver Place URL
+        _naverPlaceUrl.value = "https://m.place.naver.com/place/search?query=${java.net.URLEncoder.encode(place.name, "UTF-8")}"
         closeSearchDialog()
     }
 
@@ -209,7 +214,8 @@ class CreateMemoViewModel @Inject constructor(
                 isWishlist = _isWishlist.value,
                 businessName = if (_businessName.value.isNotBlank()) _businessName.value.trim() else null,
                 businessPhone = if (_businessPhone.value.isNotBlank()) _businessPhone.value.trim() else null,
-                businessAddress = if (_businessAddress.value.isNotBlank()) _businessAddress.value.trim() else null
+                businessAddress = if (_businessAddress.value.isNotBlank()) _businessAddress.value.trim() else null,
+                naverPlaceUrl = if (_naverPlaceUrl.value.isNotBlank()) _naverPlaceUrl.value.trim() else null
             ).fold(
                 onSuccess = {
                     _uiState.value = CreateMemoUiState.Success

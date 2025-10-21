@@ -62,6 +62,7 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		BusinessName:    req.BusinessName,
 		BusinessPhone:   req.BusinessPhone,
 		BusinessAddress: req.BusinessAddress,
+		NaverPlaceURL:   req.NaverPlaceURL,
 	}
 
 	err := uc.Repository.Create(ctx, memo)

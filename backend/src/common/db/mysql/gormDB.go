@@ -36,6 +36,7 @@ type Memo struct {
 	BusinessName    *string  `json:"business_name,omitempty" gorm:"column:business_name;type:varchar(255);comment:장소/가게명 (카카오/네이버)"`
 	BusinessPhone   *string  `json:"business_phone,omitempty" gorm:"column:business_phone;type:varchar(50);comment:전화번호"`
 	BusinessAddress *string  `json:"business_address,omitempty" gorm:"column:business_address;type:text;comment:주소"`
+	NaverPlaceURL   *string  `json:"naver_place_url,omitempty" gorm:"column:naver_place_url;type:varchar(500);comment:네이버 플레이스 URL"`
 	User            *User    `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }
 
