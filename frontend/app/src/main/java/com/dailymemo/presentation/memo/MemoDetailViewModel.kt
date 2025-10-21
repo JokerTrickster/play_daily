@@ -21,6 +21,8 @@ class MemoDetailViewModel @Inject constructor(
     private val getMemoByIdUseCase: GetMemoByIdUseCase,
     private val updateMemoUseCase: UpdateMemoUseCase,
     private val deleteMemoUseCase: DeleteMemoUseCase,
+    private val createCommentUseCase: com.dailymemo.domain.usecases.CreateCommentUseCase,
+    private val deleteCommentUseCase: com.dailymemo.domain.usecases.DeleteCommentUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -70,31 +72,6 @@ class MemoDetailViewModel @Inject constructor(
 
     init {
         loadMemo()
-        loadComments()
-    }
-
-    private fun loadComments() {
-        // TODO: 백엔드 연동 시 실제 댓글 로드
-        _comments.value = listOf(
-            Comment(
-                id = 1,
-                memoId = memoId,
-                userId = 1,
-                userName = "테스트 사용자",
-                content = "좋은 장소네요!",
-                createdAt = LocalDateTime.now().minusHours(2),
-                updatedAt = LocalDateTime.now().minusHours(2)
-            ),
-            Comment(
-                id = 2,
-                memoId = memoId,
-                userId = 2,
-                userName = "김철수",
-                content = "다음에 꼭 가봐야겠어요",
-                createdAt = LocalDateTime.now().minusMinutes(30),
-                updatedAt = LocalDateTime.now().minusMinutes(30)
-            )
-        )
     }
 
     fun onCommentInputChange(newInput: String) {
@@ -108,25 +85,31 @@ class MemoDetailViewModel @Inject constructor(
     fun postComment() {
         if (_commentInput.value.isBlank()) return
 
-        // TODO: 백엔드 연동 시 실제 댓글 작성
-        val newComment = Comment(
-            id = System.currentTimeMillis(),
-            memoId = memoId,
-            userId = 1,
-            userName = "현재 사용자",
-            content = _commentInput.value.trim(),
-            rating = _commentRating.value,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
-        )
-        _comments.value = _comments.value + newComment
-        _commentInput.value = ""
-        _commentRating.value = 0
+        viewModelScope.launch {
+            createCommentUseCase(memoId, _commentInput.value.trim()).fold(
+                onSuccess = { newComment ->
+                    _comments.value = _comments.value + newComment
+                    _commentInput.value = ""
+                    _commentRating.value = 0
+                },
+                onFailure = { error ->
+                    _uiState.value = MemoDetailUiState.Error("댓글 작성 실패: ${error.message}")
+                }
+            )
+        }
     }
 
     fun deleteComment(commentId: Long) {
-        // TODO: 백엔드 연동 시 실제 댓글 삭제
-        _comments.value = _comments.value.filter { it.id != commentId }
+        viewModelScope.launch {
+            deleteCommentUseCase(commentId).fold(
+                onSuccess = {
+                    _comments.value = _comments.value.filter { it.id != commentId }
+                },
+                onFailure = { error ->
+                    _uiState.value = MemoDetailUiState.Error("댓글 삭제 실패: ${error.message}")
+                }
+            )
+        }
     }
 
     private fun loadMemo() {
@@ -144,6 +127,10 @@ class MemoDetailViewModel @Inject constructor(
                     _businessName.value = memo.businessName
                     _businessPhone.value = memo.businessPhone
                     _businessAddress.value = memo.businessAddress
+
+                    // 댓글 로드 (API에서 함께 반환됨)
+                    _comments.value = memo.comments
+
                     _uiState.value = MemoDetailUiState.Loaded
                 },
                 onFailure = { error ->

@@ -179,4 +179,12 @@ object AppModule {
     ): PlaceRepository {
         return PlaceRepositoryImpl(kakaoLocalApiService)
     }
+
+    @Provides
+    @Singleton
+    fun provideCommentRepository(
+        commentApiService: com.dailymemo.data.datasources.remote.api.CommentApiService
+    ): com.dailymemo.domain.repositories.CommentRepository {
+        return com.dailymemo.data.repositories.CommentRepositoryImpl(commentApiService)
+    }
 }
