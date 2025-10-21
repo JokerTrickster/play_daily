@@ -74,6 +74,10 @@ class MemoRepositoryImpl @Inject constructor(
             val longitudePart = longitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val locationNamePart = locationName?.toRequestBody("text/plain".toMediaTypeOrNull())
             val categoryPart = category?.name?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val isWishlistPart = isWishlist.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessNamePart = businessName?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessPhonePart = businessPhone?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessAddressPart = businessAddress?.toRequestBody("text/plain".toMediaTypeOrNull())
 
             val response = memoApiService.createMemo(
                 title = titlePart,
@@ -84,6 +88,10 @@ class MemoRepositoryImpl @Inject constructor(
                 longitude = longitudePart,
                 locationName = locationNamePart,
                 category = categoryPart,
+                isWishlist = isWishlistPart,
+                businessName = businessNamePart,
+                businessPhone = businessPhonePart,
+                businessAddress = businessAddressPart,
                 image = null // TODO: 이미지 업로드 구현 시 추가
             )
             if (response.isSuccessful && response.body() != null) {

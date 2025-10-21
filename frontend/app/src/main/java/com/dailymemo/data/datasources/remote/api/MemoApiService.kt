@@ -32,6 +32,10 @@ interface MemoApiService {
         @Part("longitude") longitude: RequestBody?,
         @Part("location_name") locationName: RequestBody?,
         @Part("category") category: RequestBody?,
+        @Part("is_wishlist") isWishlist: RequestBody?,
+        @Part("business_name") businessName: RequestBody?,
+        @Part("business_phone") businessPhone: RequestBody?,
+        @Part("business_address") businessAddress: RequestBody?,
         @Part image: MultipartBody.Part?
     ): Response<MemoDto>
 
