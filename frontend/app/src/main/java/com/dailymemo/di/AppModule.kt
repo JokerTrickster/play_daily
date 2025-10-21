@@ -95,6 +95,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideCommentApiService(retrofit: Retrofit): com.dailymemo.data.datasources.remote.api.CommentApiService {
+        return retrofit.create(com.dailymemo.data.datasources.remote.api.CommentApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideAuthLocalDataSource(
         @ApplicationContext context: Context
     ): AuthLocalDataSource {

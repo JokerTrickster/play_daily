@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	authHandler "main/features/auth/handler"
+	commentHandler "main/features/comment/handler"
 	memoHandler "main/features/memo/handler"
 
 	"github.com/labstack/echo/v4"
@@ -17,6 +18,7 @@ func InitHandler(e *echo.Echo) error {
 
 	authHandler.NewAuthHandler(e)
 	memoHandler.NewMemoHandlers(e)
+	commentHandler.NewCommentHandler(e)
 
 	return nil
 }

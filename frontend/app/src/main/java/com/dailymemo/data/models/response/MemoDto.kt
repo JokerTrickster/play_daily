@@ -35,6 +35,8 @@ data class MemoDto(
     val businessAddress: String? = null,
     @SerializedName("naver_place_url")
     val naverPlaceUrl: String? = null,
+    @SerializedName("comments")
+    val comments: List<CommentResponseDto>? = null,
     @SerializedName("created_at")
     val createdAt: String,
     @SerializedName("updated_at")

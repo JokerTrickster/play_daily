@@ -18,10 +18,11 @@ func NewGetMemoRepository(gormDB *gorm.DB) _interface.IGetMemoRepository {
 	}
 }
 
-// GetByID 특정 메모 조회
+// GetByID 특정 메모 조회 (댓글 포함)
 func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error) {
 	var memo mysql.Memo
 	result := r.GormDB.WithContext(ctx).
+		Preload("Comments.User").
 		Where("id = ? AND user_id = ?", id, userID).
 		First(&memo)
 
