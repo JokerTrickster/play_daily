@@ -2,8 +2,6 @@ package com.dailymemo.presentation.memo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -11,16 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,9 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import com.dailymemo.domain.models.Comment
-import java.time.format.DateTimeFormatter
+import com.dailymemo.presentation.memo.components.BusinessInfoDisplaySection
+import com.dailymemo.presentation.memo.components.CommentsSection
+import com.dailymemo.presentation.memo.components.MemoImageSection
 import android.content.Intent
 import android.net.Uri
 
@@ -55,7 +47,11 @@ fun MemoDetailScreen(
     val isEditing by viewModel.isEditing.collectAsState()
     val comments by viewModel.comments.collectAsState()
     val commentInput by viewModel.commentInput.collectAsState()
+    val commentRating by viewModel.commentRating.collectAsState()
     val naverPlaceUrl by viewModel.naverPlaceUrl.collectAsState()
+    val businessName by viewModel.businessName.collectAsState()
+    val businessPhone by viewModel.businessPhone.collectAsState()
+    val businessAddress by viewModel.businessAddress.collectAsState()
 
     val scrollState = rememberScrollState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -374,33 +370,15 @@ fun MemoDetailScreen(
                                 )
                             }
 
-                            // Image (if exists)
-                            if (imageUrl.isNotBlank()) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(16.dp)
-                                    ) {
-                                        Text(
-                                            text = "이미지",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        AsyncImage(
-                                            model = imageUrl,
-                                            contentDescription = "메모 이미지",
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .heightIn(max = 400.dp)
-                                                .clip(RoundedCornerShape(8.dp)),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    }
-                                }
-                            }
+                            // Business Info Section
+                            BusinessInfoDisplaySection(
+                                businessName = businessName,
+                                businessPhone = businessPhone,
+                                businessAddress = businessAddress
+                            )
+
+                            // Image Section
+                            MemoImageSection(imageUrl = imageUrl)
 
                             // Rating
                             if (rating > 0) {
@@ -470,7 +448,9 @@ fun MemoDetailScreen(
                                 CommentsSection(
                                     comments = comments,
                                     commentInput = commentInput,
+                                    commentRating = commentRating,
                                     onCommentInputChange = viewModel::onCommentInputChange,
+                                    onCommentRatingChange = viewModel::onCommentRatingChange,
                                     onPostComment = viewModel::postComment,
                                     onDeleteComment = viewModel::deleteComment
                                 )
@@ -480,277 +460,6 @@ fun MemoDetailScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun CommentsSection(
-    comments: List<Comment>,
-    commentInput: String,
-    onCommentInputChange: (String) -> Unit,
-    onPostComment: () -> Unit,
-    onDeleteComment: (Long) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "댓글",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "${comments.size}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Comment Input
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = commentInput,
-                    onValueChange = onCommentInputChange,
-                    placeholder = { Text("댓글을 입력하세요...") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(20.dp),
-                    maxLines = 3,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    )
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = onPostComment,
-                    enabled = commentInput.isNotBlank()
-                ) {
-                    Icon(
-                        Icons.Filled.Send,
-                        contentDescription = "댓글 작성",
-                        tint = if (commentInput.isNotBlank()) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        }
-                    )
-                }
-            }
-
-            // Comments List
-            if (comments.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(8.dp))
-
-                comments.forEach { comment ->
-                    CommentItem(
-                        comment = comment,
-                        onDelete = { onDeleteComment(comment.id) }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CommentItem(
-    comment: Comment,
-    onDelete: () -> Unit
-) {
-    val timeFormatter = DateTimeFormatter.ofPattern("MM/dd HH:mm")
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        ),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = comment.userName,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = comment.createdAt.format(timeFormatter),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // 댓글 평점 표시
-                if (comment.rating > 0) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        repeat(5) { index ->
-                            Icon(
-                                imageVector = if (index < comment.rating) Icons.Filled.Star else Icons.Outlined.Star,
-                                contentDescription = null,
-                                tint = if (index < comment.rating) Color(0xFFFFB800) else Color.Gray,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-
-                Text(
-                    text = comment.content,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = "댓글 삭제",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun BusinessInfoDisplaySection(
-    businessName: String?,
-    businessPhone: String?,
-    businessAddress: String?,
-    modifier: Modifier = Modifier
-) {
-    if (businessName != null || businessPhone != null || businessAddress != null) {
-        Card(
-            modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "장소 정보",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                businessName?.let {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Store,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                businessPhone?.let {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Phone,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                businessAddress?.let {
-                    Row(
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MemoImageSection(
-    imageUrl: String?,
-    modifier: Modifier = Modifier
-) {
-    imageUrl?.let { url ->
-        if (url.isNotBlank()) {
-            Card(
-                modifier = modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                AsyncImage(
-                    model = url,
-                    contentDescription = "메모 이미지",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 300.dp),
-                    contentScale = ContentScale.Crop
-                )
             }
         }
     }
