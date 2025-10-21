@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -106,21 +107,27 @@ func (s *S3Client) UploadFile(ctx context.Context, file multipart.File, fileHead
 		return "", fmt.Errorf("failed to read file: %w", err)
 	}
 
-	// S3에 업로드
+	fmt.Printf("📤 S3 업로드 시작: bucket=%s, key=%s, size=%d bytes, contentType=%s\n",
+		s.bucketName, key, len(fileBytes), contentType)
+
+	// S3에 업로드 (바이너리 데이터를 올바르게 처리)
 	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(s.bucketName),
 		Key:           aws.String(key),
-		Body:          strings.NewReader(string(fileBytes)),
+		Body:          bytes.NewReader(fileBytes),
 		ContentType:   aws.String(contentType),
 		ContentLength: aws.Int64(int64(len(fileBytes))),
 	})
 
 	if err != nil {
+		fmt.Printf("❌ S3 업로드 실패: %v\n", err)
 		return "", fmt.Errorf("failed to upload to S3: %w", err)
 	}
 
 	// URL 생성 (CloudFront 사용 시 CloudFront URL로 변경 가능)
 	url := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.bucketName, s.region, key)
+
+	fmt.Printf("✅ S3 업로드 성공: %s\n", url)
 
 	return url, nil
 }

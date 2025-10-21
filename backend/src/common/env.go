@@ -114,7 +114,7 @@ func LoadConfig() error {
 		MaxFileSize: getEnvAsInt64("MAX_FILE_SIZE", 10485760), // 10MB
 
 		// AWS S3 Configuration
-		AWSRegion:          getEnv("AWS_REGION", "ap-northeast-2"),
+		AWSRegion:          getEnv("AWS_REGION", "ap-south-1"),
 		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
 		AWSSecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
 		S3BucketName:       getEnv("S3_BUCKET_NAME", "daily-memo-dev"),
