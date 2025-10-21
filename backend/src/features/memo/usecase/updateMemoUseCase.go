@@ -29,6 +29,11 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
 	defer cancel()
 
+	// 비즈니스 정보 필드 검증
+	if err := request.ValidateBusinessFields(req.BusinessName, req.BusinessPhone, req.BusinessAddress); err != nil {
+		return nil, err
+	}
+
 	// 이미지 파일이 있으면 S3에 업로드
 	imageURL := req.ImageURL
 	if req.ImageFile != nil && req.ImageHeader != nil {
@@ -50,14 +55,18 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 	}
 
 	updateMemo := &mysql.Memo{
-		Title:        req.Title,
-		Content:      req.Content,
-		ImageURL:     imageURL,
-		Rating:       req.Rating,
-		IsPinned:     req.IsPinned,
-		Latitude:     req.Latitude,
-		Longitude:    req.Longitude,
-		LocationName: req.LocationName,
+		Title:           req.Title,
+		Content:         req.Content,
+		ImageURL:        imageURL,
+		Rating:          req.Rating,
+		IsPinned:        req.IsPinned,
+		Latitude:        req.Latitude,
+		Longitude:       req.Longitude,
+		LocationName:    req.LocationName,
+		IsWishlist:      req.IsWishlist,
+		BusinessName:    req.BusinessName,
+		BusinessPhone:   req.BusinessPhone,
+		BusinessAddress: req.BusinessAddress,
 	}
 
 	err := uc.Repository.Update(ctx, memoID, userID, updateMemo)
