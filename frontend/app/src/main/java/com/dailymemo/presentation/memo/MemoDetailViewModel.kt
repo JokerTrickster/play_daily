@@ -53,6 +53,9 @@ class MemoDetailViewModel @Inject constructor(
     private val _commentInput = MutableStateFlow("")
     val commentInput: StateFlow<String> = _commentInput.asStateFlow()
 
+    private val _commentRating = MutableStateFlow(0)
+    val commentRating: StateFlow<Int> = _commentRating.asStateFlow()
+
     private val _naverPlaceUrl = MutableStateFlow<String?>(null)
     val naverPlaceUrl: StateFlow<String?> = _naverPlaceUrl.asStateFlow()
 
@@ -89,6 +92,10 @@ class MemoDetailViewModel @Inject constructor(
         _commentInput.value = newInput
     }
 
+    fun onCommentRatingChange(newRating: Int) {
+        _commentRating.value = newRating
+    }
+
     fun postComment() {
         if (_commentInput.value.isBlank()) return
 
@@ -99,11 +106,13 @@ class MemoDetailViewModel @Inject constructor(
             userId = 1,
             userName = "현재 사용자",
             content = _commentInput.value.trim(),
+            rating = _commentRating.value,
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now()
         )
         _comments.value = _comments.value + newComment
         _commentInput.value = ""
+        _commentRating.value = 0
     }
 
     fun deleteComment(commentId: Long) {
