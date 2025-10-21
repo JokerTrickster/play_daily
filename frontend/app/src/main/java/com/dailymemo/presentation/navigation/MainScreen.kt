@@ -85,6 +85,9 @@ fun MainScreen(
                     onNavigateToCreate = {
                         mainNavController.navigate(Screen.Memory.Create.route)
                     },
+                    onNavigateToCreateWishlist = {
+                        mainNavController.navigate("${Screen.Memory.Create.route}?isWishlist=true")
+                    },
                     onNavigateToDetail = { memoId ->
                         mainNavController.navigate("${Screen.Memory.Detail.route}/$memoId")
                     }

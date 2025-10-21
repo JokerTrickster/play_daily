@@ -22,14 +22,23 @@ class MemoListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<MemoListUiState>(MemoListUiState.Loading)
     val uiState: StateFlow<MemoListUiState> = _uiState.asStateFlow()
 
+    private val _currentTab = MutableStateFlow(MemoTab.VISITED)
+    val currentTab: StateFlow<MemoTab> = _currentTab.asStateFlow()
+
     init {
+        loadMemos()
+    }
+
+    fun switchTab(tab: MemoTab) {
+        _currentTab.value = tab
         loadMemos()
     }
 
     fun loadMemos() {
         viewModelScope.launch {
             _uiState.value = MemoListUiState.Loading
-            getMemosUseCase().fold(
+            val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
+            getMemosUseCase(isWishlist = isWishlist).fold(
                 onSuccess = { memos ->
                     _uiState.value = MemoListUiState.Success(memos)
                 },

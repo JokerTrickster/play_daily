@@ -39,9 +39,11 @@ import java.time.format.DateTimeFormatter
 fun MemoListScreen(
     viewModel: MemoListViewModel = hiltViewModel(),
     onNavigateToCreate: () -> Unit = {},
+    onNavigateToCreateWishlist: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentTab by viewModel.currentTab.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Reload memos when screen comes back to foreground
@@ -59,21 +61,44 @@ fun MemoListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "내 메모",
-                        fontWeight = FontWeight.Bold
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "내 메모",
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
                 )
-            )
+                TabRow(
+                    selectedTabIndex = if (currentTab == MemoTab.VISITED) 0 else 1,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    Tab(
+                        selected = currentTab == MemoTab.VISITED,
+                        onClick = { viewModel.switchTab(MemoTab.VISITED) },
+                        text = { Text("방문한 곳") }
+                    )
+                    Tab(
+                        selected = currentTab == MemoTab.WISHLIST,
+                        onClick = { viewModel.switchTab(MemoTab.WISHLIST) },
+                        text = { Text("가고싶은 곳") }
+                    )
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onNavigateToCreate,
+                onClick = {
+                    if (currentTab == MemoTab.WISHLIST) {
+                        onNavigateToCreateWishlist()
+                    } else {
+                        onNavigateToCreate()
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 shape = CircleShape
             ) {
