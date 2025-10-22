@@ -49,6 +49,13 @@ class MapViewModel @Inject constructor(
     private val _showSearchResults = MutableStateFlow(false)
     val showSearchResults: StateFlow<Boolean> = _showSearchResults.asStateFlow()
 
+    // Popup card states (Task 005)
+    private val _selectedMemoId = MutableStateFlow<Long?>(null)
+    val selectedMemoId: StateFlow<Long?> = _selectedMemoId.asStateFlow()
+
+    private val _showPopupCard = MutableStateFlow(false)
+    val showPopupCard: StateFlow<Boolean> = _showPopupCard.asStateFlow()
+
     init {
         loadMemos()
         startLocationUpdates()
@@ -207,6 +214,19 @@ class MapViewModel @Inject constructor(
         _currentLocation.value?.let { loc ->
             searchNearbyPlaces(loc.latitude, loc.longitude)
         }
+    }
+
+    // Marker and popup functions (Task 003, 005)
+    fun onMarkerClick(memoId: Long) {
+        _selectedMemoId.value = memoId
+    }
+
+    fun onInfoWindowClick() {
+        _showPopupCard.value = true
+    }
+
+    fun dismissPopupCard() {
+        _showPopupCard.value = false
     }
 }
 

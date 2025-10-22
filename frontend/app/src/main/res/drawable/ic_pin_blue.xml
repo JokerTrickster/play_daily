@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- 그림자 -->
+    <path
+        android:fillColor="#4D000000"
+        android:pathData="M24,44 C26,44 30,42 30,38 C30,34 26,30 24,30 C22,30 18,34 18,38 C18,42 22,44 24,44Z"/>
+
+    <!-- 핀 본체 (Blue) -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M24,4 C16.27,4 10,10.27 10,18 C10,28.5 24,42 24,42 C24,42 38,28.5 38,18 C38,10.27 31.73,4 24,4Z"/>
+
+    <!-- 흰색 외곽선 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M24,4 C16.27,4 10,10.27 10,18 C10,28.5 24,42 24,42 C24,42 38,28.5 38,18 C38,10.27 31.73,4 24,4Z"/>
+
+    <!-- 중앙 원 (구분용) -->
+    <circle
+        android:fillColor="#FFFFFF"
+        android:cx="24"
+        android:cy="18"
+        android:radius="6"/>
+</vector>
