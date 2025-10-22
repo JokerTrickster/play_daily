@@ -69,7 +69,7 @@ jobs:
       - name: Build Docker image
         working-directory: ./backend
         run: |
-          docker build -t play-daily-backend:latest .
+          docker build --no-cache -t play-daily-backend:latest .
 
       - name: Run Docker container
         run: |
