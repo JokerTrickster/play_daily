@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
-import com.dailymemo.presentation.memo.components.HalfStarRating
+import com.dailymemo.presentation.memo.components.HalfStarRatingDisplay
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -106,7 +106,7 @@ fun MemoPopupCard(
 
                 // Rating
                 if (memo.rating > 0f) {
-                    HalfStarRating(
+                    HalfStarRatingDisplay(
                         rating = memo.rating,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -137,14 +137,4 @@ fun MemoPopupCard(
     }
 }
 
-val PlaceCategory.icon: String
-    get() = when (this) {
-        PlaceCategory.RESTAURANT -> "🍽️"
-        PlaceCategory.CAFE -> "☕"
-        PlaceCategory.CULTURE -> "🎭"
-        PlaceCategory.SHOPPING -> "🛍️"
-        PlaceCategory.NATURE -> "🌳"
-        PlaceCategory.ACCOMMODATION -> "🏨"
-        PlaceCategory.CONVENIENCE -> "🏪"
-        PlaceCategory.ALL -> "📍"
-    }
+// PlaceCategory already has icon property in domain model
