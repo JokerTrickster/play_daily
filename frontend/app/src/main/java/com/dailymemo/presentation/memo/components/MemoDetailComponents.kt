@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import com.dailymemo.utils.FullSizeAsyncImage
 
 @Composable
 fun BusinessInfoDisplaySection(
@@ -109,8 +109,8 @@ fun MemoImageSection(
                 modifier = modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                AsyncImage(
-                    model = url,
+                FullSizeAsyncImage(
+                    imageUrl = url,
                     contentDescription = "메모 이미지",
                     modifier = Modifier
                         .fillMaxWidth()

@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.presentation.memo.components.HalfStarRatingDisplay
+import com.dailymemo.utils.OptimizedAsyncImage
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -52,12 +52,13 @@ fun MemoPopupCard(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // Thumbnail
+                // Thumbnail (최적화된 썸네일 로딩)
                 if (memo.imageUrl != null) {
-                    AsyncImage(
-                        model = memo.imageUrl,
+                    OptimizedAsyncImage(
+                        imageUrl = memo.imageUrl,
                         contentDescription = "${memo.title} 썸네일",
                         contentScale = ContentScale.Crop,
+                        thumbnailSize = 300, // 팝업 카드용 작은 크기
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp)
