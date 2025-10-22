@@ -78,9 +78,6 @@ fun MemoDetailScreen(
 
     LaunchedEffect(uiState) {
         when (uiState) {
-            is MemoDetailUiState.Updated -> {
-                viewModel.toggleEditMode()
-            }
             is MemoDetailUiState.Deleted -> {
                 onMemoDeleted()
             }

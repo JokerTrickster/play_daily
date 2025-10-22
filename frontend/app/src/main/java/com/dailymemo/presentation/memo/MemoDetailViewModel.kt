@@ -162,6 +162,9 @@ class MemoDetailViewModel @Inject constructor(
                     // 댓글 로드 (API에서 함께 반환됨)
                     _comments.value = memo.comments
 
+                    // 새로 추가한 이미지 URIs 초기화
+                    _imageUris.value = emptyList()
+
                     _uiState.value = MemoDetailUiState.Loaded
                 },
                 onFailure = { error ->
@@ -280,7 +283,8 @@ class MemoDetailViewModel @Inject constructor(
             ).fold(
                 onSuccess = {
                     _isEditing.value = false
-                    _uiState.value = MemoDetailUiState.Updated
+                    // 업데이트 후 메모를 다시 로드하여 최신 상태 반영
+                    loadMemo()
                 },
                 onFailure = { error ->
                     _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.updateError(error))
