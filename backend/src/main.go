@@ -11,8 +11,8 @@ import (
 )
 
 // @title Play Daily API
-// @version 1.0
-// @description Daily Memo API Server
+// @version 1.1
+// @description Daily Memo API Server with Comments
 // @host localhost:8080
 // @BasePath /
 func main() {
