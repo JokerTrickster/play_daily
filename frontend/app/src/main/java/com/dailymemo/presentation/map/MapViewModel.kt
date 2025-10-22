@@ -189,7 +189,7 @@ class MapViewModel @Inject constructor(
                         category = cat,
                         longitude = longitude,
                         latitude = latitude,
-                        radius = 1000
+                        radius = 5000 // 5km로 확대 (메모 표시는 API 사용 안 함)
                     ).getOrNull()
                 }.flatten().distinctBy { it.id }
 
@@ -200,7 +200,7 @@ class MapViewModel @Inject constructor(
                     category = category,
                     longitude = longitude,
                     latitude = latitude,
-                    radius = 1000
+                    radius = 5000 // 5km로 확대 (메모 표시는 API 사용 안 함)
                 ).getOrNull() ?: emptyList()
 
                 _searchResults.value = results
