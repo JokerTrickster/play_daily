@@ -30,11 +30,11 @@ class CreateMemoViewModel @Inject constructor(
     private val _content = MutableStateFlow("")
     val content: StateFlow<String> = _content.asStateFlow()
 
-    private val _imageUrl = MutableStateFlow("")
-    val imageUrl: StateFlow<String> = _imageUrl.asStateFlow()
+    private val _imageUri = MutableStateFlow<android.net.Uri?>(null)
+    val imageUri: StateFlow<android.net.Uri?> = _imageUri.asStateFlow()
 
-    private val _rating = MutableStateFlow(0)
-    val rating: StateFlow<Int> = _rating.asStateFlow()
+    private val _rating = MutableStateFlow(0f)
+    val rating: StateFlow<Float> = _rating.asStateFlow()
 
     private val _isPinned = MutableStateFlow(false)
     val isPinned: StateFlow<Boolean> = _isPinned.asStateFlow()
@@ -124,12 +124,12 @@ class CreateMemoViewModel @Inject constructor(
         _uiState.value = CreateMemoUiState.Initial
     }
 
-    fun onImageUrlChange(newUrl: String) {
-        _imageUrl.value = newUrl
+    fun onImageUriChange(newUri: android.net.Uri?) {
+        _imageUri.value = newUri
     }
 
-    fun onRatingChange(newRating: Int) {
-        _rating.value = newRating
+    fun onRatingChange(newRating: Float) {
+        _rating.value = newRating.coerceIn(0f, 5f)
     }
 
     fun togglePin() {
@@ -189,8 +189,8 @@ class CreateMemoViewModel @Inject constructor(
         _businessName.value = place.name
         _businessPhone.value = place.phone ?: ""
         _businessAddress.value = place.address
-        // Generate Naver Place URL
-        _naverPlaceUrl.value = "https://m.place.naver.com/place/search?query=${java.net.URLEncoder.encode(place.name, "UTF-8")}"
+        // Use place URL from Kakao API (which contains the actual place URL)
+        _naverPlaceUrl.value = place.placeUrl ?: ""
         closeSearchDialog()
     }
 
@@ -208,7 +208,7 @@ class CreateMemoViewModel @Inject constructor(
             createMemoUseCase(
                 title = _title.value.trim(),
                 content = _content.value.trim(),
-                imageUrl = if (_imageUrl.value.isNotBlank()) _imageUrl.value.trim() else null,
+                imageUri = _imageUri.value,
                 rating = _rating.value,
                 isPinned = _isPinned.value,
                 latitude = _currentLocation.value?.latitude,

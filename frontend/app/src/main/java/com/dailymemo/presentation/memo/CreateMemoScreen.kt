@@ -33,6 +33,7 @@ import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.presentation.components.BusinessInfoSection
 import com.dailymemo.presentation.components.InterestLevelPicker
 import com.dailymemo.presentation.components.PlaceSearchDialog
+import com.dailymemo.presentation.memo.components.HalfStarRating
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +66,7 @@ fun CreateMemoScreen(
     val uiState by viewModel.uiState.collectAsState()
     val title by viewModel.title.collectAsState()
     val content by viewModel.content.collectAsState()
-    val imageUrl by viewModel.imageUrl.collectAsState()
+    val imageUri by viewModel.imageUri.collectAsState()
     val rating by viewModel.rating.collectAsState()
     val isPinned by viewModel.isPinned.collectAsState()
     val currentLocation by viewModel.currentLocation.collectAsState()
@@ -82,12 +83,10 @@ fun CreateMemoScreen(
     val scrollState = rememberScrollState()
 
     // Image picker
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        selectedImageUri = uri
-        uri?.let { viewModel.onImageUrlChange(it.toString()) }
+        viewModel.onImageUriChange(uri)
     }
 
     LaunchedEffect(uiState) {
@@ -220,7 +219,7 @@ fun CreateMemoScreen(
                         }
 
                         // Image preview
-                        selectedImageUri?.let { uri ->
+                        imageUri?.let { uri ->
                             Spacer(modifier = Modifier.height(12.dp))
                             Box(
                                 modifier = Modifier.fillMaxWidth()
@@ -238,8 +237,7 @@ fun CreateMemoScreen(
                                 // Remove image button
                                 IconButton(
                                     onClick = {
-                                        selectedImageUri = null
-                                        viewModel.onImageUrlChange("")
+                                        viewModel.onImageUriChange(null)
                                     },
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
@@ -396,39 +394,22 @@ fun CreateMemoScreen(
                         )
                     } else {
                         Column(
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "별점",
+                                text = "별점 (0.5 단위)",
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.Start)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                (1..5).forEach { star ->
-                                    IconButton(
-                                        onClick = { viewModel.onRatingChange(star) }
-                                    ) {
-                                        Icon(
-                                            imageVector = if (star <= rating) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                                            contentDescription = "$star 점",
-                                            tint = if (star <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(32.dp)
-                                        )
-                                    }
-                                }
-                            }
-                            if (rating > 0) {
-                                Text(
-                                    text = "선택: ${rating}점",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                                )
-                            }
+                            HalfStarRating(
+                                rating = rating,
+                                onRatingChange = viewModel::onRatingChange,
+                                starSize = 36.dp,
+                                showLabel = true
+                            )
                         }
                     }
                 }

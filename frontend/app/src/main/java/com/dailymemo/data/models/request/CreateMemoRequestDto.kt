@@ -10,7 +10,7 @@ data class CreateMemoRequestDto(
     @SerializedName("image_url")
     val imageUrl: String? = null,
     @SerializedName("rating")
-    val rating: Int = 0,
+    val rating: Float = 0f,
     @SerializedName("is_pinned")
     val isPinned: Boolean = false,
     @SerializedName("latitude")

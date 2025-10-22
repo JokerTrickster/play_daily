@@ -14,7 +14,7 @@ data class MemoDto(
     @SerializedName("image_url")
     val imageUrl: String?,
     @SerializedName("rating")
-    val rating: Int,
+    val rating: Float,
     @SerializedName("is_pinned")
     val isPinned: Boolean,
     @SerializedName("latitude")

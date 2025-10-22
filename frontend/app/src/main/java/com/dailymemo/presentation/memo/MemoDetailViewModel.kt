@@ -1,5 +1,6 @@
 package com.dailymemo.presentation.memo
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,7 @@ class MemoDetailViewModel @Inject constructor(
     private val deleteMemoUseCase: DeleteMemoUseCase,
     private val createCommentUseCase: com.dailymemo.domain.usecases.CreateCommentUseCase,
     private val deleteCommentUseCase: com.dailymemo.domain.usecases.DeleteCommentUseCase,
+    private val memoRepository: com.dailymemo.domain.repositories.MemoRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -40,8 +42,14 @@ class MemoDetailViewModel @Inject constructor(
     private val _imageUrl = MutableStateFlow("")
     val imageUrl: StateFlow<String> = _imageUrl.asStateFlow()
 
-    private val _rating = MutableStateFlow(0)
-    val rating: StateFlow<Int> = _rating.asStateFlow()
+    private val _imageUris = MutableStateFlow<List<Uri>>(emptyList())
+    val imageUris: StateFlow<List<Uri>> = _imageUris.asStateFlow()
+
+    private val _existingImageUrls = MutableStateFlow<List<String>>(emptyList())
+    val existingImageUrls: StateFlow<List<String>> = _existingImageUrls.asStateFlow()
+
+    private val _rating = MutableStateFlow(0f)
+    val rating: StateFlow<Float> = _rating.asStateFlow()
 
     private val _isPinned = MutableStateFlow(false)
     val isPinned: StateFlow<Boolean> = _isPinned.asStateFlow()
@@ -69,6 +77,18 @@ class MemoDetailViewModel @Inject constructor(
 
     private val _businessAddress = MutableStateFlow<String?>(null)
     val businessAddress: StateFlow<String?> = _businessAddress.asStateFlow()
+
+    private val _locationName = MutableStateFlow<String?>(null)
+    val locationName: StateFlow<String?> = _locationName.asStateFlow()
+
+    private val _category = MutableStateFlow<com.dailymemo.domain.models.PlaceCategory?>(null)
+    val category: StateFlow<com.dailymemo.domain.models.PlaceCategory?> = _category.asStateFlow()
+
+    private val _isWishlist = MutableStateFlow(false)
+    val isWishlist: StateFlow<Boolean> = _isWishlist.asStateFlow()
+
+    private val _latitude = MutableStateFlow<Double?>(null)
+    private val _longitude = MutableStateFlow<Double?>(null)
 
     init {
         loadMemo()
@@ -121,12 +141,23 @@ class MemoDetailViewModel @Inject constructor(
                     _title.value = memo.title
                     _content.value = memo.content
                     _imageUrl.value = memo.imageUrl ?: ""
+                    // Initialize existing images
+                    _existingImageUrls.value = if (!memo.imageUrl.isNullOrBlank()) {
+                        listOf(memo.imageUrl)
+                    } else {
+                        emptyList()
+                    }
                     _rating.value = memo.rating
                     _isPinned.value = memo.isPinned
                     _naverPlaceUrl.value = memo.naverPlaceUrl
                     _businessName.value = memo.businessName
                     _businessPhone.value = memo.businessPhone
                     _businessAddress.value = memo.businessAddress
+                    _locationName.value = memo.locationName
+                    _category.value = memo.category
+                    _isWishlist.value = memo.isWishlist
+                    _latitude.value = memo.latitude
+                    _longitude.value = memo.longitude
 
                     // 댓글 로드 (API에서 함께 반환됨)
                     _comments.value = memo.comments
@@ -156,12 +187,53 @@ class MemoDetailViewModel @Inject constructor(
         _imageUrl.value = newUrl
     }
 
-    fun onRatingChange(newRating: Int) {
-        _rating.value = newRating
+    fun addImageUri(uri: Uri?) {
+        uri?.let { newUri ->
+            val currentCount = _existingImageUrls.value.size + _imageUris.value.size
+            if (currentCount < 2) {
+                _imageUris.value = _imageUris.value + newUri
+            }
+        }
+    }
+
+    fun removeImageUri(uri: Uri) {
+        _imageUris.value = _imageUris.value.filter { it != uri }
+    }
+
+    fun removeExistingImage(url: String) {
+        _existingImageUrls.value = _existingImageUrls.value.filter { it != url }
+    }
+
+    fun canAddMoreImages(): Boolean {
+        return (_existingImageUrls.value.size + _imageUris.value.size) < 2
+    }
+
+    fun onRatingChange(newRating: Float) {
+        _rating.value = newRating.coerceIn(0f, 5f)
     }
 
     fun togglePin() {
         _isPinned.value = !_isPinned.value
+    }
+
+    fun onLocationNameChange(newLocationName: String?) {
+        _locationName.value = newLocationName
+    }
+
+    fun onBusinessNameChange(newBusinessName: String?) {
+        _businessName.value = newBusinessName
+    }
+
+    fun onBusinessPhoneChange(newBusinessPhone: String?) {
+        _businessPhone.value = newBusinessPhone
+    }
+
+    fun onBusinessAddressChange(newBusinessAddress: String?) {
+        _businessAddress.value = newBusinessAddress
+    }
+
+    fun onCategoryChange(newCategory: com.dailymemo.domain.models.PlaceCategory?) {
+        _category.value = newCategory
     }
 
     fun updateMemo() {
@@ -173,13 +245,38 @@ class MemoDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = MemoDetailUiState.Updating
 
+            // Upload new images and get URLs
+            val newImageUrls = mutableListOf<String>()
+            for (uri in _imageUris.value) {
+                memoRepository.uploadImage(uri).fold(
+                    onSuccess = { url -> newImageUrls.add(url) },
+                    onFailure = { error ->
+                        _uiState.value = MemoDetailUiState.Error("이미지 업로드 실패: ${error.message}")
+                        return@launch
+                    }
+                )
+            }
+
+            // Combine existing and new image URLs
+            val allImageUrls = _existingImageUrls.value + newImageUrls
+            val firstImageUrl = allImageUrls.firstOrNull()
+
             updateMemoUseCase(
                 id = memoId,
                 title = _title.value.trim(),
                 content = _content.value.trim(),
-                imageUrl = if (_imageUrl.value.isNotBlank()) _imageUrl.value.trim() else null,
+                imageUrl = firstImageUrl,
+                imageUrls = allImageUrls,
                 rating = _rating.value,
-                isPinned = _isPinned.value
+                isPinned = _isPinned.value,
+                latitude = _latitude.value,
+                longitude = _longitude.value,
+                locationName = _locationName.value?.trim(),
+                category = _category.value,
+                isWishlist = _isWishlist.value,
+                businessName = _businessName.value?.trim(),
+                businessPhone = _businessPhone.value?.trim(),
+                businessAddress = _businessAddress.value?.trim()
             ).fold(
                 onSuccess = {
                     _isEditing.value = false

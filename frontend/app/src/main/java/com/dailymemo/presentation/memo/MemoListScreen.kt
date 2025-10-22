@@ -268,22 +268,6 @@ fun MemoListItem(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // 이미지 썸네일
-            memo.imageUrl?.let { imageUrl ->
-                if (imageUrl.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AsyncImage(
-                        model = imageUrl,
-                        contentDescription = "메모 이미지",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(12.dp))
 
             // 푸터 (날짜 + 별점)

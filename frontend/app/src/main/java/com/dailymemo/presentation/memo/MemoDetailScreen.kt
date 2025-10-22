@@ -1,5 +1,9 @@
 package com.dailymemo.presentation.memo
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PushPin
@@ -20,16 +26,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.dailymemo.presentation.memo.components.BusinessInfoDisplaySection
 import com.dailymemo.presentation.memo.components.CommentsSection
+import com.dailymemo.presentation.memo.components.HalfStarRating
+import com.dailymemo.presentation.memo.components.HalfStarRatingDisplay
 import com.dailymemo.presentation.memo.components.MemoImageSection
-import android.content.Intent
-import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +49,8 @@ fun MemoDetailScreen(
     val title by viewModel.title.collectAsState()
     val content by viewModel.content.collectAsState()
     val imageUrl by viewModel.imageUrl.collectAsState()
+    val imageUris by viewModel.imageUris.collectAsState()
+    val existingImageUrls by viewModel.existingImageUrls.collectAsState()
     val rating by viewModel.rating.collectAsState()
     val isPinned by viewModel.isPinned.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
@@ -52,10 +61,20 @@ fun MemoDetailScreen(
     val businessName by viewModel.businessName.collectAsState()
     val businessPhone by viewModel.businessPhone.collectAsState()
     val businessAddress by viewModel.businessAddress.collectAsState()
+    val locationName by viewModel.locationName.collectAsState()
+    val category by viewModel.category.collectAsState()
+    val isWishlist by viewModel.isWishlist.collectAsState()
 
     val scrollState = rememberScrollState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    // Image picker
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        viewModel.addImageUri(uri)
+    }
 
     LaunchedEffect(uiState) {
         when (uiState) {
@@ -223,20 +242,126 @@ fun MemoDetailScreen(
                                 )
                             )
 
-                            // Image URL
-                            OutlinedTextField(
-                                value = imageUrl,
-                                onValueChange = viewModel::onImageUrlChange,
-                                label = { Text("이미지 URL (선택)") },
-                                placeholder = { Text("https://...") },
+                            // Image Section
+                            Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
                                 )
-                            )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "이미지 (최대 2개)",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        if (viewModel.canAddMoreImages()) {
+                                            Button(
+                                                onClick = { imagePickerLauncher.launch("image/*") },
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.AddPhotoAlternate,
+                                                    contentDescription = "이미지 추가",
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("추가")
+                                            }
+                                        }
+                                    }
+
+                                    // Existing images
+                                    existingImageUrls.forEach { url ->
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            AsyncImage(
+                                                model = url,
+                                                contentDescription = "기존 이미지",
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(200.dp)
+                                                    .clip(RoundedCornerShape(8.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+
+                                            // Delete button
+                                            IconButton(
+                                                onClick = { viewModel.removeExistingImage(url) },
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(8.dp)
+                                                    .size(32.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                                        RoundedCornerShape(16.dp)
+                                                    )
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "이미지 삭제",
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // New images
+                                    imageUris.forEach { uri ->
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            AsyncImage(
+                                                model = uri,
+                                                contentDescription = "새 이미지",
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(200.dp)
+                                                    .clip(RoundedCornerShape(8.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+
+                                            // Delete button
+                                            IconButton(
+                                                onClick = { viewModel.removeImageUri(uri) },
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(8.dp)
+                                                    .size(32.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                                        RoundedCornerShape(16.dp)
+                                                    )
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "이미지 제거",
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (existingImageUrls.isEmpty() && imageUris.isEmpty()) {
+                                        Text(
+                                            text = "이미지를 추가해보세요",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        )
+                                    }
+                                }
+                            }
 
                             // Rating Section
                             Card(
@@ -247,39 +372,87 @@ fun MemoDetailScreen(
                                 )
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(16.dp)
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = "별점",
+                                        text = "별점 (0.5 단위)",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.align(Alignment.Start)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    HalfStarRating(
+                                        rating = rating,
+                                        onRatingChange = viewModel::onRatingChange,
+                                        starSize = 36.dp,
+                                        showLabel = true
+                                    )
+                                }
+                            }
+
+                            // Location Name
+                            OutlinedTextField(
+                                value = locationName ?: "",
+                                onValueChange = viewModel::onLocationNameChange,
+                                label = { Text("위치 이름 (선택)") },
+                                placeholder = { Text("위치 이름을 입력하세요") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                                )
+                            )
+
+                            // Business Information Card
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Text(
+                                        text = "업체 정보 (선택)",
                                         style = MaterialTheme.typography.titleSmall,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Row(
+
+                                    OutlinedTextField(
+                                        value = businessName ?: "",
+                                        onValueChange = viewModel::onBusinessNameChange,
+                                        label = { Text("업체명") },
+                                        placeholder = { Text("업체명을 입력하세요") },
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceEvenly
-                                    ) {
-                                        (1..5).forEach { star ->
-                                            IconButton(
-                                                onClick = { viewModel.onRatingChange(star) }
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (star <= rating) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                                                    contentDescription = "$star 점",
-                                                    tint = if (star <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.size(32.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                    if (rating > 0) {
-                                        Text(
-                                            text = "선택: ${rating}점",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                                        )
-                                    }
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = businessPhone ?: "",
+                                        onValueChange = viewModel::onBusinessPhoneChange,
+                                        label = { Text("전화번호") },
+                                        placeholder = { Text("전화번호를 입력하세요") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = businessAddress ?: "",
+                                        onValueChange = viewModel::onBusinessAddressChange,
+                                        label = { Text("주소") },
+                                        placeholder = { Text("주소를 입력하세요") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        minLines = 2,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
                                 }
                             }
 
@@ -398,16 +571,10 @@ fun MemoDetailScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Spacer(modifier = Modifier.width(16.dp))
-                                        Row {
-                                            repeat(rating) {
-                                                Icon(
-                                                    Icons.Filled.Star,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.primary,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                            }
-                                        }
+                                        HalfStarRatingDisplay(
+                                            rating = rating,
+                                            starSize = 24.dp
+                                        )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "${rating}점",

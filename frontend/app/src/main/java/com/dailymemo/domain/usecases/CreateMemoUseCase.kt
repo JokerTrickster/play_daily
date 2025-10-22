@@ -11,9 +11,9 @@ class CreateMemoUseCase @Inject constructor(
     suspend operator fun invoke(
         title: String,
         content: String,
-        imageUrl: String? = null,
+        imageUri: android.net.Uri? = null,
         imageUrls: List<String> = emptyList(),
-        rating: Int = 0,
+        rating: Float = 0f,
         isPinned: Boolean = false,
         latitude: Double? = null,
         longitude: Double? = null,
@@ -28,7 +28,7 @@ class CreateMemoUseCase @Inject constructor(
         return repository.createMemo(
             title = title,
             content = content,
-            imageUrl = imageUrl,
+            imageUri = imageUri,
             imageUrls = imageUrls,
             rating = rating,
             isPinned = isPinned,

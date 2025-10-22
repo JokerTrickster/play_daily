@@ -11,10 +11,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun InterestLevelPicker(
-    currentLevel: Int,
-    onLevelChange: (Int) -> Unit,
+    currentLevel: Float,
+    onLevelChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentLevelInt = currentLevel.toInt()
     Column(modifier = modifier) {
         Text(
             text = "관심도",
@@ -29,17 +30,17 @@ fun InterestLevelPicker(
             repeat(5) { index ->
                 val level = index + 1
                 IconButton(
-                    onClick = { onLevelChange(level) },
+                    onClick = { onLevelChange(level.toFloat()) },
                     modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
-                        imageVector = if (level <= currentLevel) {
+                        imageVector = if (level <= currentLevelInt) {
                             Icons.Filled.Favorite
                         } else {
                             Icons.Outlined.FavoriteBorder
                         },
                         contentDescription = "관심도 $level",
-                        tint = if (level <= currentLevel) {
+                        tint = if (level <= currentLevelInt) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -51,7 +52,7 @@ fun InterestLevelPicker(
         }
 
         Text(
-            text = when (currentLevel) {
+            text = when (currentLevelInt) {
                 0 -> "관심도를 선택하세요"
                 1 -> "조금 관심있어요"
                 2 -> "관심있어요"

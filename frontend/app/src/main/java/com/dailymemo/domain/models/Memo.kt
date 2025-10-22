@@ -9,7 +9,7 @@ data class Memo(
     val content: String,
     val imageUrl: String?,
     val imageUrls: List<String> = emptyList(), // 여러 이미지 지원
-    val rating: Int,
+    val rating: Float, // 0.0 ~ 5.0 (0.5 단위)
     val isPinned: Boolean,
     val latitude: Double?,
     val longitude: Double?,

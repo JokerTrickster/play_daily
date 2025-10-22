@@ -127,9 +127,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideMemoRepository(
+        @ApplicationContext context: Context,
         memoApiService: com.dailymemo.data.datasources.remote.api.MemoApiService
     ): com.dailymemo.domain.repositories.MemoRepository {
-        return com.dailymemo.data.repositories.MemoRepositoryImpl(memoApiService)
+        return com.dailymemo.data.repositories.MemoRepositoryImpl(context, memoApiService)
     }
 
     @Provides

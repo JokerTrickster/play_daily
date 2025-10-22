@@ -1,5 +1,8 @@
 package com.dailymemo.data.repositories
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import com.dailymemo.data.datasources.remote.api.MemoApiService
 import com.dailymemo.data.models.request.CreateMemoRequestDto
 import com.dailymemo.data.models.request.UpdateMemoRequestDto
@@ -8,8 +11,13 @@ import com.dailymemo.domain.models.Comment
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.repositories.MemoRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -17,6 +25,7 @@ import javax.inject.Singleton
 
 @Singleton
 class MemoRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val memoApiService: MemoApiService
 ) : MemoRepository {
 
@@ -52,9 +61,9 @@ class MemoRepositoryImpl @Inject constructor(
     override suspend fun createMemo(
         title: String,
         content: String,
-        imageUrl: String?,
+        imageUri: Uri?,
         imageUrls: List<String>,
-        rating: Int,
+        rating: Float,
         isPinned: Boolean,
         latitude: Double?,
         longitude: Double?,
@@ -82,6 +91,9 @@ class MemoRepositoryImpl @Inject constructor(
             val businessAddressPart = businessAddress?.toRequestBody("text/plain".toMediaTypeOrNull())
             val naverPlaceUrlPart = naverPlaceUrl?.toRequestBody("text/plain".toMediaTypeOrNull())
 
+            // 이미지 Uri를 MultipartBody.Part로 변환
+            val imagePart = imageUri?.let { prepareFilePart(it) }
+
             val response = memoApiService.createMemo(
                 title = titlePart,
                 content = contentPart,
@@ -96,7 +108,7 @@ class MemoRepositoryImpl @Inject constructor(
                 businessPhone = businessPhonePart,
                 businessAddress = businessAddressPart,
                 naverPlaceUrl = naverPlaceUrlPart,
-                image = null // TODO: 이미지 업로드 구현 시 추가
+                image = imagePart
             )
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
@@ -114,7 +126,7 @@ class MemoRepositoryImpl @Inject constructor(
         content: String,
         imageUrl: String?,
         imageUrls: List<String>,
-        rating: Int,
+        rating: Float,
         isPinned: Boolean,
         latitude: Double?,
         longitude: Double?,
@@ -166,6 +178,51 @@ class MemoRepositoryImpl @Inject constructor(
     override suspend fun uploadImage(imageUri: android.net.Uri): Result<String> {
         // TODO: 백엔드 연동 시 실제 이미지 업로드 구현
         return Result.success("https://example.com/image/${System.currentTimeMillis()}.jpg")
+    }
+
+    private fun prepareFilePart(uri: Uri): MultipartBody.Part {
+        // Uri에서 파일 정보 가져오기
+        val contentResolver = context.contentResolver
+        val fileName = getFileName(uri) ?: "image_${System.currentTimeMillis()}.jpg"
+
+        // ContentResolver를 사용하여 임시 파일로 복사
+        val tempFile = File(context.cacheDir, fileName)
+        contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(tempFile).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
+
+        // MIME 타입 가져오기
+        val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+
+        // RequestBody 생성
+        val requestBody = tempFile.asRequestBody(mimeType.toMediaTypeOrNull())
+
+        // MultipartBody.Part 생성
+        return MultipartBody.Part.createFormData("image", fileName, requestBody)
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val columnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (columnIndex != -1) {
+                        result = cursor.getString(columnIndex)
+                    }
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/')
+            if (cut != -1) {
+                result = result?.substring(cut!! + 1)
+            }
+        }
+        return result
     }
 
     private fun MemoDto.toDomain(): Memo {
