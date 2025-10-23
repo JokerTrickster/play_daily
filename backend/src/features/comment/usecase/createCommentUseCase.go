@@ -26,7 +26,13 @@ func (u *CreateCommentUseCase) Execute(ctx context.Context, memoID uint, userID 
 		Rating:  req.Rating,
 	}
 
+	// 댓글 생성
 	if err := u.CreateCommentRepository.Create(ctx, comment); err != nil {
+		return nil, err
+	}
+
+	// 댓글 추가 후 메모의 평점 업데이트
+	if err := u.CreateCommentRepository.UpdateMemoRating(ctx, memoID); err != nil {
 		return nil, err
 	}
 

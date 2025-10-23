@@ -7,6 +7,7 @@ import (
 
 type ICreateCommentRepository interface {
 	Create(ctx context.Context, comment *mysql.Comment) error
+	UpdateMemoRating(ctx context.Context, memoID uint) error
 }
 
 type IGetCommentRepository interface {
@@ -16,4 +17,6 @@ type IGetCommentRepository interface {
 
 type IDeleteCommentRepository interface {
 	Delete(ctx context.Context, id uint, userID uint) error
+	GetMemoIDByCommentID(ctx context.Context, commentID uint) (uint, error)
+	UpdateMemoRating(ctx context.Context, memoID uint) error
 }
