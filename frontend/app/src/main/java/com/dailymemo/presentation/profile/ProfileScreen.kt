@@ -20,7 +20,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.kakao.vectormap.KakaoMap
+import com.kakao.vectormap.KakaoMapReadyCallback
+import com.kakao.vectormap.LatLng
+import com.kakao.vectormap.MapLifeCycleCallback
+import com.kakao.vectormap.MapView
+import com.kakao.vectormap.camera.CameraUpdateFactory
+import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelStyles
 
 @Composable
 fun ProfileScreen(
@@ -766,26 +776,25 @@ fun ParticipantItem(
 
 @Composable
 fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
-    // 대한민국의 대략적인 경계 (위도/경도)
-    val koreaMinLat = 33.0  // 제주도 남단
-    val koreaMaxLat = 38.6  // 북한 경계 (남한만: 38.6)
-    val koreaMinLon = 124.5 // 서해 서단
-    val koreaMaxLon = 132.0 // 동해 동단
+    var kakaoMap by remember { mutableStateOf<KakaoMap?>(null) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp),
+            .height(400.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(20.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Header
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -802,83 +811,93 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 한국 지도 영역
+            // Kakao Map
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(240.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
-                                MaterialTheme.colorScheme.surface
-                            )
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                        RoundedCornerShape(12.dp)
-                    )
+                    .weight(1f)
+                    .padding(horizontal = 20.dp, vertical = 0.dp)
+                    .clip(RoundedCornerShape(12.dp))
             ) {
-                // 메모 위치를 지도 상에 점으로 표시
-                memos.forEach { memo ->
-                    val lat = memo.latitude ?: return@forEach
-                    val lon = memo.longitude ?: return@forEach
+                AndroidView(
+                    factory = { context ->
+                        MapView(context).apply {
+                            start(object : MapLifeCycleCallback() {
+                                override fun onMapDestroy() {}
+                                override fun onMapError(error: Exception) {
+                                    android.util.Log.e("ProfileMap", "Map error: ${error.message}", error)
+                                }
+                            }, object : KakaoMapReadyCallback() {
+                                override fun onMapReady(map: KakaoMap) {
+                                    kakaoMap = map
 
-                    // 위경도를 Box 내 좌표로 변환
-                    val xPercent = ((lon - koreaMinLon) / (koreaMaxLon - koreaMinLon)).toFloat()
-                        .coerceIn(0f, 1f)
-                    val yPercent = 1f - ((lat - koreaMinLat) / (koreaMaxLat - koreaMinLat)).toFloat()
-                        .coerceIn(0f, 1f)
-
-                    Box(
-                        modifier = Modifier
-                            .offset(
-                                x = (xPercent * 320).dp,  // Box width 대략적 계산
-                                y = (yPercent * 240).dp   // Box height
-                            )
-                            .size(12.dp)
-                            .background(
-                                brush = Brush.radialGradient(
-                                    colors = listOf(
-                                        when (memo.category) {
-                                            com.dailymemo.domain.models.PlaceCategory.RESTAURANT -> Color(0xFFFF6B6B)
-                                            com.dailymemo.domain.models.PlaceCategory.CAFE -> Color(0xFFFFB84D)
-                                            com.dailymemo.domain.models.PlaceCategory.SHOPPING -> Color(0xFFAB47BC)
-                                            com.dailymemo.domain.models.PlaceCategory.CULTURAL -> Color(0xFF42A5F5)
-                                            com.dailymemo.domain.models.PlaceCategory.ENTERTAINMENT -> Color(0xFFEC407A)
-                                            com.dailymemo.domain.models.PlaceCategory.ACCOMMODATION -> Color(0xFF26A69A)
-                                            else -> MaterialTheme.colorScheme.primary
-                                        },
-                                        Color.Transparent
+                                    // 한국 중심 좌표로 카메라 이동 (서울 중심)
+                                    map.moveCamera(
+                                        CameraUpdateFactory.newCenterPosition(
+                                            LatLng.from(36.5, 127.5),
+                                            6  // 전국이 보이는 줌 레벨
+                                        )
                                     )
-                                ),
-                                shape = CircleShape
-                            )
-                            .shadow(2.dp, CircleShape)
-                    )
-                }
 
-                // 지도 중앙에 안내 텍스트 (메모가 적을 때)
-                if (memos.size < 5) {
+                                    // 메모 마커 추가
+                                    val labelManager = map.labelManager
+                                    val layer = labelManager?.layer
+
+                                    memos.forEach { memo ->
+                                        val lat = memo.latitude ?: return@forEach
+                                        val lon = memo.longitude ?: return@forEach
+
+                                        val position = LatLng.from(lat, lon)
+
+                                        // 카테고리별 색상
+                                        val color = when (memo.category) {
+                                            com.dailymemo.domain.models.PlaceCategory.RESTAURANT -> android.graphics.Color.parseColor("#FF6B6B")
+                                            com.dailymemo.domain.models.PlaceCategory.CAFE -> android.graphics.Color.parseColor("#FFB84D")
+                                            com.dailymemo.domain.models.PlaceCategory.SHOPPING -> android.graphics.Color.parseColor("#AB47BC")
+                                            com.dailymemo.domain.models.PlaceCategory.CULTURAL -> android.graphics.Color.parseColor("#42A5F5")
+                                            com.dailymemo.domain.models.PlaceCategory.ENTERTAINMENT -> android.graphics.Color.parseColor("#EC407A")
+                                            com.dailymemo.domain.models.PlaceCategory.ACCOMMODATION -> android.graphics.Color.parseColor("#26A69A")
+                                            else -> android.graphics.Color.parseColor("#2196F3")
+                                        }
+
+                                        val styles = LabelStyles.from(
+                                            LabelStyle.from(android.R.drawable.star_on)
+                                                .setTextStyles(28, color, 2, android.graphics.Color.WHITE)
+                                        )
+
+                                        val options = LabelOptions.from(position)
+                                            .setStyles(styles)
+                                            .setTexts("${memo.category.icon}")
+
+                                        layer?.addLabel(options)
+                                    }
+                                }
+                            })
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // 안내 텍스트 (메모가 없을 때)
+                if (memos.isEmpty()) {
                     Box(
                         modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(32.dp)
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "더 많은 장소를 방문하고\n메모를 남겨보세요!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = "장소를 방문하고\n메모를 남겨보세요!",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

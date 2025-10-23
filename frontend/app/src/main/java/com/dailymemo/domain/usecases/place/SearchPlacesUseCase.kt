@@ -11,7 +11,7 @@ class SearchPlacesUseCase @Inject constructor(
         query: String,
         longitude: Double? = null,
         latitude: Double? = null,
-        radius: Int = 2000
+        radius: Int = 300000  // 300km
     ): Result<List<Place>> {
         if (query.isBlank()) {
             return Result.success(emptyList())
