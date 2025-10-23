@@ -314,20 +314,8 @@ fun MenuSection(
                 MenuItemCard(
                     icon = Icons.Outlined.AccountCircle,
                     title = "프로필 수정",
-                    subtitle = "이름, 이메일 변경",
+                    subtitle = "이름, 비밀번호, 프로필 이미지 변경",
                     onClick = onProfileEditClick
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                MenuItemCard(
-                    icon = Icons.Outlined.Lock,
-                    title = "비밀번호 변경",
-                    subtitle = "계정 보안 설정",
-                    onClick = { /* TODO: 비밀번호 변경 화면으로 이동 */ }
                 )
 
                 HorizontalDivider(
