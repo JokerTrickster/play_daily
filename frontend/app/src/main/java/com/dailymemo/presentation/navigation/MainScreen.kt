@@ -69,9 +69,10 @@ fun MainScreen(
                     onNavigateToCreateMemo = {
                         mainNavController.navigate(Screen.Memory.Create.route)
                     },
-                    onNavigateToCreateMemoWithPlace = { placeName, address, latitude, longitude, categoryName ->
+                    onNavigateToCreateMemoWithPlace = { placeName, address, latitude, longitude, categoryName, naverPlaceUrl ->
+                        val encodedUrl = naverPlaceUrl?.let { android.net.Uri.encode(it) } ?: ""
                         mainNavController.navigate(
-                            "${Screen.Memory.Create.route}?placeName=$placeName&address=$address&latitude=$latitude&longitude=$longitude&category=$categoryName"
+                            "${Screen.Memory.Create.route}?placeName=$placeName&address=$address&latitude=$latitude&longitude=$longitude&category=$categoryName&naverPlaceUrl=$encodedUrl"
                         )
                     },
                     onNavigateToDetail = { memoId ->

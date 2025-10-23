@@ -45,7 +45,7 @@ import com.kakao.vectormap.label.LabelStyles
 @Composable
 fun MapScreen(
     onNavigateToCreateMemo: () -> Unit,
-    onNavigateToCreateMemoWithPlace: (String, String, Double, Double, String?) -> Unit,
+    onNavigateToCreateMemoWithPlace: (String, String, Double, Double, String?, String?) -> Unit,
     onNavigateToDetail: (Long) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel()
 ) {
@@ -433,7 +433,8 @@ fun MapScreen(
                             place.address,
                             place.latitude,
                             place.longitude,
-                            place.toPlaceCategory().name
+                            place.toPlaceCategory().name,
+                            place.placeUrl
                         )
                     }
                     showPlaceDialog = false

@@ -61,14 +61,15 @@ fun NavGraph(
 
         // Memory screens
         composable(
-            route = "${Screen.Memory.Create.route}?placeName={placeName}&address={address}&latitude={latitude}&longitude={longitude}&category={category}&isWishlist={isWishlist}",
+            route = "${Screen.Memory.Create.route}?placeName={placeName}&address={address}&latitude={latitude}&longitude={longitude}&category={category}&isWishlist={isWishlist}&naverPlaceUrl={naverPlaceUrl}",
             arguments = listOf(
                 navArgument("placeName") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("address") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("latitude") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("longitude") { type = NavType.StringType; nullable = true; defaultValue = null },
                 navArgument("category") { type = NavType.StringType; nullable = true; defaultValue = null },
-                navArgument("isWishlist") { type = NavType.BoolType; defaultValue = false }
+                navArgument("isWishlist") { type = NavType.BoolType; defaultValue = false },
+                navArgument("naverPlaceUrl") { type = NavType.StringType; nullable = true; defaultValue = null }
             )
         ) { backStackEntry ->
             val placeName = backStackEntry.arguments?.getString("placeName")
@@ -77,6 +78,7 @@ fun NavGraph(
             val longitude = backStackEntry.arguments?.getString("longitude")?.toDoubleOrNull()
             val categoryName = backStackEntry.arguments?.getString("category")
             val isWishlist = backStackEntry.arguments?.getBoolean("isWishlist") ?: false
+            val naverPlaceUrl = backStackEntry.arguments?.getString("naverPlaceUrl")
 
             CreateMemoScreen(
                 onNavigateBack = {
@@ -90,7 +92,8 @@ fun NavGraph(
                 latitude = latitude,
                 longitude = longitude,
                 categoryName = categoryName,
-                isWishlist = isWishlist
+                isWishlist = isWishlist,
+                naverPlaceUrl = naverPlaceUrl
             )
         }
 

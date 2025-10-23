@@ -46,18 +46,17 @@ fun CreateMemoScreen(
     longitude: Double? = null,
     categoryName: String? = null,
     isWishlist: Boolean = false,
+    naverPlaceUrl: String? = null,
     viewModel: CreateMemoViewModel = hiltViewModel()
 ) {
     // Initialize place data if provided
-    LaunchedEffect(placeName, address, latitude, longitude, categoryName, isWishlist) {
+    LaunchedEffect(placeName, address, latitude, longitude, categoryName, isWishlist, naverPlaceUrl) {
+        // 카카오맵에서 검색한 장소 정보를 장소 검색 필드에 자동 입력
         if (placeName != null) {
-            // 카카오맵에서 선택한 장소: 제목과 위치 자동 입력
-            viewModel.onTitleChange(placeName)
             viewModel.onLocationNameChange(placeName)
-            if (address != null) {
-                // 주소를 content에 자동으로 추가
-                viewModel.onContentChange("📍 $address")
-            }
+        }
+        if (address != null) {
+            viewModel.onBusinessAddressChange(address)
         }
         if (latitude != null && longitude != null) {
             viewModel.setPlaceLocation(latitude, longitude)
@@ -66,6 +65,9 @@ fun CreateMemoScreen(
             PlaceCategory.values().find { it.name == categoryName }?.let {
                 viewModel.onCategoryChange(it)
             }
+        }
+        if (naverPlaceUrl != null) {
+            viewModel.onNaverPlaceUrlChange(naverPlaceUrl)
         }
         viewModel.setWishlistMode(isWishlist)
     }

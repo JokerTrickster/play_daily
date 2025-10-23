@@ -95,6 +95,10 @@ class CreateMemoViewModel @Inject constructor(
         _businessAddress.value = newAddress
     }
 
+    fun onNaverPlaceUrlChange(newUrl: String) {
+        _naverPlaceUrl.value = newUrl
+    }
+
     fun getCurrentLocation() {
         viewModelScope.launch {
             getCurrentLocationUseCase().fold(
