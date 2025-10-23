@@ -4,14 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -34,7 +39,7 @@ import com.dailymemo.domain.models.Memo
 import com.dailymemo.presentation.components.MemoListSkeletonItem
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MemoListScreen(
     viewModel: MemoListViewModel = hiltViewModel(),
@@ -44,6 +49,10 @@ fun MemoListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentTab by viewModel.currentTab.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
+    val minRating by viewModel.minRating.collectAsState()
+    val showFilters by viewModel.showFilters.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Reload memos when screen comes back to foreground
@@ -106,14 +115,136 @@ fun MemoListScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(paddingValues)
         ) {
-            when (val state = uiState) {
-                is MemoListUiState.Loading -> {
+            // 검색바
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("제목, 내용, 장소명 검색...") },
+                leadingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = "검색")
+                },
+                trailingIcon = {
+                    Row {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                                Icon(Icons.Filled.Clear, contentDescription = "검색어 지우기")
+                            }
+                        }
+                        IconButton(onClick = { viewModel.toggleFilters() }) {
+                            Icon(
+                                Icons.Filled.FilterList,
+                                contentDescription = "필터",
+                                tint = if (selectedCategory != null || minRating > 0f) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(28.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                ),
+                singleLine = true
+            )
+
+            // 필터 섹션
+            if (showFilters) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "필터",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            TextButton(onClick = { viewModel.clearFilters() }) {
+                                Text("초기화")
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // 카테고리 필터
+                        Text(
+                            text = "카테고리",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        val categories = listOf(
+                            com.dailymemo.domain.models.PlaceCategory.RESTAURANT,
+                            com.dailymemo.domain.models.PlaceCategory.CAFE,
+                            com.dailymemo.domain.models.PlaceCategory.SHOPPING,
+                            com.dailymemo.domain.models.PlaceCategory.CULTURAL,
+                            com.dailymemo.domain.models.PlaceCategory.ENTERTAINMENT,
+                            com.dailymemo.domain.models.PlaceCategory.ACCOMMODATION
+                        )
+
+                        androidx.compose.foundation.layout.FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            categories.forEach { cat ->
+                                FilterChip(
+                                    selected = selectedCategory == cat,
+                                    onClick = { viewModel.onCategoryFilterChange(cat) },
+                                    label = { Text("${cat.icon} ${cat.displayName}") }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 평점 필터
+                        Text(
+                            text = "최소 평점: ${minRating.toInt()}⭐",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Slider(
+                            value = minRating,
+                            onValueChange = { viewModel.onRatingFilterChange(it) },
+                            valueRange = 0f..5f,
+                            steps = 4
+                        )
+                    }
+                }
+            }
+
+            // 메모 목록
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+            ) {
+                when (val state = uiState) {
+                    is MemoListUiState.Loading -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
@@ -186,6 +317,7 @@ fun MemoListScreen(
                     }
                 }
             }
+        }
         }
     }
 }
