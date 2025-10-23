@@ -22,12 +22,13 @@ func (Room) TableName() string {
 // User 사용자 정보 테이블
 type User struct {
 	gorm.Model
-	AccountID     string  `json:"account_id" gorm:"column:account_id;type:varchar(255);uniqueIndex;not null;comment:계정 아이디"`
-	Password      string  `json:"password" gorm:"column:password;type:varchar(255);not null;comment:암호화된 비밀번호"`
-	Nickname      string  `json:"nickname" gorm:"column:nickname;type:varchar(100);comment:사용자 닉네임"`
-	DefaultRoomID *uint   `json:"default_room_id" gorm:"column:default_room_id;index;comment:기본 방 ID (회원가입 시 자동 생성된 방)"`
-	DefaultRoom   *Room   `json:"default_room,omitempty" gorm:"foreignKey:DefaultRoomID"`
-	Memos         []Memo  `json:"memos,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	AccountID        string  `json:"account_id" gorm:"column:account_id;type:varchar(255);uniqueIndex;not null;comment:계정 아이디"`
+	Password         string  `json:"password" gorm:"column:password;type:varchar(255);not null;comment:암호화된 비밀번호"`
+	Nickname         string  `json:"nickname" gorm:"column:nickname;type:varchar(100);comment:사용자 닉네임"`
+	ProfileImageURL  *string `json:"profile_image_url,omitempty" gorm:"column:profile_image_url;type:varchar(500);comment:프로필 이미지 URL"`
+	DefaultRoomID    *uint   `json:"default_room_id" gorm:"column:default_room_id;index;comment:기본 방 ID (회원가입 시 자동 생성된 방)"`
+	DefaultRoom      *Room   `json:"default_room,omitempty" gorm:"foreignKey:DefaultRoomID"`
+	Memos            []Memo  `json:"memos,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 // TableName User 테이블명 지정
