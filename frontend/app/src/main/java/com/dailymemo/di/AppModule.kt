@@ -5,12 +5,15 @@ import com.dailymemo.data.datasources.local.AuthLocalDataSource
 import com.dailymemo.data.datasources.local.LocationDataSource
 import com.dailymemo.data.datasources.remote.AuthRemoteDataSource
 import com.dailymemo.data.datasources.remote.api.AuthApiService
+import com.dailymemo.data.datasources.remote.api.ProfileApiService
 import com.dailymemo.data.repositories.AuthRepositoryImpl
+import com.dailymemo.data.repositories.ProfileRepositoryImpl
 import com.dailymemo.data.repositories.LocationRepositoryImpl
 import com.dailymemo.data.repositories.PlaceRepositoryImpl
 import com.dailymemo.domain.repositories.AuthRepository
 import com.dailymemo.domain.repositories.LocationRepository
 import com.dailymemo.domain.repositories.PlaceRepository
+import com.dailymemo.domain.repositories.ProfileRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -187,5 +190,19 @@ object AppModule {
         commentApiService: com.dailymemo.data.datasources.remote.api.CommentApiService
     ): com.dailymemo.domain.repositories.CommentRepository {
         return com.dailymemo.data.repositories.CommentRepositoryImpl(commentApiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileApiService(retrofit: Retrofit): ProfileApiService {
+        return retrofit.create(ProfileApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(
+        profileApiService: ProfileApiService
+    ): ProfileRepository {
+        return ProfileRepositoryImpl(profileApiService)
     }
 }

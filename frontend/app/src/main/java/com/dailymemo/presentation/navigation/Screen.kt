@@ -17,5 +17,9 @@ sealed class Screen(val route: String) {
         object Detail : Memory("memory/detail")
     }
 
+    sealed class Profile(route: String) : Screen(route) {
+        object Edit : Profile("profile/edit")
+    }
+
     object Collaboration : Screen("collaboration")
 }

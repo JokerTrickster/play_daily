@@ -14,6 +14,7 @@ import com.dailymemo.presentation.collaboration.CollaborationScreen
 import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
+import com.dailymemo.presentation.profile.ProfileEditScreen
 
 @Composable
 fun NavGraph(
@@ -100,6 +101,15 @@ fun NavGraph(
                 },
                 onMemoDeleted = {
                     navController.popBackStack("main", inclusive = false)
+                }
+            )
+        }
+
+        // Profile screens
+        composable(Screen.Profile.Edit.route) {
+            ProfileEditScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

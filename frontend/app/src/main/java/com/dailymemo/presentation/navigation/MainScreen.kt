@@ -101,6 +101,9 @@ fun MainScreen(
                         mainNavController.navigate(Screen.Auth.Login.route) {
                             popUpTo("main") { inclusive = true }
                         }
+                    },
+                    onNavigateToEdit = {
+                        mainNavController.navigate(Screen.Profile.Edit.route)
                     }
                 )
             }
