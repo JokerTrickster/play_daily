@@ -71,8 +71,9 @@ class ProfileViewModel @Inject constructor(
                     _isLoading.value = false
                 },
                 onFailure = { error ->
-                    _uiState.value = ProfileUiState.Error(error.message ?: "프로필을 불러올 수 없습니다")
-                    _errorMessage.value = error.message ?: "프로필을 불러올 수 없습니다"
+                    val errorMsg = error.message ?: "프로필을 불러올 수 없습니다. 다시 시도해주세요."
+                    _uiState.value = ProfileUiState.Error(errorMsg)
+                    _errorMessage.value = errorMsg
                     _isLoading.value = false
                 }
             )
@@ -137,7 +138,14 @@ class ProfileViewModel @Inject constructor(
                     _uiState.value = ProfileUiState.Success(profile)
                     _nickname.value = profile.nickname
                     _profileImageUrl.value = profile.profileImageUrl
-                    _successMessage.value = "프로필이 성공적으로 업데이트되었습니다"
+
+                    // Determine success message based on what was changed
+                    _successMessage.value = if (_newPassword.value.isNotBlank()) {
+                        "프로필이 업데이트되었습니다 ✅\n새 비밀번호로 로그인할 수 있습니다."
+                    } else {
+                        "프로필이 성공적으로 업데이트되었습니다 ✅"
+                    }
+
                     _isLoading.value = false
 
                     // Clear password fields after successful update
@@ -147,7 +155,7 @@ class ProfileViewModel @Inject constructor(
                     _selectedImageUri.value = null
                 },
                 onFailure = { error ->
-                    _errorMessage.value = error.message ?: "프로필 업데이트에 실패했습니다"
+                    _errorMessage.value = error.message ?: "프로필 업데이트에 실패했습니다. 다시 시도해주세요."
                     _isLoading.value = false
                 }
             )
@@ -155,21 +163,27 @@ class ProfileViewModel @Inject constructor(
     }
 
     private fun validateForm(): Boolean {
-        // Current password is required
+        // Nickname validation
+        if (_nickname.value.isBlank()) {
+            _errorMessage.value = "이름을 입력해주세요."
+            return false
+        }
+
+        // Current password is required for any update
         if (_currentPassword.value.isBlank()) {
-            _errorMessage.value = "현재 비밀번호를 입력해주세요"
+            _errorMessage.value = "현재 비밀번호를 입력해주세요."
             return false
         }
 
         // If new password is provided, validate it
         if (_newPassword.value.isNotBlank()) {
             if (_newPassword.value.length < 6) {
-                _errorMessage.value = "새 비밀번호는 최소 6자 이상이어야 합니다"
+                _errorMessage.value = "새 비밀번호는 최소 6자 이상이어야 합니다."
                 return false
             }
 
             if (_newPassword.value != _confirmPassword.value) {
-                _errorMessage.value = "새 비밀번호가 일치하지 않습니다"
+                _errorMessage.value = "새 비밀번호가 일치하지 않습니다."
                 return false
             }
         }
@@ -177,13 +191,13 @@ class ProfileViewModel @Inject constructor(
         // At least one field should be changed
         val currentProfile = (_uiState.value as? ProfileUiState.Success)?.profile
         val hasChanges = currentProfile?.let {
-            _nickname.value != it.nickname ||
+            _nickname.value.trim() != it.nickname ||
                     _newPassword.value.isNotBlank() ||
                     _selectedImageUri.value != null
         } ?: true
 
         if (!hasChanges) {
-            _errorMessage.value = "변경된 내용이 없습니다"
+            _errorMessage.value = "변경된 내용이 없습니다."
             return false
         }
 
