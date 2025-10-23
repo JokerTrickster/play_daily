@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
+    onNavigateToEdit: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val userName by viewModel.userName.collectAsState()
@@ -86,6 +87,7 @@ fun ProfileScreen(
 
             // Menu Items
             MenuSection(
+                onProfileEditClick = onNavigateToEdit,
                 onLogoutClick = { showLogoutDialog = true }
             )
 
@@ -286,6 +288,7 @@ fun StatItem(
 
 @Composable
 fun MenuSection(
+    onProfileEditClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     Column(
@@ -312,7 +315,7 @@ fun MenuSection(
                     icon = Icons.Outlined.AccountCircle,
                     title = "프로필 수정",
                     subtitle = "이름, 이메일 변경",
-                    onClick = { /* TODO: 프로필 수정 화면으로 이동 */ }
+                    onClick = onProfileEditClick
                 )
 
                 HorizontalDivider(
