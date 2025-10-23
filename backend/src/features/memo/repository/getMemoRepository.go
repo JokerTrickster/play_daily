@@ -33,10 +33,15 @@ func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (
 	return &memo, nil
 }
 
-// GetListByUserID 사용자의 메모 목록 조회 (위시리스트 필터 옵션 포함)
-func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, isWishlist *bool) ([]mysql.Memo, error) {
+// GetListByUserID 사용자의 메모 목록 조회 (Room ID 및 위시리스트 필터 옵션 포함)
+func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) ([]mysql.Memo, error) {
 	var memos []mysql.Memo
 	query := r.GormDB.WithContext(ctx).Where("user_id = ?", userID)
+
+	// roomID 필터 적용
+	if roomID != nil {
+		query = query.Where("room_id = ?", *roomID)
+	}
 
 	// isWishlist 필터 적용
 	if isWishlist != nil {

@@ -49,6 +49,7 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 
 	memo := &mysql.Memo{
 		UserID:          userID,
+		RoomID:          req.RoomID,
 		Title:           req.Title,
 		Content:         req.Content,
 		ImageURL:        imageURL,

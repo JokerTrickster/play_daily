@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"main/common/db/mysql"
 	_interface "main/features/auth/model/interface"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -37,13 +39,40 @@ func (r *SignUpAuthRepository) CheckAccountIDDuplicate(ctx context.Context, acco
 }
 
 func (r *SignUpAuthRepository) CreateUser(ctx context.Context, userDTO *mysql.User) (*mysql.User, error) {
-	// 사용자 생성
-	result := r.GormDB.WithContext(ctx).Create(userDTO)
+	// 트랜잭션 시작
+	err := r.GormDB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. 사용자 생성
+		if err := tx.Create(userDTO).Error; err != nil {
+			return err
+		}
 
-	if result.Error != nil {
-		return nil, result.Error
+		// 2. 사용자의 기본 방 생성
+		roomCode := uuid.New().String()
+		roomName := fmt.Sprintf("%s의 방", userDTO.Nickname)
+
+		room := &mysql.Room{
+			RoomCode:    roomCode,
+			Name:        roomName,
+			OwnerUserID: userDTO.ID,
+		}
+
+		if err := tx.Create(room).Error; err != nil {
+			return err
+		}
+
+		// 3. 사용자의 default_room_id 업데이트
+		userDTO.DefaultRoomID = &room.ID
+		if err := tx.Save(userDTO).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	// 생성된 사용자 정보 반환 (ID가 자동 할당됨)
+	// 생성된 사용자 정보 반환 (ID와 DefaultRoomID가 자동 할당됨)
 	return userDTO, nil
 }

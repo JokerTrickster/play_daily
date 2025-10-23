@@ -156,6 +156,9 @@ class CreateMemoViewModel @Inject constructor(
 
     fun closeSearchDialog() {
         _showSearchDialog.value = false
+        _isSearching.value = false
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
     }
 
     fun searchPlaces() {
@@ -163,16 +166,19 @@ class CreateMemoViewModel @Inject constructor(
 
         viewModelScope.launch {
             _isSearching.value = true
+            android.util.Log.d("CreateMemoVM", "searchPlaces: query=${_searchQuery.value}, lat=${_currentLocation.value?.latitude}, lon=${_currentLocation.value?.longitude}")
             searchPlacesUseCase(
                 query = _searchQuery.value,
                 longitude = _currentLocation.value?.longitude,
                 latitude = _currentLocation.value?.latitude
             ).fold(
                 onSuccess = { places ->
+                    android.util.Log.d("CreateMemoVM", "searchPlaces success: ${places.size} results")
                     _searchResults.value = places
                     _isSearching.value = false
                 },
                 onFailure = { error ->
+                    android.util.Log.e("CreateMemoVM", "searchPlaces failed: ${error.message}", error)
                     _isSearching.value = false
                     _searchResults.value = emptyList()
                 }

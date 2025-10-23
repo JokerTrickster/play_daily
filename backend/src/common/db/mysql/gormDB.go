@@ -4,13 +4,30 @@ import (
 	"gorm.io/gorm"
 )
 
+// Room 방 정보 테이블
+type Room struct {
+	gorm.Model
+	RoomCode    string `json:"room_code" gorm:"column:room_code;type:varchar(50);uniqueIndex;not null;comment:방 고유 코드 (UUID)"`
+	Name        string `json:"name" gorm:"column:name;type:varchar(100);not null;comment:방 이름"`
+	OwnerUserID uint   `json:"owner_user_id" gorm:"column:owner_user_id;not null;index;comment:방 소유자 ID"`
+	Owner       *User  `json:"owner,omitempty" gorm:"foreignKey:OwnerUserID"`
+	Memos       []Memo `json:"memos,omitempty" gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
+}
+
+// TableName Room 테이블명 지정
+func (Room) TableName() string {
+	return "rooms"
+}
+
 // User 사용자 정보 테이블
 type User struct {
 	gorm.Model
-	AccountID string  `json:"account_id" gorm:"column:account_id;type:varchar(255);uniqueIndex;not null;comment:계정 아이디"`
-	Password  string  `json:"password" gorm:"column:password;type:varchar(255);not null;comment:암호화된 비밀번호"`
-	Nickname  string  `json:"nickname" gorm:"column:nickname;type:varchar(100);comment:사용자 닉네임"`
-	Memos     []Memo  `json:"memos,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	AccountID     string  `json:"account_id" gorm:"column:account_id;type:varchar(255);uniqueIndex;not null;comment:계정 아이디"`
+	Password      string  `json:"password" gorm:"column:password;type:varchar(255);not null;comment:암호화된 비밀번호"`
+	Nickname      string  `json:"nickname" gorm:"column:nickname;type:varchar(100);comment:사용자 닉네임"`
+	DefaultRoomID *uint   `json:"default_room_id" gorm:"column:default_room_id;index;comment:기본 방 ID (회원가입 시 자동 생성된 방)"`
+	DefaultRoom   *Room   `json:"default_room,omitempty" gorm:"foreignKey:DefaultRoomID"`
+	Memos         []Memo  `json:"memos,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 // TableName User 테이블명 지정
@@ -22,6 +39,7 @@ func (User) TableName() string {
 type Memo struct {
 	gorm.Model
 	UserID          uint      `json:"user_id" gorm:"column:user_id;not null;index;comment:작성자 ID"`
+	RoomID          uint      `json:"room_id" gorm:"column:room_id;not null;index;comment:메모가 속한 방 ID"`
 	Title           string    `json:"title" gorm:"column:title;type:varchar(200);not null;comment:메모 제목"`
 	Content         string    `json:"content" gorm:"column:content;type:text;comment:메모 내용"`
 	ImageURL        string    `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
@@ -38,6 +56,7 @@ type Memo struct {
 	BusinessAddress *string   `json:"business_address,omitempty" gorm:"column:business_address;type:text;comment:주소"`
 	NaverPlaceURL   *string   `json:"naver_place_url,omitempty" gorm:"column:naver_place_url;type:varchar(500);comment:네이버 플레이스 URL"`
 	User            *User     `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Room            *Room     `json:"room,omitempty" gorm:"foreignKey:RoomID"`
 	Comments        []Comment `json:"comments,omitempty" gorm:"foreignKey:MemoID;constraint:OnDelete:CASCADE"`
 }
 

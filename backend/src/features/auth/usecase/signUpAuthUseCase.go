@@ -61,6 +61,7 @@ func (uc *SignUpAuthUseCase) SignUp(ctx context.Context, req request.ReqSignUp) 
 		UserID:                user.ID,
 		AccountID:             user.AccountID,
 		Nickname:              user.Nickname,
+		DefaultRoomID:         user.DefaultRoomID,
 	}
 
 	return res, nil

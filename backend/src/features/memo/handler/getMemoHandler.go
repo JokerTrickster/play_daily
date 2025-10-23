@@ -54,9 +54,10 @@ func (h *GetMemoHandler) GetMemo(c echo.Context) error {
 // GetMemoList 메모 목록 조회 API
 // @Router /v0.1/memo [get]
 // @Summary 메모 목록 조회 API
-// @Description 사용자의 모든 메모를 조회합니다 (is_wishlist 필터 지원)
+// @Description 사용자의 모든 메모를 조회합니다 (is_wishlist, room_id 필터 지원)
 // @Produce json
 // @Param is_wishlist query bool false "Wishlist filter"
+// @Param room_id query int false "Room ID filter"
 // @Success 200 {object} response.ResMemoList
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -78,8 +79,20 @@ func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
 		isWishlist = &parsedIsWishlist
 	}
 
+	// room_id 파싱 및 검증
+	var roomID *uint
+	roomIDStr := c.QueryParam("room_id")
+	if roomIDStr != "" {
+		parsedRoomID, err := strconv.ParseUint(roomIDStr, 10, 32)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid room_id format"})
+		}
+		roomIDUint := uint(parsedRoomID)
+		roomID = &roomIDUint
+	}
+
 	// 메모 목록 조회
-	memoList, err := h.UseCase.GetMemoList(ctx, userID, isWishlist)
+	memoList, err := h.UseCase.GetMemoList(ctx, userID, roomID, isWishlist)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

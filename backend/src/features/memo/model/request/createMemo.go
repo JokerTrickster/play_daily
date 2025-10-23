@@ -3,6 +3,7 @@ package request
 import "mime/multipart"
 
 type ReqCreateMemo struct {
+	RoomID          uint                  `json:"room_id" binding:"required"`
 	Title           string                `json:"title" binding:"required"`
 	Content         string                `json:"content"`
 	ImageURL        string                `json:"image_url"`
