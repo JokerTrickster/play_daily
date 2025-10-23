@@ -24,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
-    private val updateProfileUseCase: UpdateProfileUseCase
+    private val updateProfileUseCase: UpdateProfileUseCase,
+    private val getMemosUseCase: com.dailymemo.domain.usecases.GetMemosUseCase
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -57,6 +58,29 @@ class ProfileViewModel @Inject constructor(
 
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage: StateFlow<String?> = _successMessage.asStateFlow()
+
+    // Memo location data for map visualization
+    private val _memosWithLocation = MutableStateFlow<List<com.dailymemo.domain.models.Memo>>(emptyList())
+    val memosWithLocation: StateFlow<List<com.dailymemo.domain.models.Memo>> = _memosWithLocation.asStateFlow()
+
+    init {
+        loadMemosWithLocation()
+    }
+
+    fun loadMemosWithLocation() {
+        viewModelScope.launch {
+            getMemosUseCase(isWishlist = null).fold(
+                onSuccess = { memos ->
+                    _memosWithLocation.value = memos.filter {
+                        it.latitude != null && it.longitude != null
+                    }
+                },
+                onFailure = {
+                    // Silently fail - location visualization is optional
+                }
+            )
+        }
+    }
 
     fun loadProfile() {
         viewModelScope.launch {

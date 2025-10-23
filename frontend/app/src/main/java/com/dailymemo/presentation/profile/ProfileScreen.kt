@@ -34,6 +34,7 @@ fun ProfileScreen(
     val currentRoom by viewModel.currentRoom.collectAsState()
     val roomIdInput by viewModel.roomIdInput.collectAsState()
     val showJoinDialog by viewModel.showJoinDialog.collectAsState()
+    val memosWithLocation by viewModel.memosWithLocation.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -70,7 +71,15 @@ fun ProfileScreen(
                 memoCount = memoCount
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Korea Map with Memo Locations
+            if (memosWithLocation.isNotEmpty()) {
+                KoreaMapSection(
+                    memos = memosWithLocation
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             // Room Info Section
             currentRoom?.let { room ->
@@ -750,6 +759,125 @@ fun ParticipantItem(
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.error
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
+    // 대한민국의 대략적인 경계 (위도/경도)
+    val koreaMinLat = 33.0  // 제주도 남단
+    val koreaMaxLat = 38.6  // 북한 경계 (남한만: 38.6)
+    val koreaMinLon = 124.5 // 서해 서단
+    val koreaMaxLon = 132.0 // 동해 동단
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(320.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "📍 내가 다녀온 곳",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${memos.size}곳",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 한국 지도 영역
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                                MaterialTheme.colorScheme.surface
+                            )
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        RoundedCornerShape(12.dp)
+                    )
+            ) {
+                // 메모 위치를 지도 상에 점으로 표시
+                memos.forEach { memo ->
+                    val lat = memo.latitude ?: return@forEach
+                    val lon = memo.longitude ?: return@forEach
+
+                    // 위경도를 Box 내 좌표로 변환
+                    val xPercent = ((lon - koreaMinLon) / (koreaMaxLon - koreaMinLon)).toFloat()
+                        .coerceIn(0f, 1f)
+                    val yPercent = 1f - ((lat - koreaMinLat) / (koreaMaxLat - koreaMinLat)).toFloat()
+                        .coerceIn(0f, 1f)
+
+                    Box(
+                        modifier = Modifier
+                            .offset(
+                                x = (xPercent * 320).dp,  // Box width 대략적 계산
+                                y = (yPercent * 240).dp   // Box height
+                            )
+                            .size(12.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        when (memo.category) {
+                                            com.dailymemo.domain.models.PlaceCategory.RESTAURANT -> Color(0xFFFF6B6B)
+                                            com.dailymemo.domain.models.PlaceCategory.CAFE -> Color(0xFFFFB84D)
+                                            com.dailymemo.domain.models.PlaceCategory.SHOPPING -> Color(0xFFAB47BC)
+                                            com.dailymemo.domain.models.PlaceCategory.CULTURAL -> Color(0xFF42A5F5)
+                                            com.dailymemo.domain.models.PlaceCategory.ENTERTAINMENT -> Color(0xFFEC407A)
+                                            com.dailymemo.domain.models.PlaceCategory.ACCOMMODATION -> Color(0xFF26A69A)
+                                            else -> MaterialTheme.colorScheme.primary
+                                        },
+                                        Color.Transparent
+                                    )
+                                ),
+                                shape = CircleShape
+                            )
+                            .shadow(2.dp, CircleShape)
+                    )
+                }
+
+                // 지도 중앙에 안내 텍스트 (메모가 적을 때)
+                if (memos.size < 5) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(32.dp)
+                    ) {
+                        Text(
+                            text = "더 많은 장소를 방문하고\n메모를 남겨보세요!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
