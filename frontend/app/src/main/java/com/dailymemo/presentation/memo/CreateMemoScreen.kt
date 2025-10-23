@@ -50,8 +50,14 @@ fun CreateMemoScreen(
 ) {
     // Initialize place data if provided
     LaunchedEffect(placeName, address, latitude, longitude, categoryName, isWishlist) {
-        if (placeName != null && address != null) {
+        if (placeName != null) {
+            // 카카오맵에서 선택한 장소: 제목과 위치 자동 입력
+            viewModel.onTitleChange(placeName)
             viewModel.onLocationNameChange(placeName)
+            if (address != null) {
+                // 주소를 content에 자동으로 추가
+                viewModel.onContentChange("📍 $address")
+            }
         }
         if (latitude != null && longitude != null) {
             viewModel.setPlaceLocation(latitude, longitude)
@@ -259,7 +265,7 @@ fun CreateMemoScreen(
                     }
                 }
 
-                // Category Section
+                // Category Section - 주요 카테고리만 표시
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -270,19 +276,44 @@ fun CreateMemoScreen(
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
-                        Text(
-                            text = "장소 카테고리 (선택)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "장소 카테고리",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (category != null && category != PlaceCategory.OTHER) {
+                                Text(
+                                    text = "${category?.icon} ${category?.displayName}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Category chips
+                        // 주요 카테고리만 표시 (자주 사용되는 8개)
+                        val mainCategories = listOf(
+                            PlaceCategory.RESTAURANT,
+                            PlaceCategory.CAFE,
+                            PlaceCategory.SHOPPING,
+                            PlaceCategory.CULTURAL,
+                            PlaceCategory.ENTERTAINMENT,
+                            PlaceCategory.ACCOMMODATION,
+                            PlaceCategory.SPORTS,
+                            PlaceCategory.OTHER
+                        )
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            PlaceCategory.values().take(4).forEach { cat ->
+                            mainCategories.take(4).forEach { cat ->
                                 FilterChip(
                                     selected = category == cat,
                                     onClick = {
@@ -290,7 +321,8 @@ fun CreateMemoScreen(
                                     },
                                     label = {
                                         Text("${cat.icon} ${cat.displayName}")
-                                    }
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
@@ -299,7 +331,7 @@ fun CreateMemoScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            PlaceCategory.values().drop(4).forEach { cat ->
+                            mainCategories.drop(4).forEach { cat ->
                                 FilterChip(
                                     selected = category == cat,
                                     onClick = {
@@ -307,7 +339,8 @@ fun CreateMemoScreen(
                                     },
                                     label = {
                                         Text("${cat.icon} ${cat.displayName}")
-                                    }
+                                    },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
