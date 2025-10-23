@@ -16,4 +16,9 @@ func NewProfileHandlers(e *echo.Echo) {
 	getProfileRepo := repository.NewGetProfileRepository(mysql.GormMysqlDB)
 	getProfileUseCase := usecase.NewGetProfileUseCase(getProfileRepo, timeout)
 	NewGetProfileHandler(e, getProfileUseCase)
+
+	// UpdateProfile
+	updateProfileRepo := repository.NewUpdateProfileRepository(mysql.GormMysqlDB)
+	updateProfileUseCase := usecase.NewUpdateProfileUseCase(updateProfileRepo, timeout)
+	NewUpdateProfileHandler(e, updateProfileUseCase)
 }
