@@ -48,8 +48,13 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 	// TODO: JWT에서 userID 추출
 	userID := uint(1)
 
+	// TODO: JWT 또는 사용자 설정에서 기본 RoomID 가져오기
+	// 현재는 기본값 1 사용
+	roomID := uint(1)
+
 	// Form 데이터 파싱
 	req := request.ReqCreateMemo{
+		RoomID:  roomID,
 		Title:   c.FormValue("title"),
 		Content: c.FormValue("content"),
 	}

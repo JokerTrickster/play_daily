@@ -3,7 +3,7 @@ package request
 import "mime/multipart"
 
 type ReqCreateMemo struct {
-	RoomID          uint                  `json:"room_id" binding:"required"`
+	RoomID          uint                  `json:"room_id"` // Handler에서 기본값 설정
 	Title           string                `json:"title" binding:"required"`
 	Content         string                `json:"content"`
 	ImageURL        string                `json:"image_url"`
