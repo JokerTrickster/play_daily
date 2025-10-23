@@ -113,9 +113,13 @@ class MemoRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception("메모 생성에 실패했습니다"))
+                val errorBody = response.errorBody()?.string()
+                val errorMsg = "메모 생성 실패 (${response.code()}): ${errorBody ?: response.message()}"
+                android.util.Log.e("MemoRepository", errorMsg)
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
+            android.util.Log.e("MemoRepository", "메모 생성 예외", e)
             Result.failure(Exception("네트워크 오류: ${e.message}"))
         }
     }
