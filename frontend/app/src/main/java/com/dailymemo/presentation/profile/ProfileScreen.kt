@@ -824,11 +824,6 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                     .weight(1f)
                     .padding(horizontal = 20.dp, vertical = 0.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .pointerInteropFilter {
-                        // Intercept all touch events - prevent parent scroll
-                        // Return true to indicate event is handled
-                        true
-                    }
             ) {
                 var mapView by remember { mutableStateOf<MapView?>(null) }
 
@@ -841,9 +836,28 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                 }
 
                 AndroidView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInteropFilter { event ->
+                            // 모든 터치 이벤트를 MapView가 처리하도록 함
+                            // 부모 스크롤로 이벤트 전파 차단
+                            android.util.Log.d("ProfileMap", "Touch event intercepted: ${event.action}")
+                            // requestDisallowInterceptTouchEvent를 호출하여 부모의 터치 가로채기 방지
+                            mapView?.parent?.requestDisallowInterceptTouchEvent(true)
+                            false  // false를 반환하여 MapView가 이벤트를 처리하도록 함
+                        },
                     factory = { context ->
                         MapView(context).apply {
                             mapView = this
+
+                            // 터치 이벤트 리스너 추가 - 부모 스크롤 차단
+                            setOnTouchListener { view, event ->
+                                // 부모 뷰에게 터치 이벤트를 가로채지 말라고 요청
+                                view.parent?.requestDisallowInterceptTouchEvent(true)
+                                android.util.Log.d("ProfileMap", "MapView touch: action=${event.action}")
+                                false  // false를 반환하여 MapView가 이벤트를 계속 처리하도록 함
+                            }
+
                             start(object : MapLifeCycleCallback() {
                                 override fun onMapDestroy() {}
                                 override fun onMapError(error: Exception) {
@@ -899,8 +913,7 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                                 }
                             })
                         }
-                    },
-                    modifier = Modifier.fillMaxSize()
+                    }
                 )
 
                 // 안내 텍스트 (메모가 없을 때)
