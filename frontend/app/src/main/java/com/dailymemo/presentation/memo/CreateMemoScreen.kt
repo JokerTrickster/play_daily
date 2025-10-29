@@ -267,39 +267,66 @@ fun CreateMemoScreen(
                     }
                 }
 
-                // Category Section - 주요 카테고리만 표시
+                // Category Section - 그리드 레이아웃
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
-                    )
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "장소 카테고리",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (category != null && category != PlaceCategory.OTHER) {
-                                Text(
-                                    text = "${category?.icon} ${category?.displayName}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium
-                                )
+                        Text(
+                            text = "카테고리 선택",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        if (category != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = category?.icon ?: "",
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = category?.displayName ?: "",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    IconButton(
+                                        onClick = { viewModel.onCategoryChange(null) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "선택 취소",
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // 주요 카테고리만 표시 (자주 사용되는 8개)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 주요 카테고리 그리드 (4x2)
                         val mainCategories = listOf(
                             PlaceCategory.RESTAURANT,
                             PlaceCategory.CAFE,
@@ -311,39 +338,41 @@ fun CreateMemoScreen(
                             PlaceCategory.OTHER
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        // 2줄의 그리드
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            mainCategories.take(4).forEach { cat ->
-                                FilterChip(
-                                    selected = category == cat,
-                                    onClick = {
-                                        viewModel.onCategoryChange(if (category == cat) null else cat)
-                                    },
-                                    label = {
-                                        Text("${cat.icon} ${cat.displayName}")
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
+                            // 첫 번째 줄
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                mainCategories.take(4).forEach { cat ->
+                                    CategoryItem(
+                                        category = cat,
+                                        isSelected = category == cat,
+                                        onClick = {
+                                            viewModel.onCategoryChange(if (category == cat) null else cat)
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            mainCategories.drop(4).forEach { cat ->
-                                FilterChip(
-                                    selected = category == cat,
-                                    onClick = {
-                                        viewModel.onCategoryChange(if (category == cat) null else cat)
-                                    },
-                                    label = {
-                                        Text("${cat.icon} ${cat.displayName}")
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
+                            // 두 번째 줄
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                mainCategories.drop(4).forEach { cat ->
+                                    CategoryItem(
+                                        category = cat,
+                                        isSelected = category == cat,
+                                        onClick = {
+                                            viewModel.onCategoryChange(if (category == cat) null else cat)
+                                        },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -523,6 +552,57 @@ fun CreateMemoScreen(
                 onSearch = viewModel::searchPlaces,
                 onSelectPlace = viewModel::selectPlace,
                 onDismiss = viewModel::closeSearchDialog
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryItem(
+    category: PlaceCategory,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier
+            .aspectRatio(1f),
+        shape = RoundedCornerShape(12.dp),
+        color = if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        },
+        border = if (isSelected) {
+            androidx.compose.foundation.BorderStroke(
+                2.dp,
+                MaterialTheme.colorScheme.primary
+            )
+        } else null
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = category.icon,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            Text(
+                text = category.displayName,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                maxLines = 1
             )
         }
     }

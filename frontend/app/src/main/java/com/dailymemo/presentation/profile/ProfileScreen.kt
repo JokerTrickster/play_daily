@@ -842,18 +842,8 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                                 override fun onMapReady(map: KakaoMap) {
                                     kakaoMap = map
 
-                                    // 지도 제스처 활성화 (확대/축소/드래그)
-                                    try {
-                                        // 줌 제스처 활성화
-                                        map.setOnZoomGestureListener { zoomLevel, position ->
-                                            android.util.Log.d("ProfileMap", "Zoom: $zoomLevel")
-                                        }
-
-                                        // 모든 제스처 활성화 (기본값이지만 명시적으로 설정)
-                                        android.util.Log.d("ProfileMap", "Gestures enabled")
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("ProfileMap", "Error enabling gestures: ${e.message}", e)
-                                    }
+                                    // 지도 제스처는 기본적으로 활성화되어 있음 (확대/축소/드래그)
+                                    android.util.Log.d("ProfileMap", "Map ready with gestures enabled")
 
                                     // 한국 중심 좌표로 카메라 이동 (서울 중심)
                                     map.moveCamera(
