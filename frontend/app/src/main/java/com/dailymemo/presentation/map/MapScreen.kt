@@ -275,6 +275,16 @@ fun MapScreen(
                             searchResults.take(5).forEach { place ->
                                 Surface(
                                     onClick = {
+                                        // 지도를 해당 장소로 이동
+                                        kakaoMap?.moveCamera(
+                                            com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                                LatLng.from(place.latitude, place.longitude),
+                                                15 // zoom level
+                                            )
+                                        )
+                                        Log.d("MapScreen", "Moving to place: ${place.name} at ${place.latitude}, ${place.longitude}")
+
+                                        // 다이얼로그 표시
                                         selectedPlace = place
                                         showPlaceDialog = true
                                     },

@@ -50,11 +50,11 @@ fun HalfStarRating(
                         .clickable(enabled = editable) {
                             // Determine new rating based on click position
                             val newRating = when {
-                                rating == i.toFloat() -> i - 0.5f  // If clicking on full star, make it half
+                                rating == i.toFloat() && i > 1 -> i - 0.5f  // If clicking on full star, make it half (but not below 1)
                                 rating == i - 0.5f -> i.toFloat()  // If clicking on half star, make it full
                                 else -> i.toFloat()  // Otherwise make it full
                             }
-                            onRatingChange(newRating.coerceIn(0f, maxRating.toFloat()))
+                            onRatingChange(newRating.coerceIn(1f, maxRating.toFloat()))  // 최소 1점
                         }
                 ) {
                     when (starRating) {

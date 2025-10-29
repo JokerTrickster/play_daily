@@ -75,17 +75,19 @@ class LocationDataSource(
                 fusedLocationClient.removeLocationUpdates(locationCallback)
             }
 
-            // Also try to get last known location as fallback
+            // Also try to get last known location as immediate fallback
             fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
                 if (continuation.isActive && lastLocation != null) {
-                    // Only use last location if it's recent (within 30 seconds) and accurate
-                    val isRecent = (System.currentTimeMillis() - lastLocation.time) < 30_000
-                    val isAccurate = lastLocation.accuracy < 50 // meters
+                    // Use last location if it's reasonably recent (within 5 minutes) and acceptable accuracy
+                    val isRecent = (System.currentTimeMillis() - lastLocation.time) < 300_000 // 5 minutes
+                    val isAccurate = lastLocation.accuracy < 200 // 200 meters
 
-                    if (!isRecent || !isAccurate) {
-                        // Wait for fresh location from requestLocationUpdates
-                        return@addOnSuccessListener
+                    if (isRecent && isAccurate) {
+                        // Use last known location immediately for faster response
+                        fusedLocationClient.removeLocationUpdates(object : LocationCallback() {})
+                        continuation.resume(lastLocation)
                     }
+                    // Otherwise wait for fresh location from requestLocationUpdates
                 }
             }
         } catch (e: SecurityException) {

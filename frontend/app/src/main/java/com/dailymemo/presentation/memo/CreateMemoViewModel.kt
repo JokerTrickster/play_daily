@@ -33,7 +33,7 @@ class CreateMemoViewModel @Inject constructor(
     private val _imageUri = MutableStateFlow<android.net.Uri?>(null)
     val imageUri: StateFlow<android.net.Uri?> = _imageUri.asStateFlow()
 
-    private val _rating = MutableStateFlow(0f)
+    private val _rating = MutableStateFlow(1f)  // 기본값 1점
     val rating: StateFlow<Float> = _rating.asStateFlow()
 
     private val _isPinned = MutableStateFlow(false)
@@ -133,7 +133,7 @@ class CreateMemoViewModel @Inject constructor(
     }
 
     fun onRatingChange(newRating: Float) {
-        _rating.value = newRating.coerceIn(0f, 5f)
+        _rating.value = newRating.coerceIn(1f, 5f)  // 최소 1점, 최대 5점
     }
 
     fun togglePin() {

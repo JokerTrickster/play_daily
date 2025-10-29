@@ -118,30 +118,68 @@ class MapViewModel @Inject constructor(
     }
 
     fun searchPlaces(query: String) {
+        android.util.Log.d("MapViewModel", "searchPlaces called with query: $query")
         if (query.isBlank()) {
             _searchResults.value = emptyList()
             _showSearchResults.value = false
+            android.util.Log.d("MapViewModel", "Query is blank, clearing results")
             return
         }
 
         viewModelScope.launch {
             val location = _currentLocation.value
+            android.util.Log.d("MapViewModel", "Current location: ${location?.latitude}, ${location?.longitude}")
+            android.util.Log.d("MapViewModel", "Searching within 20km radius")
+
             searchPlacesUseCase(
                 query = query,
                 longitude = location?.longitude,
-                latitude = location?.latitude
+                latitude = location?.latitude,
+                radius = 20000  // 20km 반경으로 검색
             ).fold(
                 onSuccess = { places ->
-                    _searchResults.value = places
+                    android.util.Log.d("MapViewModel", "Search success: found ${places.size} places")
+
+                    // 현재 위치 기준으로 거리순 정렬
+                    val sortedPlaces = if (location != null) {
+                        places.sortedBy { place ->
+                            calculateDistance(
+                                location.latitude, location.longitude,
+                                place.latitude, place.longitude
+                            )
+                        }
+                    } else {
+                        places
+                    }
+
+                    android.util.Log.d("MapViewModel", "Sorted ${sortedPlaces.size} places by distance")
+                    _searchResults.value = sortedPlaces
                     _showSearchResults.value = true
                 },
                 onFailure = { error ->
+                    android.util.Log.e("MapViewModel", "Search failed: ${error.message}", error)
                     _uiState.value = MapUiState.Error(
                         error.message ?: "Failed to search places"
                     )
                 }
             )
         }
+    }
+
+    // 두 지점 간 거리 계산 (Haversine formula)
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val earthRadius = 6371000.0 // 지구 반지름 (미터)
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+        return earthRadius * c // 거리 (미터)
     }
 
     fun searchByCategory(category: PlaceCategory) {
@@ -152,7 +190,8 @@ class MapViewModel @Inject constructor(
             searchPlacesByCategoryUseCase(
                 category = category,
                 longitude = location.longitude,
-                latitude = location.latitude
+                latitude = location.latitude,
+                radius = 20000  // 최대값 20km (카카오 API 제한)
             ).fold(
                 onSuccess = { places ->
                     _searchResults.value = places
@@ -189,7 +228,7 @@ class MapViewModel @Inject constructor(
                         category = cat,
                         longitude = longitude,
                         latitude = latitude,
-                        radius = 5000 // 5km로 확대 (메모 표시는 API 사용 안 함)
+                        radius = 20000 // 최대값 20km (카카오 API 제한)
                     ).getOrNull()
                 }.flatten().distinctBy { it.id }
 
@@ -200,7 +239,7 @@ class MapViewModel @Inject constructor(
                     category = category,
                     longitude = longitude,
                     latitude = latitude,
-                    radius = 5000 // 5km로 확대 (메모 표시는 API 사용 안 함)
+                    radius = 20000 // 최대값 20km (카카오 API 제한)
                 ).getOrNull() ?: emptyList()
 
                 _searchResults.value = results
