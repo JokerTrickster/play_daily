@@ -106,10 +106,21 @@ fun MapScreen(
     ) {
         if (hasLocationPermission) {
             // Kakao Map View
+            var mapView: MapView? by remember { mutableStateOf(null) }
+
+            DisposableEffect(Unit) {
+                onDispose {
+                    Log.d("MapScreen", "Cleaning up MapView")
+                    mapView?.finish()
+                    kakaoMap = null
+                }
+            }
+
             AndroidView(
                 factory = { ctx ->
                     Log.d("MapScreen", "MapView factory called")
                     MapView(ctx).apply {
+                        mapView = this
                         start(object : MapLifeCycleCallback() {
                             override fun onMapDestroy() {
                                 Log.d("MapScreen", "onMapDestroy")

@@ -185,23 +185,41 @@ class MemoRepositoryImpl @Inject constructor(
     }
 
     private fun prepareFilePart(uri: Uri): MultipartBody.Part {
-        // Uri에서 파일 정보 가져오기
         val contentResolver = context.contentResolver
         val fileName = getFileName(uri) ?: "image_${System.currentTimeMillis()}.jpg"
 
-        // ContentResolver를 사용하여 임시 파일로 복사
-        val tempFile = File(context.cacheDir, fileName)
-        contentResolver.openInputStream(uri)?.use { inputStream ->
-            FileOutputStream(tempFile).use { outputStream ->
-                inputStream.copyTo(outputStream)
-            }
-        }
+        // 이미지 압축 처리
+        val compressedBytes = contentResolver.openInputStream(uri)?.use { inputStream ->
+            // 비트맵 디코딩
+            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
 
-        // MIME 타입 가져오기
-        val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+            // 크기 조정 (최대 1920x1920)
+            val scaledBitmap = if (bitmap.width > 1920 || bitmap.height > 1920) {
+                val scale = minOf(1920f / bitmap.width, 1920f / bitmap.height)
+                android.graphics.Bitmap.createScaledBitmap(
+                    bitmap,
+                    (bitmap.width * scale).toInt(),
+                    (bitmap.height * scale).toInt(),
+                    true
+                )
+            } else {
+                bitmap
+            }
+
+            // JPEG 압축 (85% 품질)
+            val outputStream = java.io.ByteArrayOutputStream()
+            scaledBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, outputStream)
+            val bytes = outputStream.toByteArray()
+
+            // 메모리 해제
+            if (scaledBitmap != bitmap) scaledBitmap.recycle()
+            bitmap.recycle()
+
+            bytes
+        } ?: throw Exception("Failed to read image")
 
         // RequestBody 생성
-        val requestBody = tempFile.asRequestBody(mimeType.toMediaTypeOrNull())
+        val requestBody = compressedBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
 
         // MultipartBody.Part 생성
         return MultipartBody.Part.createFormData("image", fileName, requestBody)

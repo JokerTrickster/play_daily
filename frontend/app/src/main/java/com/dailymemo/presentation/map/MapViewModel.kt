@@ -78,8 +78,11 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    private var locationJob: kotlinx.coroutines.Job? = null
+
     private fun startLocationUpdates() {
-        viewModelScope.launch {
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
             getLocationUpdatesUseCase()
                 .catch { error ->
                     _uiState.value = MapUiState.Error(
@@ -90,6 +93,16 @@ class MapViewModel @Inject constructor(
                     _currentLocation.value = location
                 }
         }
+    }
+
+    fun stopLocationUpdates() {
+        locationJob?.cancel()
+        locationJob = null
+    }
+
+    override fun onCleared() {
+        stopLocationUpdates()
+        super.onCleared()
     }
 
     private fun loadMemos() {
@@ -113,8 +126,22 @@ class MapViewModel @Inject constructor(
         loadMemos()
     }
 
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
+
+        // 디바운싱: 300ms 후에 자동 검색
+        searchJob?.cancel()
+        if (query.isNotBlank()) {
+            searchJob = viewModelScope.launch {
+                kotlinx.coroutines.delay(300)
+                searchPlaces(query)
+            }
+        } else {
+            _searchResults.value = emptyList()
+            _showSearchResults.value = false
+        }
     }
 
     fun searchPlaces(query: String) {
@@ -140,13 +167,16 @@ class MapViewModel @Inject constructor(
                 onSuccess = { places ->
                     android.util.Log.d("MapViewModel", "Search success: found ${places.size} places")
 
-                    // 현재 위치 기준으로 거리순 정렬
+                    // 현재 위치 기준으로 거리순 정렬 (백그라운드 스레드에서 실행)
                     val sortedPlaces = if (location != null) {
-                        places.sortedBy { place ->
-                            calculateDistance(
-                                location.latitude, location.longitude,
-                                place.latitude, place.longitude
-                            )
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                            places.map { place ->
+                                place to calculateDistance(
+                                    location.latitude, location.longitude,
+                                    place.latitude, place.longitude
+                                )
+                            }.sortedBy { it.second }
+                             .map { it.first }
                         }
                     } else {
                         places
