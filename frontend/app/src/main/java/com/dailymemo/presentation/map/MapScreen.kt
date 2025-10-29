@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -247,28 +251,65 @@ fun MapScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // Search Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { newQuery ->
-                        viewModel.onSearchQueryChange(newQuery)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(4.dp, RoundedCornerShape(28.dp)),
-                    placeholder = { Text("장소 검색...") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Search, contentDescription = "검색")
-                    },
-                    shape = RoundedCornerShape(28.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = Color.Transparent
-                    ),
-                    singleLine = true
-                )
+                // Search Bar with Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { newQuery ->
+                            viewModel.updateSearchQuery(newQuery)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .shadow(4.dp, RoundedCornerShape(28.dp)),
+                        placeholder = { Text("장소 검색...") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Search, contentDescription = "검색")
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.clearSearch() }) {
+                                    Icon(Icons.Filled.Clear, contentDescription = "지우기")
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(28.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = Color.Transparent
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Search
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                if (searchQuery.length >= 2) {
+                                    viewModel.searchPlaces(searchQuery)
+                                }
+                            }
+                        )
+                    )
+
+                    // Search Button
+                    Button(
+                        onClick = {
+                            if (searchQuery.length >= 2) {
+                                viewModel.searchPlaces(searchQuery)
+                            }
+                        },
+                        enabled = searchQuery.length >= 2,
+                        modifier = Modifier.height(56.dp),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
+                        Text("검색")
+                    }
+                }
 
                 // Search Results List (below search bar)
                 if (searchResults.isNotEmpty()) {

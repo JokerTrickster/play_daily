@@ -128,20 +128,19 @@ class MapViewModel @Inject constructor(
 
     private var searchJob: kotlinx.coroutines.Job? = null
 
-    fun onSearchQueryChange(query: String) {
+    // 검색어만 업데이트 (자동 검색 없음)
+    fun updateSearchQuery(query: String) {
         _searchQuery.value = query
-
-        // 디바운싱: 500ms 후에 자동 검색 (Kakao API Rate Limit 방지)
-        searchJob?.cancel()
-        if (query.length >= 2) {  // 최소 2글자 이상부터 검색
-            searchJob = viewModelScope.launch {
-                kotlinx.coroutines.delay(500)  // 500ms로 증가
-                searchPlaces(query)
-            }
-        } else {
+        // 검색어가 비어있으면 결과 초기화
+        if (query.isEmpty()) {
             _searchResults.value = emptyList()
             _showSearchResults.value = false
         }
+    }
+
+    // 디바운싱 로직은 더 이상 사용하지 않음 (수동 검색으로 변경)
+    fun onSearchQueryChange(query: String) {
+        updateSearchQuery(query)
     }
 
     fun searchPlaces(query: String) {
