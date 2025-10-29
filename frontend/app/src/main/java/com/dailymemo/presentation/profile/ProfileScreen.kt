@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -818,6 +819,9 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                     .weight(1f)
                     .padding(horizontal = 20.dp, vertical = 0.dp)
                     .clip(RoundedCornerShape(12.dp))
+                    .pointerInput(Unit) {
+                        // Allow touch events to pass through to the AndroidView
+                    }
             ) {
                 var mapView by remember { mutableStateOf<MapView?>(null) }
 

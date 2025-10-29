@@ -42,7 +42,13 @@ class PlaceRepositoryImpl @Inject constructor(
                 } ?: emptyList()
                 Result.success(places)
             } else {
-                Result.failure(Exception("Failed to search places: ${response.code()} ${response.message()}"))
+                val errorMsg = when (response.code()) {
+                    429 -> "검색 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+                    400 -> "잘못된 검색 조건입니다."
+                    401 -> "API 인증에 실패했습니다."
+                    else -> "검색에 실패했습니다: ${response.code()}"
+                }
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -80,7 +86,13 @@ class PlaceRepositoryImpl @Inject constructor(
                 } ?: emptyList()
                 Result.success(places)
             } else {
-                Result.failure(Exception("Failed to search places by category: ${response.code()} ${response.message()}"))
+                val errorMsg = when (response.code()) {
+                    429 -> "검색 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+                    400 -> "잘못된 검색 조건입니다."
+                    401 -> "API 인증에 실패했습니다."
+                    else -> "카테고리 검색에 실패했습니다: ${response.code()}"
+                }
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

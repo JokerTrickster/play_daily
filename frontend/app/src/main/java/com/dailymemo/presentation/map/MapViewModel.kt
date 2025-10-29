@@ -131,11 +131,11 @@ class MapViewModel @Inject constructor(
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
 
-        // 디바운싱: 300ms 후에 자동 검색
+        // 디바운싱: 500ms 후에 자동 검색 (Kakao API Rate Limit 방지)
         searchJob?.cancel()
-        if (query.isNotBlank()) {
+        if (query.length >= 2) {  // 최소 2글자 이상부터 검색
             searchJob = viewModelScope.launch {
-                kotlinx.coroutines.delay(300)
+                kotlinx.coroutines.delay(500)  // 500ms로 증가
                 searchPlaces(query)
             }
         } else {
