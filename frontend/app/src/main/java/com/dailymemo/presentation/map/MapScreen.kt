@@ -252,7 +252,6 @@ fun MapScreen(
                     value = searchQuery,
                     onValueChange = { newQuery ->
                         viewModel.onSearchQueryChange(newQuery)
-                        viewModel.searchPlaces(newQuery)
                     },
                     modifier = Modifier
                         .fillMaxWidth()

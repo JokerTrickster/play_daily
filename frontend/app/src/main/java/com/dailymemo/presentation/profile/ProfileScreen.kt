@@ -18,6 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -819,9 +822,17 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                     .weight(1f)
                     .padding(horizontal = 20.dp, vertical = 0.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .pointerInput(Unit) {
-                        // Allow touch events to pass through to the AndroidView
-                    }
+                    .nestedScroll(remember {
+                        object : NestedScrollConnection {
+                            override fun onPreScroll(
+                                available: androidx.compose.ui.geometry.Offset,
+                                source: NestedScrollSource
+                            ): androidx.compose.ui.geometry.Offset {
+                                // Consume all scroll events to prevent parent scroll
+                                return available
+                            }
+                        }
+                    })
             ) {
                 var mapView by remember { mutableStateOf<MapView?>(null) }
 
