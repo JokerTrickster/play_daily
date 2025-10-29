@@ -22,6 +22,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -778,6 +779,7 @@ fun ParticipantItem(
     }
 }
 
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
     var kakaoMap by remember { mutableStateOf<KakaoMap?>(null) }
@@ -822,17 +824,11 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
                     .weight(1f)
                     .padding(horizontal = 20.dp, vertical = 0.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .nestedScroll(remember {
-                        object : NestedScrollConnection {
-                            override fun onPreScroll(
-                                available: androidx.compose.ui.geometry.Offset,
-                                source: NestedScrollSource
-                            ): androidx.compose.ui.geometry.Offset {
-                                // Consume all scroll events to prevent parent scroll
-                                return available
-                            }
-                        }
-                    })
+                    .pointerInteropFilter {
+                        // Intercept all touch events - prevent parent scroll
+                        // Return true to indicate event is handled
+                        true
+                    }
             ) {
                 var mapView by remember { mutableStateOf<MapView?>(null) }
 
