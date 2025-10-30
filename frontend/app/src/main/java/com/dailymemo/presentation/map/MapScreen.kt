@@ -669,11 +669,11 @@ fun PlaceSelectionDialog(
             .fillMaxSize()
             .background(Color.Transparent)
     ) {
-        // 반투명 배경 (지도가 희미하게 보임)
+        // 반투명 배경 (지도가 잘 보이도록 살짝만 투명)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(Color.Black.copy(alpha = 0.1f))
                 .clickable(onClick = onDismiss)
         )
 
