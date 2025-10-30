@@ -66,6 +66,7 @@ fun MapScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedMemoId by viewModel.selectedMemoId.collectAsState()
     val showPopupCard by viewModel.showPopupCard.collectAsState()
+    val showSearchResults by viewModel.showSearchResults.collectAsState()
     var showPlaceDialog by remember { mutableStateOf(false) }
     var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
 
@@ -324,8 +325,8 @@ fun MapScreen(
                     }
                 }
 
-                // Search Results List (below search bar)
-                if (searchResults.isNotEmpty()) {
+                // Search Results List (below search bar) - only show if showSearchResults is true
+                if (searchResults.isNotEmpty() && showSearchResults) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(
                         modifier = Modifier
