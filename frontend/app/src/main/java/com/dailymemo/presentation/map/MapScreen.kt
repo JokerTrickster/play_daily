@@ -160,8 +160,8 @@ fun MapScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Move camera when current location changes
-            LaunchedEffect(currentLocation) {
+            // Move camera to current location only once (on initial load)
+            LaunchedEffect(Unit) {
                 currentLocation?.let { location ->
                     kakaoMap?.let { map ->
                         try {
@@ -170,9 +170,9 @@ fun MapScreen(
                                     LatLng.from(location.latitude, location.longitude)
                                 )
                             )
-                            Log.d("MapScreen", "Camera moved to current location: ${location.latitude}, ${location.longitude}")
+                            Log.d("MapScreen", "Camera moved to initial location: ${location.latitude}, ${location.longitude}")
                         } catch (e: Exception) {
-                            Log.e("MapScreen", "Error moving camera to current location: ${e.message}", e)
+                            Log.e("MapScreen", "Error moving camera to initial location: ${e.message}", e)
                         }
                     }
                 }
@@ -205,14 +205,27 @@ fun MapScreen(
                             Log.d("MapScreen", "Added current location marker at ${location.latitude}, ${location.longitude}")
                         }
 
-                        // 2. Add markers for saved memos
+                        // 2. Add markers for saved memos with category-based pin colors
                         memos.filter { it.latitude != null && it.longitude != null }
                             .forEach { memo ->
                                 val position = LatLng.from(memo.latitude!!, memo.longitude!!)
 
+                                // Category별 색상 매칭 (PlaceCategory의 color와 일치)
+                                val pinColor = when (memo.category.name) {
+                                    "RESTAURANT" -> android.graphics.Color.parseColor("#FF6B6B")  // 빨강
+                                    "CAFE" -> android.graphics.Color.parseColor("#8B4513")        // 갈색
+                                    "SHOPPING" -> android.graphics.Color.parseColor("#9C27B0")    // 보라
+                                    "ACCOMMODATION" -> android.graphics.Color.parseColor("#2196F3") // 파랑
+                                    "CULTURE" -> android.graphics.Color.parseColor("#E91E63")     // 핑크
+                                    "LEISURE" -> android.graphics.Color.parseColor("#4CAF50")     // 초록
+                                    "TRAVEL" -> android.graphics.Color.parseColor("#FF9800")      // 주황
+                                    "OTHER" -> android.graphics.Color.parseColor("#9E9E9E")       // 회색
+                                    else -> android.graphics.Color.parseColor("#2196F3")
+                                }
+
                                 val styles = LabelStyles.from(
-                                    LabelStyle.from(android.R.drawable.star_on)
-                                        .setTextStyles(30, android.graphics.Color.parseColor("#FFC107"), 2, android.graphics.Color.WHITE)
+                                    LabelStyle.from(android.R.drawable.ic_menu_compass)
+                                        .setTextStyles(32, pinColor, 3, android.graphics.Color.WHITE)
                                 )
 
                                 val labelText = "${memo.category.icon} ${memo.title}"
