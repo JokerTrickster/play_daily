@@ -244,13 +244,13 @@ fun MapScreen(
 
                                 // 동그란 마커 스타일 - 마커 아이콘과 텍스트 레이블 설정
                                 val markerStyle = LabelStyle.from(android.R.drawable.presence_online)
-                                    .setTextStyles(27, markerColor, 0, markerColor)  // 마커 아이콘 스타일
+                                    .setTextStyles(14, markerColor, 0, markerColor)  // 마커 아이콘 스타일 (27 -> 14)
 
                                 val labelStyle = LabelStyle.from(android.R.drawable.presence_online)
                                     .setTextStyles(
-                                        38,  // 텍스트 크기 (크고 읽기 쉽게)
+                                        20,  // 텍스트 크기 (38 -> 20)
                                         android.graphics.Color.parseColor("#1A1A1A"),  // 진한 회색 텍스트
-                                        4,   // 테두리 두께 (가독성 향상)
+                                        2,   // 테두리 두께 (4 -> 2)
                                         android.graphics.Color.WHITE  // 흰색 테두리
                                     )
 
