@@ -18,6 +18,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.*
@@ -59,6 +63,8 @@ fun MapScreen(
     val memos by viewModel.memos.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedMemoId by viewModel.selectedMemoId.collectAsState()
+    val showPopupCard by viewModel.showPopupCard.collectAsState()
     var showPlaceDialog by remember { mutableStateOf(false) }
     var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
 
@@ -241,13 +247,13 @@ fun MapScreen(
                                 Log.d("MapScreen", "Added memo marker: ${memo.title} with color ${memo.category.name}")
                             }
 
-                        // Set label click listener for memo markers
+                        // Set label click listener for memo markers - show popup card
                         map.setOnLabelClickListener { _, _, label ->
                             val tag = label.tag.toString()
                             if (tag.startsWith("memo_")) {
                                 val memoId = tag.removePrefix("memo_").toLongOrNull()
                                 if (memoId != null) {
-                                    onNavigateToDetail(memoId)
+                                    viewModel.showMemoPopup(memoId)
                                 }
                             }
                         }
@@ -517,6 +523,142 @@ fun MapScreen(
                     viewModel.clearSearch()
                 }
             )
+        }
+
+        // Memo Popup Card (마커 클릭 시 표시)
+        if (showPopupCard && selectedMemoId != null) {
+            val selectedMemo = memos.find { it.id == selectedMemoId }
+            selectedMemo?.let { memo ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 80.dp), // FAB 위에 표시
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .shadow(8.dp, RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            // Header with close button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${memo.category.icon} ${memo.title}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = { viewModel.dismissPopupCard() }) {
+                                    Icon(
+                                        Icons.Filled.Close,
+                                        contentDescription = "닫기",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Content preview
+                            if (memo.content.isNotEmpty()) {
+                                Text(
+                                    text = memo.content,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
+                            // Location and rating
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Location
+                                memo.locationName?.let { location ->
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Place,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = location,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f, fill = false)
+                                        )
+                                    }
+                                }
+
+                                // Rating
+                                if (memo.rating > 0) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Star,
+                                            contentDescription = "평점",
+                                            modifier = Modifier.size(16.dp),
+                                            tint = Color(0xFFFFB800)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = String.format("%.1f", memo.rating),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFFFB800)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // View details button
+                            Button(
+                                onClick = {
+                                    viewModel.dismissPopupCard()
+                                    onNavigateToDetail(memo.id)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("자세히 보기")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

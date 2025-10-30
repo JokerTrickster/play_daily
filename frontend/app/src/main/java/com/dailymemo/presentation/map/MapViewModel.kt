@@ -293,8 +293,14 @@ class MapViewModel @Inject constructor(
         _showPopupCard.value = true
     }
 
+    fun showMemoPopup(memoId: Long) {
+        _selectedMemoId.value = memoId
+        _showPopupCard.value = true
+    }
+
     fun dismissPopupCard() {
         _showPopupCard.value = false
+        _selectedMemoId.value = null
     }
 }
 
