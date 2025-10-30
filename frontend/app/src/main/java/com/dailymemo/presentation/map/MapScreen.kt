@@ -229,18 +229,37 @@ fun MapScreen(
                                     else -> android.graphics.Color.parseColor("#FF3B30")
                                 }
 
-                                // 동그란 마커 스타일 (크기 2/3로 축소: 40 -> 27)
-                                val styles = LabelStyles.from(
-                                    LabelStyle.from(android.R.drawable.presence_online)
-                                        .setTextStyles(27, markerColor, 0, markerColor)
-                                )
+                                // 평점 표시 포함 (평점이 있는 경우)
+                                val ratingText = if (memo.rating > 0) {
+                                    "★ ${String.format("%.1f", memo.rating)}"
+                                } else {
+                                    ""
+                                }
 
-                                val labelText = "${memo.category.icon} ${memo.title}"
+                                val labelText = if (ratingText.isNotEmpty()) {
+                                    "$ratingText ${memo.title}"
+                                } else {
+                                    memo.title
+                                }
+
+                                // 동그란 마커 스타일 - 마커 아이콘과 텍스트 레이블 설정
+                                val markerStyle = LabelStyle.from(android.R.drawable.presence_online)
+                                    .setTextStyles(27, markerColor, 0, markerColor)  // 마커 아이콘 스타일
+
+                                val labelStyle = LabelStyle.from(android.R.drawable.presence_online)
+                                    .setTextStyles(
+                                        38,  // 텍스트 크기 (크고 읽기 쉽게)
+                                        android.graphics.Color.parseColor("#1A1A1A"),  // 진한 회색 텍스트
+                                        4,   // 테두리 두께 (가독성 향상)
+                                        android.graphics.Color.WHITE  // 흰색 테두리
+                                    )
+
+                                val styles = LabelStyles.from(markerStyle, labelStyle)
 
                                 val options = LabelOptions.from(position)
                                     .setStyles(styles)
                                     .setTag("memo_${memo.id}")
-                                    .setTexts(labelText)
+                                    .setTexts("", labelText)  // 첫 번째는 빈 문자열(마커용), 두 번째는 실제 레이블 텍스트
 
                                 layer?.addLabel(options)
 
