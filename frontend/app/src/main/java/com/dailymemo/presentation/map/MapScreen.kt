@@ -205,13 +205,13 @@ fun MapScreen(
                             Log.d("MapScreen", "Added current location marker at ${location.latitude}, ${location.longitude}")
                         }
 
-                        // 2. Add markers for saved memos with category-based pin colors
+                        // 2. Add markers for saved memos with category-based colored circles
                         memos.filter { it.latitude != null && it.longitude != null }
                             .forEach { memo ->
                                 val position = LatLng.from(memo.latitude!!, memo.longitude!!)
 
                                 // Category별 색상 매칭 (PlaceCategory의 color와 일치)
-                                val pinColor = when (memo.category.name) {
+                                val markerColor = when (memo.category.name) {
                                     "RESTAURANT" -> android.graphics.Color.parseColor("#FF6B6B")  // 빨강
                                     "CAFE" -> android.graphics.Color.parseColor("#8B4513")        // 갈색
                                     "SHOPPING" -> android.graphics.Color.parseColor("#9C27B0")    // 보라
@@ -220,12 +220,13 @@ fun MapScreen(
                                     "LEISURE" -> android.graphics.Color.parseColor("#4CAF50")     // 초록
                                     "TRAVEL" -> android.graphics.Color.parseColor("#FF9800")      // 주황
                                     "OTHER" -> android.graphics.Color.parseColor("#9E9E9E")       // 회색
-                                    else -> android.graphics.Color.parseColor("#2196F3")
+                                    else -> android.graphics.Color.parseColor("#FF6B6B")
                                 }
 
+                                // 동그란 마커 스타일 (presence_online = 동그란 점)
                                 val styles = LabelStyles.from(
-                                    LabelStyle.from(android.R.drawable.ic_menu_compass)
-                                        .setTextStyles(32, pinColor, 3, android.graphics.Color.WHITE)
+                                    LabelStyle.from(android.R.drawable.presence_online)
+                                        .setTextStyles(40, markerColor, 0, markerColor)
                                 )
 
                                 val labelText = "${memo.category.icon} ${memo.title}"
@@ -237,7 +238,7 @@ fun MapScreen(
 
                                 layer?.addLabel(options)
 
-                                Log.d("MapScreen", "Added memo marker: ${memo.title}")
+                                Log.d("MapScreen", "Added memo marker: ${memo.title} with color ${memo.category.name}")
                             }
 
                         // Set label click listener for memo markers
