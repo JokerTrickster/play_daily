@@ -61,10 +61,11 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 		Content: c.FormValue("content"),
 	}
 
-	// Rating 파싱 (optional)
+	// Rating 파싱 (Float로 받아서 uint8로 변환)
 	if ratingStr := c.FormValue("rating"); ratingStr != "" {
-		if rating, err := strconv.ParseUint(ratingStr, 10, 8); err == nil {
-			req.Rating = uint8(rating)
+		if rating, err := strconv.ParseFloat(ratingStr, 64); err == nil {
+			// 반올림하여 uint8로 변환 (0-5 범위)
+			req.Rating = uint8(rating + 0.5)
 		}
 	}
 
