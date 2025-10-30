@@ -333,9 +333,17 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadUserInfo() {
         // TODO: 백엔드 연동 시 실제 사용자 정보 로드
-        _userName.value = "홍길동"
-        _userEmail.value = "hong@example.com"
-        _memoCount.value = 42
+        // 이름, 이메일은 제거하고 방 ID만 표시
+        viewModelScope.launch {
+            getMemosUseCase(isWishlist = null).fold(
+                onSuccess = { memos ->
+                    _memoCount.value = memos.size
+                },
+                onFailure = {
+                    _memoCount.value = 0
+                }
+            )
+        }
     }
 
     private fun loadCurrentRoom() {

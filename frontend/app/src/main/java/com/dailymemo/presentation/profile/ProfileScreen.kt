@@ -81,8 +81,7 @@ fun ProfileScreen(
 
             // Profile Header
             ProfileHeader(
-                userName = userName,
-                userEmail = userEmail,
+                roomId = currentRoom?.id ?: "로딩 중...",
                 memoCount = memoCount
             )
 
@@ -182,8 +181,7 @@ fun ProfileScreen(
 
 @Composable
 fun ProfileHeader(
-    userName: String,
-    userEmail: String,
+    roomId: String,
     memoCount: Int
 ) {
     Card(
@@ -201,7 +199,7 @@ fun ProfileHeader(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Compact Avatar
+            // Room Icon
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -216,31 +214,31 @@ fun ProfileHeader(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = userName.take(2).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "방",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
                 )
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // User Info
+            // Room ID Info
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = userName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "내 방 ID",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = userEmail,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = roomId,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
