@@ -216,23 +216,23 @@ fun MapScreen(
                             .forEach { memo ->
                                 val position = LatLng.from(memo.latitude!!, memo.longitude!!)
 
-                                // Category별 색상 매칭 (PlaceCategory의 color와 일치)
+                                // Category별 색상 매칭 (더 선명하고 예쁜 색상)
                                 val markerColor = when (memo.category.name) {
-                                    "RESTAURANT" -> android.graphics.Color.parseColor("#FF6B6B")  // 빨강
-                                    "CAFE" -> android.graphics.Color.parseColor("#8B4513")        // 갈색
-                                    "SHOPPING" -> android.graphics.Color.parseColor("#9C27B0")    // 보라
-                                    "ACCOMMODATION" -> android.graphics.Color.parseColor("#2196F3") // 파랑
-                                    "CULTURE" -> android.graphics.Color.parseColor("#E91E63")     // 핑크
-                                    "LEISURE" -> android.graphics.Color.parseColor("#4CAF50")     // 초록
-                                    "TRAVEL" -> android.graphics.Color.parseColor("#FF9800")      // 주황
-                                    "OTHER" -> android.graphics.Color.parseColor("#9E9E9E")       // 회색
-                                    else -> android.graphics.Color.parseColor("#FF6B6B")
+                                    "RESTAURANT" -> android.graphics.Color.parseColor("#FF3B30")  // 선명한 빨강
+                                    "CAFE" -> android.graphics.Color.parseColor("#A0522D")        // 시에나 브라운
+                                    "SHOPPING" -> android.graphics.Color.parseColor("#AF52DE")    // 보라
+                                    "ACCOMMODATION" -> android.graphics.Color.parseColor("#007AFF") // 밝은 파랑
+                                    "CULTURE" -> android.graphics.Color.parseColor("#FF2D55")     // 핑크
+                                    "LEISURE" -> android.graphics.Color.parseColor("#34C759")     // 밝은 초록
+                                    "TRAVEL" -> android.graphics.Color.parseColor("#FF9500")      // 주황
+                                    "OTHER" -> android.graphics.Color.parseColor("#8E8E93")       // 회색
+                                    else -> android.graphics.Color.parseColor("#FF3B30")
                                 }
 
-                                // 동그란 마커 스타일 (presence_online = 동그란 점)
+                                // 동그란 마커 스타일 (크기 2/3로 축소: 40 -> 27)
                                 val styles = LabelStyles.from(
                                     LabelStyle.from(android.R.drawable.presence_online)
-                                        .setTextStyles(40, markerColor, 0, markerColor)
+                                        .setTextStyles(27, markerColor, 0, markerColor)
                                 )
 
                                 val labelText = "${memo.category.icon} ${memo.title}"
