@@ -211,59 +211,32 @@ fun MapScreen(
                             Log.d("MapScreen", "Added current location marker at ${location.latitude}, ${location.longitude}")
                         }
 
-                        // 2. Add markers for saved memos with category-based colored circles
+                        // 2. Add markers for saved memos with speech bubble style
                         memos.filter { it.latitude != null && it.longitude != null }
                             .forEach { memo ->
                                 val position = LatLng.from(memo.latitude!!, memo.longitude!!)
 
-                                // Category별 색상 매칭 (더 선명하고 예쁜 색상)
-                                val markerColor = when (memo.category.name) {
-                                    "RESTAURANT" -> android.graphics.Color.parseColor("#FF3B30")  // 선명한 빨강
-                                    "CAFE" -> android.graphics.Color.parseColor("#A0522D")        // 시에나 브라운
-                                    "SHOPPING" -> android.graphics.Color.parseColor("#AF52DE")    // 보라
-                                    "ACCOMMODATION" -> android.graphics.Color.parseColor("#007AFF") // 밝은 파랑
-                                    "CULTURE" -> android.graphics.Color.parseColor("#FF2D55")     // 핑크
-                                    "LEISURE" -> android.graphics.Color.parseColor("#34C759")     // 밝은 초록
-                                    "TRAVEL" -> android.graphics.Color.parseColor("#FF9500")      // 주황
-                                    "OTHER" -> android.graphics.Color.parseColor("#8E8E93")       // 회색
-                                    else -> android.graphics.Color.parseColor("#FF3B30")
-                                }
+                                // Category별 색상 가져오기
+                                val markerColor = MarkerBitmapHelper.getCategoryColor(memo.category.name)
 
-                                // 평점 표시 포함 (평점이 있는 경우)
-                                val ratingText = if (memo.rating > 0) {
-                                    "★ ${String.format("%.1f", memo.rating)}"
-                                } else {
-                                    ""
-                                }
+                                // 말풍선 마커 비트맵 생성
+                                val markerBitmap = MarkerBitmapHelper.createSpeechBubbleMarker(
+                                    context = context,
+                                    title = memo.title,
+                                    rating = memo.rating,
+                                    color = markerColor
+                                )
 
-                                val labelText = if (ratingText.isNotEmpty()) {
-                                    "$ratingText ${memo.title}"
-                                } else {
-                                    memo.title
-                                }
-
-                                // 동그란 마커 스타일 - 마커 아이콘과 텍스트 레이블 설정
-                                val markerStyle = LabelStyle.from(android.R.drawable.presence_online)
-                                    .setTextStyles(14, markerColor, 0, markerColor)  // 마커 아이콘 스타일 (27 -> 14)
-
-                                val labelStyle = LabelStyle.from(android.R.drawable.presence_online)
-                                    .setTextStyles(
-                                        20,  // 텍스트 크기 (38 -> 20)
-                                        android.graphics.Color.parseColor("#1A1A1A"),  // 진한 회색 텍스트
-                                        2,   // 테두리 두께 (4 -> 2)
-                                        android.graphics.Color.WHITE  // 흰색 테두리
-                                    )
-
-                                val styles = LabelStyles.from(markerStyle, labelStyle)
+                                // 커스텀 비트맵으로 마커 스타일 생성
+                                val styles = LabelStyles.from(LabelStyle.from(markerBitmap))
 
                                 val options = LabelOptions.from(position)
                                     .setStyles(styles)
                                     .setTag("memo_${memo.id}")
-                                    .setTexts("", labelText)  // 첫 번째는 빈 문자열(마커용), 두 번째는 실제 레이블 텍스트
 
                                 layer?.addLabel(options)
 
-                                Log.d("MapScreen", "Added memo marker: ${memo.title} with color ${memo.category.name}")
+                                Log.d("MapScreen", "Added speech bubble marker: ${memo.title} with color ${memo.category.name}")
                             }
 
                         // Set label click listener for memo markers - show popup card
