@@ -7,4 +7,5 @@ type ResProfile struct {
 	Nickname        string  `json:"nickname"`
 	ProfileImageURL *string `json:"profile_image_url"`
 	DefaultRoomID   *uint   `json:"default_room_id"`
+	RoomPassword    string  `json:"room_password"`
 }

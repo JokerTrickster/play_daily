@@ -50,6 +50,8 @@ fun ProfileScreen(
     val roomIdInput by viewModel.roomIdInput.collectAsState()
     val showJoinDialog by viewModel.showJoinDialog.collectAsState()
     val memosWithLocation by viewModel.memosWithLocation.collectAsState()
+    val likedRooms by viewModel.likedRooms.collectAsState()
+    val roomPassword by viewModel.roomPassword.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -82,6 +84,7 @@ fun ProfileScreen(
             // Profile Header
             ProfileHeader(
                 roomId = currentRoom?.id ?: "로딩 중...",
+                roomPassword = roomPassword,
                 memoCount = memoCount
             )
 
@@ -104,6 +107,14 @@ fun ProfileScreen(
                     onJoinRoomClick = { viewModel.showJoinDialog() },
                     onLeaveRoomClick = { viewModel.leaveRoom() },
                     onKickParticipant = { viewModel.kickParticipant(it) }
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Liked Rooms Section
+            if (likedRooms.isNotEmpty()) {
+                LikedRoomsSection(
+                    likedRooms = likedRooms
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -182,6 +193,7 @@ fun ProfileScreen(
 @Composable
 fun ProfileHeader(
     roomId: String,
+    roomPassword: String,
     memoCount: Int
 ) {
     Card(
@@ -224,7 +236,7 @@ fun ProfileHeader(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Room ID Info
+            // Room ID and Password Info
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -239,6 +251,21 @@ fun ProfileHeader(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "방 비밀번호",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = roomPassword.ifEmpty { "로딩 중..." },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -934,6 +961,157 @@ fun KoreaMapSection(memos: List<com.dailymemo.domain.models.Memo>) {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+        }
+    }
+}
+
+@Composable
+fun LikedRoomsSection(
+    likedRooms: List<com.dailymemo.domain.models.LikedRoom>
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(6.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Favorite,
+                        contentDescription = "좋아요한 방",
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "좋아요한 방",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.error
+                ) {
+                    Text(
+                        text = "${likedRooms.size}",
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Liked Rooms List
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(4.dp)
+                ) {
+                    likedRooms.forEachIndexed { index, likedRoom ->
+                        LikedRoomItem(likedRoom = likedRoom)
+                        if (index < likedRooms.size - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LikedRoomItem(
+    likedRoom: com.dailymemo.domain.models.LikedRoom
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Home,
+                    contentDescription = "방",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = likedRoom.roomName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "방 코드: ${likedRoom.roomCode}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Likes Count
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = "좋아요 수",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "${likedRoom.likesCount}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
+            )
         }
     }
 }

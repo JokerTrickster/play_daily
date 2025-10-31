@@ -25,7 +25,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
-    private val getMemosUseCase: com.dailymemo.domain.usecases.GetMemosUseCase
+    private val getMemosUseCase: com.dailymemo.domain.usecases.GetMemosUseCase,
+    private val getLikedRoomsUseCase: com.dailymemo.domain.usecases.roomlike.GetLikedRoomsUseCase
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -50,6 +51,9 @@ class ProfileViewModel @Inject constructor(
     private val _profileImageUrl = MutableStateFlow<String?>(null)
     val profileImageUrl: StateFlow<String?> = _profileImageUrl.asStateFlow()
 
+    private val _roomPassword = MutableStateFlow("")
+    val roomPassword: StateFlow<String> = _roomPassword.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -63,8 +67,13 @@ class ProfileViewModel @Inject constructor(
     private val _memosWithLocation = MutableStateFlow<List<com.dailymemo.domain.models.Memo>>(emptyList())
     val memosWithLocation: StateFlow<List<com.dailymemo.domain.models.Memo>> = _memosWithLocation.asStateFlow()
 
+    // Liked rooms data
+    private val _likedRooms = MutableStateFlow<List<com.dailymemo.domain.models.LikedRoom>>(emptyList())
+    val likedRooms: StateFlow<List<com.dailymemo.domain.models.LikedRoom>> = _likedRooms.asStateFlow()
+
     init {
         loadMemosWithLocation()
+        loadLikedRooms()
     }
 
     fun loadMemosWithLocation() {
@@ -82,6 +91,20 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun loadLikedRooms() {
+        viewModelScope.launch {
+            getLikedRoomsUseCase().fold(
+                onSuccess = { rooms ->
+                    _likedRooms.value = rooms
+                },
+                onFailure = {
+                    // Silently fail - liked rooms is optional
+                    _likedRooms.value = emptyList()
+                }
+            )
+        }
+    }
+
     fun loadProfile() {
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
@@ -92,6 +115,7 @@ class ProfileViewModel @Inject constructor(
                     _uiState.value = ProfileUiState.Success(profile)
                     _nickname.value = profile.nickname
                     _profileImageUrl.value = profile.profileImageUrl
+                    _roomPassword.value = profile.roomPassword
                     _isLoading.value = false
                 },
                 onFailure = { error ->

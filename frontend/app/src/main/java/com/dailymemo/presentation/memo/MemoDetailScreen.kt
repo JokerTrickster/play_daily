@@ -15,8 +15,10 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.*
@@ -64,6 +66,8 @@ fun MemoDetailScreen(
     val locationName by viewModel.locationName.collectAsState()
     val category by viewModel.category.collectAsState()
     val isWishlist by viewModel.isWishlist.collectAsState()
+    val isLiked by viewModel.isLiked.collectAsState()
+    val likesCount by viewModel.likesCount.collectAsState()
 
     val scrollState = rememberScrollState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -167,6 +171,14 @@ fun MemoDetailScreen(
                         },
                         actions = {
                             if (!isEditing) {
+                                // Like Button
+                                IconButton(onClick = { viewModel.toggleLike() }) {
+                                    Icon(
+                                        imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                        contentDescription = if (isLiked) "좋아요 취소" else "좋아요",
+                                        tint = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                                 // Delete Button
                                 IconButton(onClick = { showDeleteDialog = true }) {
                                     Icon(

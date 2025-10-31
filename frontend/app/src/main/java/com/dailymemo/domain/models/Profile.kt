@@ -7,11 +7,13 @@ package com.dailymemo.domain.models
  * @property nickname 닉네임
  * @property profileImageUrl 프로필 이미지 URL (nullable)
  * @property defaultRoomId 기본 방 ID (nullable)
+ * @property roomPassword 방 비밀번호 (4자리)
  */
 data class Profile(
     val userId: Int,
     val accountId: String,
     val nickname: String,
     val profileImageUrl: String? = null,
-    val defaultRoomId: Int? = null
+    val defaultRoomId: Int? = null,
+    val roomPassword: String
 )

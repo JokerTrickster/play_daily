@@ -7,6 +7,7 @@ import (
 	commentHandler "main/features/comment/handler"
 	memoHandler "main/features/memo/handler"
 	profileHandler "main/features/profile/handler"
+	roomlikeHandler "main/features/roomlike/handler"
 
 	"github.com/labstack/echo/v4"
 )
@@ -21,6 +22,7 @@ func InitHandler(e *echo.Echo) error {
 	memoHandler.NewMemoHandlers(e)
 	commentHandler.NewCommentHandler(e)
 	profileHandler.NewProfileHandlers(e)
+	roomlikeHandler.NewRoomLikeHandler(e)
 
 	return nil
 }

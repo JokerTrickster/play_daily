@@ -9,5 +9,6 @@ data class AuthResponseDto(
     @SerializedName("refresh_token_expired_at") val refreshTokenExpiredAt: Long,
     @SerializedName("user_id") val userId: Long,
     @SerializedName("account_id") val accountId: String,
-    @SerializedName("nickname") val nickname: String
+    @SerializedName("nickname") val nickname: String,
+    @SerializedName("room_password") val roomPassword: String
 )

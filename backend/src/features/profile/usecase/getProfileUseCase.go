@@ -34,5 +34,6 @@ func (uc *GetProfileUseCase) GetProfile(ctx context.Context, userID uint) (*resp
 		Nickname:        user.Nickname,
 		ProfileImageURL: user.ProfileImageURL,
 		DefaultRoomID:   user.DefaultRoomID,
+		RoomPassword:    user.RoomPassword,
 	}, nil
 }

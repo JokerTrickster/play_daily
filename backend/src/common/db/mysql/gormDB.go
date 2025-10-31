@@ -9,6 +9,7 @@ type Room struct {
 	gorm.Model
 	RoomCode    string `json:"room_code" gorm:"column:room_code;type:varchar(50);uniqueIndex;not null;comment:방 고유 코드 (UUID)"`
 	Name        string `json:"name" gorm:"column:name;type:varchar(100);not null;comment:방 이름"`
+	LikesCount  uint   `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
 	OwnerUserID uint   `json:"owner_user_id" gorm:"column:owner_user_id;not null;index;comment:방 소유자 ID"`
 	Owner       *User  `json:"owner,omitempty" gorm:"foreignKey:OwnerUserID"`
 	Memos       []Memo `json:"memos,omitempty" gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
@@ -27,6 +28,7 @@ type User struct {
 	Nickname         string  `json:"nickname" gorm:"column:nickname;type:varchar(100);comment:사용자 닉네임"`
 	ProfileImageURL  *string `json:"profile_image_url,omitempty" gorm:"column:profile_image_url;type:varchar(500);comment:프로필 이미지 URL"`
 	DefaultRoomID    *uint   `json:"default_room_id" gorm:"column:default_room_id;index;comment:기본 방 ID (회원가입 시 자동 생성된 방)"`
+	RoomPassword     string  `json:"room_password" gorm:"column:room_password;type:varchar(4);not null;comment:방 비밀번호 (4자리 숫자)"`
 	DefaultRoom      *Room   `json:"default_room,omitempty" gorm:"foreignKey:DefaultRoomID"`
 	Memos            []Memo  `json:"memos,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
@@ -80,4 +82,19 @@ type Comment struct {
 // TableName Comment 테이블명 지정
 func (Comment) TableName() string {
 	return "comments"
+}
+
+// RoomLike 방 좋아요 정보 테이블
+type RoomLike struct {
+	ID        uint  `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	RoomID    uint  `json:"room_id" gorm:"column:room_id;not null;index;comment:좋아요한 방 ID"`
+	UserID    uint  `json:"user_id" gorm:"column:user_id;not null;index;comment:좋아요를 누른 사용자 ID"`
+	CreatedAt int64 `json:"created_at" gorm:"column:created_at;autoCreateTime;comment:좋아요 누른 시간"`
+	Room      *Room `json:"room,omitempty" gorm:"foreignKey:RoomID"`
+	User      *User `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}
+
+// TableName RoomLike 테이블명 지정
+func (RoomLike) TableName() string {
+	return "room_likes"
 }

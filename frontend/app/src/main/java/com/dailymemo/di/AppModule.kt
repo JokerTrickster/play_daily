@@ -194,6 +194,20 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideRoomLikeApiService(retrofit: Retrofit): com.dailymemo.data.datasources.remote.api.RoomLikeApiService {
+        return retrofit.create(com.dailymemo.data.datasources.remote.api.RoomLikeApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRoomLikeRepository(
+        roomLikeApiService: com.dailymemo.data.datasources.remote.api.RoomLikeApiService
+    ): com.dailymemo.domain.repositories.RoomLikeRepository {
+        return com.dailymemo.data.repositories.RoomLikeRepositoryImpl(roomLikeApiService)
+    }
+
+    @Provides
+    @Singleton
     fun provideProfileApiService(retrofit: Retrofit): ProfileApiService {
         return retrofit.create(ProfileApiService::class.java)
     }

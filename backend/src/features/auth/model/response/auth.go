@@ -9,4 +9,5 @@ type ResAuth struct {
 	AccountID             string `json:"account_id"`
 	Nickname              string `json:"nickname"`
 	DefaultRoomID         *uint  `json:"default_room_id,omitempty"`
+	RoomPassword          string `json:"room_password"`
 }

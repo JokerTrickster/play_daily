@@ -25,6 +25,9 @@ class MemoDetailViewModel @Inject constructor(
     private val createCommentUseCase: com.dailymemo.domain.usecases.CreateCommentUseCase,
     private val deleteCommentUseCase: com.dailymemo.domain.usecases.DeleteCommentUseCase,
     private val memoRepository: com.dailymemo.domain.repositories.MemoRepository,
+    private val likeRoomUseCase: com.dailymemo.domain.usecases.roomlike.LikeRoomUseCase,
+    private val unlikeRoomUseCase: com.dailymemo.domain.usecases.roomlike.UnlikeRoomUseCase,
+    private val getRoomLikeStatusUseCase: com.dailymemo.domain.usecases.roomlike.GetRoomLikeStatusUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -86,6 +89,14 @@ class MemoDetailViewModel @Inject constructor(
 
     private val _isWishlist = MutableStateFlow(false)
     val isWishlist: StateFlow<Boolean> = _isWishlist.asStateFlow()
+
+    private val _isLiked = MutableStateFlow(false)
+    val isLiked: StateFlow<Boolean> = _isLiked.asStateFlow()
+
+    private val _likesCount = MutableStateFlow(0)
+    val likesCount: StateFlow<Int> = _likesCount.asStateFlow()
+
+    private val _roomId = MutableStateFlow<Long?>(null)
 
     private val _latitude = MutableStateFlow<Double?>(null)
     private val _longitude = MutableStateFlow<Double?>(null)
@@ -164,6 +175,12 @@ class MemoDetailViewModel @Inject constructor(
 
                     // 새로 추가한 이미지 URIs 초기화
                     _imageUris.value = emptyList()
+
+                    // roomId 저장 (userId를 roomId로 사용)
+                    _roomId.value = memo.userId
+
+                    // 좋아요 상태 로드
+                    loadRoomLikeStatus(memo.userId)
 
                     _uiState.value = MemoDetailUiState.Loaded
                 },
@@ -305,6 +322,52 @@ class MemoDetailViewModel @Inject constructor(
                     _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.deleteError(error))
                 }
             )
+        }
+    }
+
+    private fun loadRoomLikeStatus(roomId: Long) {
+        viewModelScope.launch {
+            getRoomLikeStatusUseCase(roomId).fold(
+                onSuccess = { status ->
+                    _isLiked.value = status.isLiked
+                    _likesCount.value = status.likesCount
+                },
+                onFailure = {
+                    // 좋아요 상태 로드 실패는 조용히 무시 (선택적 기능)
+                    _isLiked.value = false
+                    _likesCount.value = 0
+                }
+            )
+        }
+    }
+
+    fun toggleLike() {
+        val roomId = _roomId.value ?: return
+
+        viewModelScope.launch {
+            if (_isLiked.value) {
+                // 좋아요 취소
+                unlikeRoomUseCase(roomId).fold(
+                    onSuccess = {
+                        _isLiked.value = false
+                        _likesCount.value = maxOf(0, _likesCount.value - 1)
+                    },
+                    onFailure = { error ->
+                        // 에러 처리는 선택적 (토스트 메시지 등으로 표시 가능)
+                    }
+                )
+            } else {
+                // 좋아요 추가
+                likeRoomUseCase(roomId).fold(
+                    onSuccess = {
+                        _isLiked.value = true
+                        _likesCount.value = _likesCount.value + 1
+                    },
+                    onFailure = { error ->
+                        // 에러 처리는 선택적
+                    }
+                )
+            }
         }
     }
 }
