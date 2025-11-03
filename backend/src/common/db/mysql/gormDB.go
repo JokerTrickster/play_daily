@@ -48,6 +48,7 @@ type Memo struct {
 	ImageURL        string    `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
 	Rating          uint8     `json:"rating" gorm:"column:rating;type:tinyint unsigned;default:0;index;comment:평점 (0-5) 또는 관심도 (1-5)"`
 	IsPinned        bool      `json:"is_pinned" gorm:"column:is_pinned;default:false;index;comment:고정 여부"`
+	LikesCount      uint      `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
 	Latitude        *float64  `json:"latitude" gorm:"column:latitude;type:double;comment:위도"`
 	Longitude       *float64  `json:"longitude" gorm:"column:longitude;type:double;comment:경도"`
 	LocationName    *string   `json:"location_name" gorm:"column:location_name;type:varchar(255);comment:위치 이름"`
@@ -97,4 +98,19 @@ type RoomLike struct {
 // TableName RoomLike 테이블명 지정
 func (RoomLike) TableName() string {
 	return "room_likes"
+}
+
+// MemoLike 메모 좋아요 정보 테이블
+type MemoLike struct {
+	ID        uint  `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	MemoID    uint  `json:"memo_id" gorm:"column:memo_id;not null;index;comment:좋아요한 메모 ID"`
+	UserID    uint  `json:"user_id" gorm:"column:user_id;not null;index;comment:좋아요를 누른 사용자 ID"`
+	CreatedAt int64 `json:"created_at" gorm:"column:created_at;autoCreateTime;comment:좋아요 누른 시간"`
+	Memo      *Memo `json:"memo,omitempty" gorm:"foreignKey:MemoID"`
+	User      *User `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}
+
+// TableName MemoLike 테이블명 지정
+func (MemoLike) TableName() string {
+	return "memo_likes"
 }

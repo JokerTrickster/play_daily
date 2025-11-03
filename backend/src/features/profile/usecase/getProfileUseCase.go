@@ -28,12 +28,19 @@ func (uc *GetProfileUseCase) GetProfile(ctx context.Context, userID uint) (*resp
 		return nil, err
 	}
 
+	// 내 방이 받은 좋아요 개수 가져오기
+	var receivedLikesCount uint
+	if user.DefaultRoom != nil {
+		receivedLikesCount = user.DefaultRoom.LikesCount
+	}
+
 	return &response.ResProfile{
-		UserID:          user.ID,
-		AccountID:       user.AccountID,
-		Nickname:        user.Nickname,
-		ProfileImageURL: user.ProfileImageURL,
-		DefaultRoomID:   user.DefaultRoomID,
-		RoomPassword:    user.RoomPassword,
+		UserID:             user.ID,
+		AccountID:          user.AccountID,
+		Nickname:           user.Nickname,
+		ProfileImageURL:    user.ProfileImageURL,
+		DefaultRoomID:      user.DefaultRoomID,
+		RoomPassword:       user.RoomPassword,
+		ReceivedLikesCount: receivedLikesCount,
 	}, nil
 }

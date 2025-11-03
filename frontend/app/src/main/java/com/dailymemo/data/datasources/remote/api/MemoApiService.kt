@@ -13,7 +13,8 @@ interface MemoApiService {
 
     @GET("/v0.1/memo")
     suspend fun getMemos(
-        @Query("is_wishlist") isWishlist: Boolean? = null
+        @Query("is_wishlist") isWishlist: Boolean? = null,
+        @Query("room_id") roomId: Int? = null
     ): Response<MemoListDto>
 
     @GET("/v0.1/memo/{id}")
@@ -50,4 +51,9 @@ interface MemoApiService {
     suspend fun deleteMemo(
         @Path("id") id: Long
     ): Response<Unit>
+
+    @POST("/v0.1/memo/{id}/like")
+    suspend fun toggleMemoLike(
+        @Path("id") id: Long
+    ): Response<Map<String, Any>>
 }

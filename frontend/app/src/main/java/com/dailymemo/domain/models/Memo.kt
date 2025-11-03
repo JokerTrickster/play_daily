@@ -11,6 +11,8 @@ data class Memo(
     val imageUrls: List<String> = emptyList(), // 여러 이미지 지원
     val rating: Float, // 0.0 ~ 5.0 (0.5 단위)
     val isPinned: Boolean,
+    val likesCount: Int = 0, // 좋아요 개수
+    val isLiked: Boolean = false, // 현재 사용자의 좋아요 여부
     val latitude: Double?,
     val longitude: Double?,
     val locationName: String?,

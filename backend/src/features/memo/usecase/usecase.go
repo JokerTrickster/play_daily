@@ -7,7 +7,7 @@ import (
 )
 
 // convertMemoToResponse mysql.Memo를 response.ResMemo로 변환
-func convertMemoToResponse(memo *mysql.Memo) *response.ResMemo {
+func convertMemoToResponse(memo *mysql.Memo, isLiked bool) *response.ResMemo {
 	// 댓글 변환
 	comments := make([]commentResponse.ResComment, len(memo.Comments))
 	for i, comment := range memo.Comments {
@@ -39,6 +39,8 @@ func convertMemoToResponse(memo *mysql.Memo) *response.ResMemo {
 		ImageURL:        memo.ImageURL,
 		Rating:          memo.Rating,
 		IsPinned:        memo.IsPinned,
+		LikesCount:      memo.LikesCount,
+		IsLiked:         isLiked,
 		Latitude:        memo.Latitude,
 		Longitude:       memo.Longitude,
 		LocationName:    memo.LocationName,

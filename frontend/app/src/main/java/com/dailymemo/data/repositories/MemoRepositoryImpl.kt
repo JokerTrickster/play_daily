@@ -30,10 +30,11 @@ class MemoRepositoryImpl @Inject constructor(
 ) : MemoRepository {
 
     override suspend fun getMemos(
-        isWishlist: Boolean?
+        isWishlist: Boolean?,
+        roomId: Int?
     ): Result<List<Memo>> {
         return try {
-            val response = memoApiService.getMemos(isWishlist)
+            val response = memoApiService.getMemos(isWishlist, roomId)
             if (response.isSuccessful && response.body() != null) {
                 val memos = response.body()!!.memos.map { it.toDomain() }
                 Result.success(memos)
@@ -184,6 +185,20 @@ class MemoRepositoryImpl @Inject constructor(
         return Result.success("https://example.com/image/${System.currentTimeMillis()}.jpg")
     }
 
+    override suspend fun toggleMemoLike(memoId: Long): Result<Boolean> {
+        return try {
+            val response = memoApiService.toggleMemoLike(memoId)
+            if (response.isSuccessful) {
+                val isLiked = response.body()?.get("is_liked") as? Boolean ?: false
+                Result.success(isLiked)
+            } else {
+                Result.failure(Exception("좋아요 토글에 실패했습니다"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("네트워크 오류: ${e.message}"))
+        }
+    }
+
     private fun prepareFilePart(uri: Uri): MultipartBody.Part {
         val contentResolver = context.contentResolver
         val fileName = getFileName(uri) ?: "image_${System.currentTimeMillis()}.jpg"
@@ -257,6 +272,8 @@ class MemoRepositoryImpl @Inject constructor(
             imageUrl = imageUrl,
             rating = rating,
             isPinned = isPinned,
+            likesCount = likesCount,
+            isLiked = isLiked,
             latitude = latitude,
             longitude = longitude,
             locationName = locationName,

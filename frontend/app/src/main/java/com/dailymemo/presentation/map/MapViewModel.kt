@@ -157,9 +157,6 @@ class MapViewModel @Inject constructor(
             return
         }
 
-        // 검색 버튼을 누르면 일단 목록을 숨김 (지도를 보이게)
-        _showSearchResults.value = false
-
         viewModelScope.launch {
             val location = _currentLocation.value
             android.util.Log.d("MapViewModel", "Current location: ${location?.latitude}, ${location?.longitude}")
@@ -191,8 +188,8 @@ class MapViewModel @Inject constructor(
 
                     android.util.Log.d("MapViewModel", "Sorted ${sortedPlaces.size} places by distance")
                     _searchResults.value = sortedPlaces
-                    // 검색 완료 후에도 목록은 숨긴 상태로 유지
-                    // _showSearchResults.value = true  // 이 줄을 제거하여 목록이 자동으로 표시되지 않도록 함
+                    // 검색 완료 후 즉시 목록 표시
+                    _showSearchResults.value = true
                 },
                 onFailure = { error ->
                     android.util.Log.e("MapViewModel", "Search failed: ${error.message}", error)
@@ -249,6 +246,10 @@ class MapViewModel @Inject constructor(
         _searchResults.value = emptyList()
         _showSearchResults.value = false
         _selectedCategory.value = null
+    }
+
+    fun hideSearchResults() {
+        _showSearchResults.value = false
     }
 
     fun searchNearbyPlaces(latitude: Double, longitude: Double) {

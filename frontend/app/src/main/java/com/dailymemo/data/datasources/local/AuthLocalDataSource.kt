@@ -26,6 +26,7 @@ class AuthLocalDataSource @Inject constructor(
         private val USER_ID_KEY = stringPreferencesKey("user_id")
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val MEMO_SPACE_ID_KEY = stringPreferencesKey("memo_space_id")
+        private val CURRENT_ROOM_ID_KEY = stringPreferencesKey("current_room_id")
     }
 
     suspend fun saveTokens(
@@ -74,5 +75,20 @@ class AuthLocalDataSource @Inject constructor(
 
     suspend fun isLoggedIn(): Boolean {
         return getAccessToken() != null
+    }
+
+    suspend fun setCurrentRoomId(roomId: Int?) {
+        dataStore.edit { preferences ->
+            if (roomId != null) {
+                preferences[CURRENT_ROOM_ID_KEY] = roomId.toString()
+            } else {
+                preferences.remove(CURRENT_ROOM_ID_KEY)
+            }
+        }
+    }
+
+    suspend fun getCurrentRoomId(): Int? {
+        val roomIdStr = dataStore.data.first()[CURRENT_ROOM_ID_KEY]
+        return roomIdStr?.toIntOrNull()
     }
 }

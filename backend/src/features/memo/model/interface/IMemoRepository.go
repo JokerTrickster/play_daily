@@ -12,11 +12,13 @@ type ICreateMemoRepository interface {
 type IGetMemoRepository interface {
 	GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error)
 	GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) ([]mysql.Memo, error)
+	CheckUserLikedMemo(ctx context.Context, memoID uint, userID uint) (bool, error)
 }
 
 type IUpdateMemoRepository interface {
 	Update(ctx context.Context, id uint, userID uint, memo *mysql.Memo) error
 	GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error)
+	CheckUserLikedMemo(ctx context.Context, memoID uint, userID uint) (bool, error)
 }
 
 type IDeleteMemoRepository interface {

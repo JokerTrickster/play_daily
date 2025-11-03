@@ -71,5 +71,6 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		return nil, err
 	}
 
-	return convertMemoToResponse(memo), nil
+	// 생성 시점에는 좋아요가 없으므로 false
+	return convertMemoToResponse(memo, false), nil
 }

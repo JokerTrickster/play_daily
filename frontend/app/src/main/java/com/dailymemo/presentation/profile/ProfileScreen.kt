@@ -52,6 +52,7 @@ fun ProfileScreen(
     val memosWithLocation by viewModel.memosWithLocation.collectAsState()
     val likedRooms by viewModel.likedRooms.collectAsState()
     val roomPassword by viewModel.roomPassword.collectAsState()
+    val receivedLikesCount by viewModel.receivedLikesCount.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -85,7 +86,8 @@ fun ProfileScreen(
             ProfileHeader(
                 roomId = currentRoom?.id ?: "로딩 중...",
                 roomPassword = roomPassword,
-                memoCount = memoCount
+                memoCount = memoCount,
+                receivedLikesCount = receivedLikesCount
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -131,27 +133,53 @@ fun ProfileScreen(
 
     // Join Room Dialog
     if (showJoinDialog) {
+        val roomPasswordInput by viewModel.roomPasswordInput.collectAsState()
+        val joinRoomError by viewModel.joinRoomError.collectAsState()
+
         AlertDialog(
             onDismissRequest = { viewModel.hideJoinDialog() },
             title = { Text("방 참여하기") },
             text = {
                 Column {
-                    Text("참여할 방의 ID를 입력하세요")
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("참여할 방의 정보를 입력하세요")
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     OutlinedTextField(
                         value = roomIdInput,
                         onValueChange = { viewModel.onRoomIdInputChange(it) },
                         label = { Text("방 ID") },
-                        singleLine = true
+                        singleLine = true,
+                        isError = joinRoomError != null,
+                        modifier = Modifier.fillMaxWidth()
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = roomPasswordInput,
+                        onValueChange = { viewModel.onRoomPasswordInputChange(it) },
+                        label = { Text("방 비밀번호") },
+                        singleLine = true,
+                        isError = joinRoomError != null,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (joinRoomError != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = joinRoomError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.joinRoom(roomIdInput)
+                        viewModel.joinRoom(roomIdInput, roomPasswordInput)
                     },
-                    enabled = roomIdInput.isNotBlank()
+                    enabled = roomIdInput.isNotBlank() && roomPasswordInput.isNotBlank()
                 ) {
                     Text("참여")
                 }
@@ -194,7 +222,8 @@ fun ProfileScreen(
 fun ProfileHeader(
     roomId: String,
     roomPassword: String,
-    memoCount: Int
+    memoCount: Int,
+    receivedLikesCount: Int
 ) {
     Card(
         modifier = Modifier
@@ -292,6 +321,34 @@ fun ProfileHeader(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "메모",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Received Likes Count Badge
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = receivedLikesCount.toString(),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "좋아요",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

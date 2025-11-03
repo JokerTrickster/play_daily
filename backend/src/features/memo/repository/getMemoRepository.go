@@ -56,3 +56,18 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 
 	return memos, nil
 }
+
+// CheckUserLikedMemo 사용자가 특정 메모를 좋아요 했는지 확인
+func (r *GetMemoRepository) CheckUserLikedMemo(ctx context.Context, memoID uint, userID uint) (bool, error) {
+	var count int64
+	result := r.GormDB.WithContext(ctx).
+		Model(&mysql.MemoLike{}).
+		Where("memo_id = ? AND user_id = ?", memoID, userID).
+		Count(&count)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return count > 0, nil
+}

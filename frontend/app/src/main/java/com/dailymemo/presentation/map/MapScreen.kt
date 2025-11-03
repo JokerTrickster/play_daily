@@ -340,6 +340,9 @@ fun MapScreen(
                             searchResults.take(5).forEach { place ->
                                 Surface(
                                     onClick = {
+                                        // 검색 결과 목록 닫기
+                                        viewModel.hideSearchResults()
+
                                         // 지도를 해당 장소로 이동
                                         kakaoMap?.moveCamera(
                                             com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(

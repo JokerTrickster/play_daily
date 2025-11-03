@@ -29,7 +29,10 @@ data class ProfileResponse(
     val defaultRoomId: Int? = null,
 
     @SerializedName("room_password")
-    val roomPassword: String
+    val roomPassword: String,
+
+    @SerializedName("received_likes_count")
+    val receivedLikesCount: Int = 0
 ) {
     /**
      * DTO를 도메인 모델로 변환
@@ -41,7 +44,8 @@ data class ProfileResponse(
             nickname = nickname,
             profileImageUrl = profileImageUrl,
             defaultRoomId = defaultRoomId,
-            roomPassword = roomPassword
+            roomPassword = roomPassword,
+            receivedLikesCount = receivedLikesCount
         )
     }
 }

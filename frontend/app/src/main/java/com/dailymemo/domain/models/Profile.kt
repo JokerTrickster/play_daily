@@ -8,6 +8,7 @@ package com.dailymemo.domain.models
  * @property profileImageUrl 프로필 이미지 URL (nullable)
  * @property defaultRoomId 기본 방 ID (nullable)
  * @property roomPassword 방 비밀번호 (4자리)
+ * @property receivedLikesCount 내 방이 받은 좋아요 개수
  */
 data class Profile(
     val userId: Int,
@@ -15,5 +16,6 @@ data class Profile(
     val nickname: String,
     val profileImageUrl: String? = null,
     val defaultRoomId: Int? = null,
-    val roomPassword: String
+    val roomPassword: String,
+    val receivedLikesCount: Int = 0
 )

@@ -22,6 +22,7 @@ func (r *GetProfileRepository) GetByUserID(ctx context.Context, userID uint) (*m
 	var user mysql.User
 
 	result := r.GormDB.WithContext(ctx).
+		Preload("DefaultRoom"). // DefaultRoom을 preload하여 LikesCount 가져오기
 		Where("id = ?", userID).
 		First(&user)
 

@@ -6,6 +6,7 @@ import (
 	authHandler "main/features/auth/handler"
 	commentHandler "main/features/comment/handler"
 	memoHandler "main/features/memo/handler"
+	memolikeHandler "main/features/memolike/handler"
 	profileHandler "main/features/profile/handler"
 	roomlikeHandler "main/features/roomlike/handler"
 
@@ -23,6 +24,7 @@ func InitHandler(e *echo.Echo) error {
 	commentHandler.NewCommentHandler(e)
 	profileHandler.NewProfileHandlers(e)
 	roomlikeHandler.NewRoomLikeHandler(e)
+	memolikeHandler.NewMemoLikeHandler(e)
 
 	return nil
 }

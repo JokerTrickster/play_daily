@@ -80,5 +80,11 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 		return nil, err
 	}
 
-	return convertMemoToResponse(updatedMemo), nil
+	// 사용자가 이 메모를 좋아요 했는지 확인
+	isLiked, err := uc.Repository.CheckUserLikedMemo(ctx, memoID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertMemoToResponse(updatedMemo, isLiked), nil
 }

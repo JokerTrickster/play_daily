@@ -17,6 +17,10 @@ data class MemoDto(
     val rating: Float,
     @SerializedName("is_pinned")
     val isPinned: Boolean,
+    @SerializedName("likes_count")
+    val likesCount: Int = 0,
+    @SerializedName("is_liked")
+    val isLiked: Boolean = false,
     @SerializedName("latitude")
     val latitude: Double?,
     @SerializedName("longitude")

@@ -26,7 +26,8 @@ class ProfileViewModel @Inject constructor(
     private val getProfileUseCase: GetProfileUseCase,
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val getMemosUseCase: com.dailymemo.domain.usecases.GetMemosUseCase,
-    private val getLikedRoomsUseCase: com.dailymemo.domain.usecases.roomlike.GetLikedRoomsUseCase
+    private val getLikedRoomsUseCase: com.dailymemo.domain.usecases.roomlike.GetLikedRoomsUseCase,
+    private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -53,6 +54,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _roomPassword = MutableStateFlow("")
     val roomPassword: StateFlow<String> = _roomPassword.asStateFlow()
+
+    private val _receivedLikesCount = MutableStateFlow(0)
+    val receivedLikesCount: StateFlow<Int> = _receivedLikesCount.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -116,7 +120,15 @@ class ProfileViewModel @Inject constructor(
                     _nickname.value = profile.nickname
                     _profileImageUrl.value = profile.profileImageUrl
                     _roomPassword.value = profile.roomPassword
+                    _receivedLikesCount.value = profile.receivedLikesCount
                     _isLoading.value = false
+
+                    // 프로필 로드 시 기본 방 ID를 현재 방으로 설정
+                    profile.defaultRoomId?.let { roomId ->
+                        viewModelScope.launch {
+                            authLocalDataSource.setCurrentRoomId(roomId)
+                        }
+                    }
                 },
                 onFailure = { error ->
                     val errorMsg = error.message ?: "프로필을 불러올 수 없습니다. 다시 시도해주세요."
@@ -346,8 +358,14 @@ class ProfileViewModel @Inject constructor(
     private val _roomIdInput = MutableStateFlow("")
     val roomIdInput: StateFlow<String> = _roomIdInput.asStateFlow()
 
+    private val _roomPasswordInput = MutableStateFlow("")
+    val roomPasswordInput: StateFlow<String> = _roomPasswordInput.asStateFlow()
+
     private val _showJoinDialog = MutableStateFlow(false)
     val showJoinDialog: StateFlow<Boolean> = _showJoinDialog.asStateFlow()
+
+    private val _joinRoomError = MutableStateFlow<String?>(null)
+    val joinRoomError: StateFlow<String?> = _joinRoomError.asStateFlow()
 
     init {
         loadProfile()
@@ -398,45 +416,66 @@ class ProfileViewModel @Inject constructor(
 
     fun onRoomIdInputChange(input: String) {
         _roomIdInput.value = input
+        _joinRoomError.value = null
+    }
+
+    fun onRoomPasswordInputChange(input: String) {
+        _roomPasswordInput.value = input
+        _joinRoomError.value = null
     }
 
     fun showJoinDialog() {
         _showJoinDialog.value = true
+        _joinRoomError.value = null
     }
 
     fun hideJoinDialog() {
         _showJoinDialog.value = false
         _roomIdInput.value = ""
+        _roomPasswordInput.value = ""
+        _joinRoomError.value = null
     }
 
-    fun joinRoom(roomId: String) {
-        if (roomId.isBlank()) return
+    fun joinRoom(roomId: String, password: String) {
+        if (roomId.isBlank()) {
+            _joinRoomError.value = "방 ID를 입력해주세요"
+            return
+        }
+
+        if (password.isBlank()) {
+            _joinRoomError.value = "방 비밀번호를 입력해주세요"
+            return
+        }
 
         viewModelScope.launch {
             // TODO: 백엔드 연동 시 실제 방 참여 API 호출
-            _currentRoom.value = Room(
-                id = roomId,
-                name = "친구의 일상 메모",
-                ownerId = 2L,
-                ownerName = "친구",
-                participants = listOf(
-                    Participant(
-                        id = 2L,
-                        name = "친구",
-                        isOwner = true,
-                        joinedAt = LocalDateTime.now().minusDays(1)
-                    ),
-                    Participant(
-                        id = _currentUserId.value,
-                        name = _userName.value,
-                        isOwner = false,
-                        joinedAt = LocalDateTime.now()
-                    )
-                ),
-                createdAt = LocalDateTime.now().minusDays(5),
-                updatedAt = LocalDateTime.now()
-            )
-            hideJoinDialog()
+            // 현재는 유효성 검증만 추가하고, 실제 API 호출은 구현되지 않음
+            // 임시로 에러 메시지 표시
+            _joinRoomError.value = "방 참여 기능은 아직 백엔드 연동 전입니다.\n방 ID: $roomId"
+
+            // 아래 코드는 백엔드 연동 후 활성화
+            /*
+            try {
+                val result = joinRoomUseCase(roomId, password)
+                result.fold(
+                    onSuccess = { room ->
+                        _currentRoom.value = room
+                        // 방 참여 성공 시 현재 방 ID 설정 (메모 필터링을 위해)
+                        authLocalDataSource.setCurrentRoomId(room.id.toIntOrNull())
+                        hideJoinDialog()
+                    },
+                    onFailure = { error ->
+                        _joinRoomError.value = when {
+                            error.message?.contains("not found") == true -> "존재하지 않는 방입니다"
+                            error.message?.contains("password") == true -> "비밀번호가 일치하지 않습니다"
+                            else -> "방 참여에 실패했습니다: ${error.message}"
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                _joinRoomError.value = "네트워크 오류: ${e.message}"
+            }
+            */
         }
     }
 

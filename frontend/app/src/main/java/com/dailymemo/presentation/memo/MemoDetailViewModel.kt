@@ -28,6 +28,7 @@ class MemoDetailViewModel @Inject constructor(
     private val likeRoomUseCase: com.dailymemo.domain.usecases.roomlike.LikeRoomUseCase,
     private val unlikeRoomUseCase: com.dailymemo.domain.usecases.roomlike.UnlikeRoomUseCase,
     private val getRoomLikeStatusUseCase: com.dailymemo.domain.usecases.roomlike.GetRoomLikeStatusUseCase,
+    private val toggleMemoLikeUseCase: com.dailymemo.domain.usecases.ToggleMemoLikeUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -342,32 +343,19 @@ class MemoDetailViewModel @Inject constructor(
     }
 
     fun toggleLike() {
-        val roomId = _roomId.value ?: return
-
         viewModelScope.launch {
-            if (_isLiked.value) {
-                // 좋아요 취소
-                unlikeRoomUseCase(roomId).fold(
-                    onSuccess = {
-                        _isLiked.value = false
-                        _likesCount.value = maxOf(0, _likesCount.value - 1)
-                    },
-                    onFailure = { error ->
-                        // 에러 처리는 선택적 (토스트 메시지 등으로 표시 가능)
+            toggleMemoLikeUseCase(memoId)
+                .onSuccess { isLiked ->
+                    _isLiked.value = isLiked
+                    _likesCount.value = if (isLiked) {
+                        _likesCount.value + 1
+                    } else {
+                        (_likesCount.value - 1).coerceAtLeast(0)
                     }
-                )
-            } else {
-                // 좋아요 추가
-                likeRoomUseCase(roomId).fold(
-                    onSuccess = {
-                        _isLiked.value = true
-                        _likesCount.value = _likesCount.value + 1
-                    },
-                    onFailure = { error ->
-                        // 에러 처리는 선택적
-                    }
-                )
-            }
+                }
+                .onFailure {
+                    // 에러 처리는 조용히 실패 (네트워크 오류 등)
+                }
         }
     }
 }
