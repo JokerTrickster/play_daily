@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.*
@@ -37,9 +38,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.dailymemo.R
 import com.dailymemo.domain.models.PlaceCategory
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
@@ -67,6 +70,11 @@ fun MapScreen(
     val selectedMemoId by viewModel.selectedMemoId.collectAsState()
     val showPopupCard by viewModel.showPopupCard.collectAsState()
     val showSearchResults by viewModel.showSearchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+    val showJoinRoomDialog by viewModel.showJoinRoomDialog.collectAsState()
+    val joinRoomState by viewModel.joinRoomState.collectAsState()
+    val wishlistFilter by viewModel.wishlistFilter.collectAsState()
+    val selectedSearchPlace by viewModel.selectedSearchPlace.collectAsState()
     var showPlaceDialog by remember { mutableStateOf(false) }
     var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
 
@@ -186,8 +194,8 @@ fun MapScreen(
                 }
             }
 
-            // Add all markers (current location and memos)
-            LaunchedEffect(kakaoMap, memos) {
+            // Add all markers (current location, selected search place, and memos)
+            LaunchedEffect(kakaoMap, memos, selectedSearchPlace) {
                 kakaoMap?.let { map ->
                     try {
                         val labelManager = map.labelManager
@@ -196,21 +204,26 @@ fun MapScreen(
                         // Remove all markers first, then re-add them in correct order
                         layer?.removeAll()
 
-                        // 1. Add current location marker first (use current value from state)
+                        // 1. Add current location marker first (red circle)
                         currentLocation?.let { location ->
                             val position = LatLng.from(location.latitude, location.longitude)
-                            val styles = LabelStyles.from(
-                                LabelStyle.from(android.R.drawable.ic_menu_mylocation)
-                                    .setTextStyles(32, android.graphics.Color.parseColor("#2196F3"), 2, android.graphics.Color.WHITE)
+
+                            // Create red circle marker bitmap
+                            val redCircleBitmap = MarkerBitmapHelper.createCircleMarker(
+                                size = 40,
+                                color = android.graphics.Color.parseColor("#F44336"), // Red
+                                strokeColor = android.graphics.Color.WHITE,
+                                strokeWidth = 4f
                             )
+
+                            val styles = LabelStyles.from(LabelStyle.from(redCircleBitmap))
 
                             val options = LabelOptions.from(position)
                                 .setStyles(styles)
                                 .setTag("current_location")
-                                .setTexts("내 위치")
 
                             layer?.addLabel(options)
-                            Log.d("MapScreen", "Added current location marker at ${location.latitude}, ${location.longitude}")
+                            Log.d("MapScreen", "Added current location marker (red circle 40px) at ${location.latitude}, ${location.longitude}")
                         }
 
                         // 2. Add markers for saved memos with speech bubble style
@@ -240,6 +253,28 @@ fun MapScreen(
 
                                 Log.d("MapScreen", "Added speech bubble marker: ${memo.title} with color ${memo.category.name}")
                             }
+
+                        // 3. Add selected search place marker (if any)
+                        selectedSearchPlace?.let { place ->
+                            val position = LatLng.from(place.latitude, place.longitude)
+
+                            // Create green pin marker for searched place (40px)
+                            val pinBitmap = MarkerBitmapHelper.createCircleMarker(
+                                size = 40,
+                                color = android.graphics.Color.parseColor("#4CAF50"), // Green
+                                strokeColor = android.graphics.Color.WHITE,
+                                strokeWidth = 4f
+                            )
+
+                            val styles = LabelStyles.from(LabelStyle.from(pinBitmap))
+
+                            val options = LabelOptions.from(position)
+                                .setStyles(styles)
+                                .setTag("search_place")
+
+                            layer?.addLabel(options)
+                            Log.d("MapScreen", "Added search place marker (green 40px): ${place.name} at ${place.latitude}, ${place.longitude}")
+                        }
 
                         // Set label click listener for memo markers - show popup card
                         map.setOnLabelClickListener { _, _, label ->
@@ -279,14 +314,14 @@ fun MapScreen(
                         modifier = Modifier
                             .weight(1f)
                             .shadow(4.dp, RoundedCornerShape(28.dp)),
-                        placeholder = { Text("장소 검색...") },
+                        placeholder = { Text(stringResource(R.string.search_placeholder)) },
                         leadingIcon = {
-                            Icon(Icons.Filled.Search, contentDescription = "검색")
+                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
                         },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.clearSearch() }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = "지우기")
+                                    Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.clear))
                                 }
                             }
                         },
@@ -317,12 +352,45 @@ fun MapScreen(
                                 viewModel.searchPlaces(searchQuery)
                             }
                         },
-                        enabled = searchQuery.length >= 2,
+                        enabled = searchQuery.length >= 2 && !isSearching,
                         modifier = Modifier.height(56.dp),
                         shape = RoundedCornerShape(28.dp)
                     ) {
-                        Text("검색")
+                        if (isSearching) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text(stringResource(R.string.search))
+                        }
                     }
+                }
+
+                // Wishlist Filter Chips
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = wishlistFilter == com.dailymemo.presentation.map.WishlistFilter.ALL,
+                        onClick = { viewModel.setWishlistFilter(com.dailymemo.presentation.map.WishlistFilter.ALL) },
+                        label = { Text(stringResource(R.string.wishlist_filter_all)) }
+                    )
+                    FilterChip(
+                        selected = wishlistFilter == com.dailymemo.presentation.map.WishlistFilter.WISHLIST_ONLY,
+                        onClick = { viewModel.setWishlistFilter(com.dailymemo.presentation.map.WishlistFilter.WISHLIST_ONLY) },
+                        label = { Text(stringResource(R.string.wishlist_filter_wishlist)) }
+                    )
+                    FilterChip(
+                        selected = wishlistFilter == com.dailymemo.presentation.map.WishlistFilter.VISITED_ONLY,
+                        onClick = { viewModel.setWishlistFilter(com.dailymemo.presentation.map.WishlistFilter.VISITED_ONLY) },
+                        label = { Text(stringResource(R.string.wishlist_filter_visited)) }
+                    )
                 }
 
                 // Search Results List (below search bar) - only show if showSearchResults is true
@@ -342,6 +410,9 @@ fun MapScreen(
                                     onClick = {
                                         // 검색 결과 목록 닫기
                                         viewModel.hideSearchResults()
+
+                                        // 선택한 장소를 ViewModel에 저장 (마커 표시용)
+                                        viewModel.selectSearchPlace(place)
 
                                         // 지도를 해당 장소로 이동
                                         kakaoMap?.moveCamera(
@@ -401,6 +472,21 @@ fun MapScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Join Room Button
+                FloatingActionButton(
+                    onClick = {
+                        viewModel.showJoinRoomDialog()
+                    },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Home,
+                        contentDescription = "방 입장"
+                    )
+                }
+
                 // My Location Button
                 FloatingActionButton(
                     onClick = {
@@ -658,6 +744,19 @@ fun MapScreen(
             }
         }
     }
+
+    // JoinRoom Dialog
+    if (showJoinRoomDialog) {
+        com.dailymemo.presentation.map.components.JoinRoomDialog(
+            joinRoomState = joinRoomState,
+            onJoinRoom = { roomId, password ->
+                viewModel.joinRoom(roomId, password)
+            },
+            onDismiss = {
+                viewModel.dismissJoinRoomDialog()
+            }
+        )
+    }
 }
 
 @Composable
@@ -711,7 +810,7 @@ fun PlaceSelectionDialog(
                             fontWeight = FontWeight.Bold
                         )
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Filled.Close, contentDescription = "닫기")
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.close))
                         }
                     }
 
@@ -760,7 +859,7 @@ fun PlaceSelectionDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("취소")
+                            Text(stringResource(R.string.cancel))
                         }
                         Button(
                             onClick = onConfirm,

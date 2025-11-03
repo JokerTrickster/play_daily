@@ -8,6 +8,7 @@ import (
 	memoHandler "main/features/memo/handler"
 	memolikeHandler "main/features/memolike/handler"
 	profileHandler "main/features/profile/handler"
+	roomHandler "main/features/room/handler"
 	roomlikeHandler "main/features/roomlike/handler"
 
 	"github.com/labstack/echo/v4"
@@ -23,6 +24,7 @@ func InitHandler(e *echo.Echo) error {
 	memoHandler.NewMemoHandlers(e)
 	commentHandler.NewCommentHandler(e)
 	profileHandler.NewProfileHandlers(e)
+	roomHandler.NewRoomHandler(e)
 	roomlikeHandler.NewRoomLikeHandler(e)
 	memolikeHandler.NewMemoLikeHandler(e)
 

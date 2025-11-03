@@ -116,6 +116,49 @@ object MarkerBitmapHelper {
     }
 
     /**
+     * 원형 마커 비트맵 생성 (현재 위치 표시용)
+     * @param size 원의 크기 (픽셀)
+     * @param color 원의 색상
+     * @param strokeColor 테두리 색상
+     * @param strokeWidth 테두리 두께
+     * @return 원형 비트맵
+     */
+    fun createCircleMarker(
+        size: Int,
+        color: Int,
+        strokeColor: Int = android.graphics.Color.WHITE,
+        strokeWidth: Float = 4f
+    ): Bitmap {
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val centerX = size / 2f
+        val centerY = size / 2f
+        val radius = (size - strokeWidth) / 2f
+
+        // Fill paint
+        val fillPaint = Paint().apply {
+            isAntiAlias = true
+            setColor(color)
+            style = Paint.Style.FILL
+        }
+
+        // Stroke paint
+        val strokePaint = Paint().apply {
+            isAntiAlias = true
+            setColor(strokeColor)
+            style = Paint.Style.STROKE
+            this.strokeWidth = strokeWidth
+        }
+
+        // Draw circle with fill and stroke
+        canvas.drawCircle(centerX, centerY, radius, fillPaint)
+        canvas.drawCircle(centerX, centerY, radius, strokePaint)
+
+        return bitmap
+    }
+
+    /**
      * 카테고리별 색상 가져오기
      */
     fun getCategoryColor(categoryName: String): Int {

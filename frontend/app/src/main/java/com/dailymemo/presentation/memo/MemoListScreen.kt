@@ -38,7 +38,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import coil.compose.AsyncImage
 import com.dailymemo.domain.models.Memo
-import com.dailymemo.presentation.components.MemoListSkeletonItem
+import com.dailymemo.presentation.components.MemoListItemSkeleton
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -253,7 +253,7 @@ fun MemoListScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(5) {
-                            MemoListSkeletonItem()
+                            MemoListItemSkeleton()
                         }
                     }
                 }

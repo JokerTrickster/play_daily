@@ -4,21 +4,94 @@
     <string name="app_name">Daily Memo</string>
 
     <!-- Auth -->
-    <string name="signup_title">Sign Up</string>
-    <string name="login_title">Login</string>
-    <string name="username">Username</string>
-    <string name="password">Password</string>
-    <string name="auth_code">Auth Code</string>
-    <string name="signup_button">Sign Up</string>
-    <string name="login_button">Login</string>
-    <string name="signup_prompt">Don\'t have an account? Sign up</string>
-    <string name="signup_description">Create your account to start saving memories</string>
+    <string name="signup_title">회원가입</string>
+    <string name="login_title">로그인</string>
+    <string name="username">사용자 이름</string>
+    <string name="password">비밀번호</string>
+    <string name="auth_code">인증 코드</string>
+    <string name="signup_button">가입하기</string>
+    <string name="login_button">로그인</string>
+    <string name="signup_prompt">계정이 없으신가요? 회원가입</string>
+    <string name="signup_description">추억을 저장하기 위한 계정을 만드세요</string>
 
     <!-- Common -->
-    <string name="cancel">Cancel</string>
-    <string name="confirm">OK</string>
-    <string name="save">Save</string>
-    <string name="delete">Delete</string>
-    <string name="edit">Edit</string>
-    <string name="loading">Loading...</string>
+    <string name="cancel">취소</string>
+    <string name="confirm">확인</string>
+    <string name="save">저장</string>
+    <string name="delete">삭제</string>
+    <string name="edit">수정</string>
+    <string name="loading">로딩 중...</string>
+    <string name="close">닫기</string>
+    <string name="search">검색</string>
+    <string name="clear">지우기</string>
+    <string name="all">전체</string>
+
+    <!-- Map Screen -->
+    <string name="wishlist_filter_all">전체</string>
+    <string name="wishlist_filter_wishlist">가고싶은곳</string>
+    <string name="wishlist_filter_visited">방문한곳</string>
+    <string name="search_placeholder">장소를 검색하세요</string>
+    <string name="rating">평점</string>
+
+    <!-- Room -->
+    <string name="join_room">방 입장</string>
+    <string name="room_id">방 ID</string>
+    <string name="room_id_placeholder">방 ID를 입력하세요</string>
+    <string name="room_password">비밀번호 (4자리)</string>
+    <string name="room_password_placeholder">4자리 숫자</string>
+    <string name="join_button">입장</string>
+
+    <!-- Memo -->
+    <string name="memo_title">제목</string>
+    <string name="memo_content">내용</string>
+    <string name="memo_location">위치</string>
+    <string name="memo_category">카테고리</string>
+
+    <!-- Comment -->
+    <string name="comment_placeholder">댓글을 입력하세요</string>
+    <string name="comment_submit">등록</string>
+
+    <!-- Profile -->
+    <string name="profile_title">프로필</string>
+    <string name="profile_edit">프로필 수정</string>
+    <string name="profile_name">이름</string>
+    <string name="profile_email">이메일</string>
+
+    <!-- Error Messages -->
+    <string name="error_network">네트워크 오류가 발생했습니다</string>
+    <string name="error_no_connection">인터넷 연결을 확인해주세요</string>
+    <string name="error_timeout">요청 시간이 초과되었습니다</string>
+    <string name="error_retry">다시 시도</string>
+    <string name="error_unauthorized">로그인이 필요합니다</string>
+    <string name="error_invalid_credentials">아이디 또는 비밀번호가 올바르지 않습니다</string>
+    <string name="error_session_expired">세션이 만료되었습니다. 다시 로그인해주세요</string>
+    <string name="error_room_not_found">방을 찾을 수 없습니다</string>
+    <string name="error_invalid_room_password">비밀번호가 일치하지 않습니다</string>
+    <string name="error_room_join_failed">방 입장에 실패했습니다</string>
+    <string name="error_memo_not_found">메모를 찾을 수 없습니다</string>
+    <string name="error_memo_load_failed">메모 목록을 불러오는데 실패했습니다</string>
+    <string name="error_memo_create_failed">메모 생성에 실패했습니다</string>
+    <string name="error_memo_update_failed">메모 수정에 실패했습니다</string>
+    <string name="error_memo_delete_failed">메모 삭제에 실패했습니다</string>
+    <string name="error_comment_create_failed">댓글 작성에 실패했습니다</string>
+    <string name="error_comment_delete_failed">댓글 삭제에 실패했습니다</string>
+    <string name="error_like_toggle_failed">좋아요 처리에 실패했습니다</string>
+    <string name="error_location_permission_denied">위치 권한이 거부되었습니다</string>
+    <string name="error_location_unavailable">현재 위치를 가져올 수 없습니다</string>
+    <string name="error_search_failed">검색에 실패했습니다</string>
+    <string name="error_profile_load_failed">프로필을 불러오는데 실패했습니다</string>
+    <string name="error_profile_update_failed">프로필 업데이트에 실패했습니다</string>
+    <string name="error_image_upload_failed">이미지 업로드에 실패했습니다</string>
+    <string name="error_image_read_failed">이미지를 읽을 수 없습니다</string>
+    <string name="error_server">서버 오류가 발생했습니다</string>
+    <string name="error_unknown">알 수 없는 오류가 발생했습니다</string>
+
+    <!-- Success Messages -->
+    <string name="success_memo_created">메모가 생성되었습니다</string>
+    <string name="success_memo_updated">메모가 수정되었습니다</string>
+    <string name="success_memo_deleted">메모가 삭제되었습니다</string>
+    <string name="success_comment_created">댓글이 작성되었습니다</string>
+    <string name="success_comment_deleted">댓글이 삭제되었습니다</string>
+    <string name="success_profile_updated">프로필이 업데이트되었습니다</string>
+    <string name="success_room_joined">방에 입장했습니다</string>
 </resources>

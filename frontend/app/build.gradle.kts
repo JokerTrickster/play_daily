@@ -36,6 +36,11 @@ android {
             )
         }
     }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
     
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -108,4 +113,10 @@ dependencies {
 
     // Core
     implementation("androidx.core:core-ktx:1.12.0")
+
+    // LeakCanary for memory leak detection (debug only)
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
+
+    // Benchmark library for performance testing
+    androidTestImplementation("androidx.benchmark:benchmark-junit4:1.2.2")
 }

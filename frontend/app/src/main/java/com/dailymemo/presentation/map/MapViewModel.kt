@@ -11,6 +11,7 @@ import com.dailymemo.domain.usecases.SearchPlacesUseCase
 import com.dailymemo.domain.usecases.SearchPlacesByCategoryUseCase
 import com.dailymemo.domain.usecases.location.GetCurrentLocationUseCase
 import com.dailymemo.domain.usecases.location.GetLocationUpdatesUseCase
+import com.dailymemo.domain.usecases.room.JoinRoomUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,8 @@ class MapViewModel @Inject constructor(
     private val getLocationUpdatesUseCase: GetLocationUpdatesUseCase,
     private val getMemosUseCase: GetMemosUseCase,
     private val searchPlacesUseCase: SearchPlacesUseCase,
-    private val searchPlacesByCategoryUseCase: SearchPlacesByCategoryUseCase
+    private val searchPlacesByCategoryUseCase: SearchPlacesByCategoryUseCase,
+    private val joinRoomUseCase: JoinRoomUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -49,12 +51,30 @@ class MapViewModel @Inject constructor(
     private val _showSearchResults = MutableStateFlow(false)
     val showSearchResults: StateFlow<Boolean> = _showSearchResults.asStateFlow()
 
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    // Wishlist filter state
+    private val _wishlistFilter = MutableStateFlow<WishlistFilter>(WishlistFilter.ALL)
+    val wishlistFilter: StateFlow<WishlistFilter> = _wishlistFilter.asStateFlow()
+
     // Popup card states (Task 005)
     private val _selectedMemoId = MutableStateFlow<Long?>(null)
     val selectedMemoId: StateFlow<Long?> = _selectedMemoId.asStateFlow()
 
     private val _showPopupCard = MutableStateFlow(false)
     val showPopupCard: StateFlow<Boolean> = _showPopupCard.asStateFlow()
+
+    // JoinRoom states
+    private val _showJoinRoomDialog = MutableStateFlow(false)
+    val showJoinRoomDialog: StateFlow<Boolean> = _showJoinRoomDialog.asStateFlow()
+
+    private val _joinRoomState = MutableStateFlow<JoinRoomState>(JoinRoomState.Idle)
+    val joinRoomState: StateFlow<JoinRoomState> = _joinRoomState.asStateFlow()
+
+    // Selected place from search results (for marker display)
+    private val _selectedSearchPlace = MutableStateFlow<Place?>(null)
+    val selectedSearchPlace: StateFlow<Place?> = _selectedSearchPlace.asStateFlow()
 
     init {
         loadMemos()
@@ -108,7 +128,12 @@ class MapViewModel @Inject constructor(
     private fun loadMemos() {
         viewModelScope.launch {
             _uiState.value = MapUiState.Loading
-            getMemosUseCase().fold(
+            val isWishlist = when (_wishlistFilter.value) {
+                WishlistFilter.ALL -> null
+                WishlistFilter.WISHLIST_ONLY -> true
+                WishlistFilter.VISITED_ONLY -> false
+            }
+            getMemosUseCase(isWishlist).fold(
                 onSuccess = { memos ->
                     _memos.value = memos
                     _uiState.value = MapUiState.Success
@@ -153,11 +178,13 @@ class MapViewModel @Inject constructor(
         if (query.isBlank()) {
             _searchResults.value = emptyList()
             _showSearchResults.value = false
+            _isSearching.value = false
             android.util.Log.d("MapViewModel", "Query is blank, clearing results")
             return
         }
 
         viewModelScope.launch {
+            _isSearching.value = true
             val location = _currentLocation.value
             android.util.Log.d("MapViewModel", "Current location: ${location?.latitude}, ${location?.longitude}")
             android.util.Log.d("MapViewModel", "Searching within 20km radius")
@@ -188,14 +215,15 @@ class MapViewModel @Inject constructor(
 
                     android.util.Log.d("MapViewModel", "Sorted ${sortedPlaces.size} places by distance")
                     _searchResults.value = sortedPlaces
-                    // 검색 완료 후 즉시 목록 표시
                     _showSearchResults.value = true
+                    _isSearching.value = false
                 },
                 onFailure = { error ->
                     android.util.Log.e("MapViewModel", "Search failed: ${error.message}", error)
                     _uiState.value = MapUiState.Error(
                         error.message ?: "Failed to search places"
                     )
+                    _isSearching.value = false
                 }
             )
         }
@@ -245,11 +273,21 @@ class MapViewModel @Inject constructor(
         _searchQuery.value = ""
         _searchResults.value = emptyList()
         _showSearchResults.value = false
+        _isSearching.value = false
         _selectedCategory.value = null
     }
 
     fun hideSearchResults() {
         _showSearchResults.value = false
+    }
+
+    fun selectSearchPlace(place: Place) {
+        _selectedSearchPlace.value = place
+        android.util.Log.d("MapViewModel", "Selected search place: ${place.name} at ${place.latitude}, ${place.longitude}")
+    }
+
+    fun clearSelectedSearchPlace() {
+        _selectedSearchPlace.value = null
     }
 
     fun searchNearbyPlaces(latitude: Double, longitude: Double) {
@@ -312,10 +350,61 @@ class MapViewModel @Inject constructor(
         _showPopupCard.value = false
         _selectedMemoId.value = null
     }
+
+    // JoinRoom functions
+    fun showJoinRoomDialog() {
+        _showJoinRoomDialog.value = true
+        _joinRoomState.value = JoinRoomState.Idle
+    }
+
+    fun dismissJoinRoomDialog() {
+        _showJoinRoomDialog.value = false
+        _joinRoomState.value = JoinRoomState.Idle
+    }
+
+    fun joinRoom(roomId: Long, roomPassword: String) {
+        viewModelScope.launch {
+            _joinRoomState.value = JoinRoomState.Loading
+            joinRoomUseCase(roomId, roomPassword).fold(
+                onSuccess = {
+                    _joinRoomState.value = JoinRoomState.Success
+                    _showJoinRoomDialog.value = false
+                    // Refresh memos to show the new room's memos
+                    refreshMemos()
+                },
+                onFailure = { error ->
+                    _joinRoomState.value = JoinRoomState.Error(error)
+                }
+            )
+        }
+    }
+
+    fun resetJoinRoomState() {
+        _joinRoomState.value = JoinRoomState.Idle
+    }
+
+    // Wishlist filter functions
+    fun setWishlistFilter(filter: WishlistFilter) {
+        _wishlistFilter.value = filter
+        loadMemos()
+    }
 }
 
 sealed class MapUiState {
     data object Loading : MapUiState()
     data object Success : MapUiState()
     data class Error(val message: String) : MapUiState()
+}
+
+sealed class JoinRoomState {
+    data object Idle : JoinRoomState()
+    data object Loading : JoinRoomState()
+    data object Success : JoinRoomState()
+    data class Error(val error: Throwable) : JoinRoomState()
+}
+
+enum class WishlistFilter {
+    ALL,           // 전체 (wishlist + visited)
+    WISHLIST_ONLY, // 가고싶은 곳만
+    VISITED_ONLY   // 방문한 곳만
 }

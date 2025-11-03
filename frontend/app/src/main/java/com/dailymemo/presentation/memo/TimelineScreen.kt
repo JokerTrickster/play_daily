@@ -90,10 +90,8 @@ fun TimelineScreen(
                             item {
                                 TimelineSkeletonDateHeader()
                             }
-                            items(3) { itemIndex ->
-                                TimelineSkeletonItem(
-                                    isLast = groupIndex == 1 && itemIndex == 2
-                                )
+                            items(3) {
+                                TimelineSkeletonItem()
                             }
                         }
                     }

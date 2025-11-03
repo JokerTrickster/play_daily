@@ -72,6 +72,9 @@ class CreateMemoViewModel @Inject constructor(
     private val _showSearchDialog = MutableStateFlow(false)
     val showSearchDialog: StateFlow<Boolean> = _showSearchDialog.asStateFlow()
 
+    // Flag to track if location was explicitly set (from map search)
+    private var isLocationExplicitlySet = false
+
     init {
         // Automatically get current location when creating memo
         getCurrentLocation()
@@ -103,9 +106,12 @@ class CreateMemoViewModel @Inject constructor(
         viewModelScope.launch {
             getCurrentLocationUseCase().fold(
                 onSuccess = { location ->
-                    _currentLocation.value = location
-                    // You can add reverse geocoding here to get location name
-                    _locationName.value = "현재 위치" // Placeholder
+                    // Only update location if not explicitly set from map search
+                    if (!isLocationExplicitlySet) {
+                        _currentLocation.value = location
+                        // You can add reverse geocoding here to get location name
+                        _locationName.value = "현재 위치" // Placeholder
+                    }
                 },
                 onFailure = {
                     // Silently fail - location is optional
@@ -146,6 +152,7 @@ class CreateMemoViewModel @Inject constructor(
 
     fun setPlaceLocation(latitude: Double, longitude: Double) {
         _currentLocation.value = Location(latitude, longitude)
+        isLocationExplicitlySet = true // Mark that location was explicitly set from map search
     }
 
     fun onSearchQueryChange(query: String) {
@@ -196,6 +203,7 @@ class CreateMemoViewModel @Inject constructor(
     fun selectPlace(place: com.dailymemo.domain.models.Place) {
         _locationName.value = place.name
         _currentLocation.value = Location(place.latitude, place.longitude)
+        isLocationExplicitlySet = true // Mark that location was explicitly set from search
         _businessName.value = place.name
         _businessPhone.value = place.phone ?: ""
         _businessAddress.value = place.address

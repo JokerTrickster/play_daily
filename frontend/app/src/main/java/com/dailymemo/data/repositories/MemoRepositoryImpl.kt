@@ -7,6 +7,7 @@ import com.dailymemo.data.datasources.remote.api.MemoApiService
 import com.dailymemo.data.models.request.CreateMemoRequestDto
 import com.dailymemo.data.models.request.UpdateMemoRequestDto
 import com.dailymemo.data.models.response.MemoDto
+import com.dailymemo.domain.error.DomainError
 import com.dailymemo.domain.models.Comment
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
@@ -39,10 +40,11 @@ class MemoRepositoryImpl @Inject constructor(
                 val memos = response.body()!!.memos.map { it.toDomain() }
                 Result.success(memos)
             } else {
-                Result.failure(Exception("메모 목록 조회에 실패했습니다"))
+                Result.failure(DomainError.MemoLoadFailed)
             }
         } catch (e: Exception) {
-            Result.failure(Exception("네트워크 오류: ${e.message}"))
+            val error = handleException(e)
+            Result.failure(error)
         }
     }
 
@@ -52,10 +54,16 @@ class MemoRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception("메모 조회에 실패했습니다"))
+                val error = if (response.code() == 404) {
+                    DomainError.MemoNotFound
+                } else {
+                    DomainError.MemoLoadFailed
+                }
+                Result.failure(error)
             }
         } catch (e: Exception) {
-            Result.failure(Exception("네트워크 오류: ${e.message}"))
+            val error = handleException(e)
+            Result.failure(error)
         }
     }
 
@@ -115,13 +123,17 @@ class MemoRepositoryImpl @Inject constructor(
                 Result.success(response.body()!!.toDomain())
             } else {
                 val errorBody = response.errorBody()?.string()
-                val errorMsg = "메모 생성 실패 (${response.code()}): ${errorBody ?: response.message()}"
-                android.util.Log.e("MemoRepository", errorMsg)
-                Result.failure(Exception(errorMsg))
+                android.util.Log.e("MemoRepository", "메모 생성 실패 (${response.code()}): ${errorBody ?: response.message()}")
+                Result.failure(DomainError.MemoCreateFailed)
             }
         } catch (e: Exception) {
             android.util.Log.e("MemoRepository", "메모 생성 예외", e)
-            Result.failure(Exception("네트워크 오류: ${e.message}"))
+            val error = if (e.message?.contains("Failed to read image") == true) {
+                DomainError.ImageReadFailed
+            } else {
+                handleException(e)
+            }
+            Result.failure(error)
         }
     }
 
@@ -160,10 +172,11 @@ class MemoRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.toDomain())
             } else {
-                Result.failure(Exception("메모 수정에 실패했습니다"))
+                Result.failure(DomainError.MemoUpdateFailed)
             }
         } catch (e: Exception) {
-            Result.failure(Exception("네트워크 오류: ${e.message}"))
+            val error = handleException(e)
+            Result.failure(error)
         }
     }
 
@@ -173,10 +186,11 @@ class MemoRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("메모 삭제에 실패했습니다"))
+                Result.failure(DomainError.MemoDeleteFailed)
             }
         } catch (e: Exception) {
-            Result.failure(Exception("네트워크 오류: ${e.message}"))
+            val error = handleException(e)
+            Result.failure(error)
         }
     }
 
@@ -192,10 +206,20 @@ class MemoRepositoryImpl @Inject constructor(
                 val isLiked = response.body()?.get("is_liked") as? Boolean ?: false
                 Result.success(isLiked)
             } else {
-                Result.failure(Exception("좋아요 토글에 실패했습니다"))
+                Result.failure(DomainError.LikeToggleFailed)
             }
         } catch (e: Exception) {
-            Result.failure(Exception("네트워크 오류: ${e.message}"))
+            val error = handleException(e)
+            Result.failure(error)
+        }
+    }
+
+    private fun handleException(e: Exception): DomainError {
+        return when (e) {
+            is java.net.UnknownHostException -> DomainError.NoConnection
+            is java.net.SocketTimeoutException -> DomainError.Timeout
+            is java.io.IOException -> DomainError.NetworkError(e)
+            else -> DomainError.UnknownError
         }
     }
 
