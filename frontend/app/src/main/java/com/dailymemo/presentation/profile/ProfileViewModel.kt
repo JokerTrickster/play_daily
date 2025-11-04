@@ -28,7 +28,8 @@ class ProfileViewModel @Inject constructor(
     private val getMemosUseCase: com.dailymemo.domain.usecases.GetMemosUseCase,
     private val getLikedRoomsUseCase: com.dailymemo.domain.usecases.roomlike.GetLikedRoomsUseCase,
     private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource,
-    private val logoutUseCase: com.dailymemo.domain.usecases.LogoutUseCase
+    private val logoutUseCase: com.dailymemo.domain.usecases.LogoutUseCase,
+    private val joinRoomUseCase: com.dailymemo.domain.usecases.room.JoinRoomUseCase
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -449,34 +450,42 @@ class ProfileViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 방 참여 API 호출
-            // 현재는 유효성 검증만 추가하고, 실제 API 호출은 구현되지 않음
-            // 임시로 에러 메시지 표시
-            _joinRoomError.value = "방 참여 기능은 아직 백엔드 연동 전입니다.\n방 ID: $roomId"
-
-            // 아래 코드는 백엔드 연동 후 활성화
-            /*
             try {
-                val result = joinRoomUseCase(roomId, password)
+                val roomIdLong = roomId.toLongOrNull()
+                if (roomIdLong == null) {
+                    _joinRoomError.value = "잘못된 방 ID 형식입니다"
+                    return@launch
+                }
+
+                val result = joinRoomUseCase(roomIdLong, password)
                 result.fold(
-                    onSuccess = { room ->
-                        _currentRoom.value = room
+                    onSuccess = {
                         // 방 참여 성공 시 현재 방 ID 설정 (메모 필터링을 위해)
-                        authLocalDataSource.setCurrentRoomId(room.id.toIntOrNull())
+                        authLocalDataSource.setCurrentRoomId(roomIdLong.toInt())
                         hideJoinDialog()
+                        // 방 정보 새로고침
+                        loadCurrentRoom()
                     },
                     onFailure = { error ->
-                        _joinRoomError.value = when {
-                            error.message?.contains("not found") == true -> "존재하지 않는 방입니다"
-                            error.message?.contains("password") == true -> "비밀번호가 일치하지 않습니다"
-                            else -> "방 참여에 실패했습니다: ${error.message}"
+                        _joinRoomError.value = when (error) {
+                            is com.dailymemo.domain.error.DomainError.RoomNotFound ->
+                                "존재하지 않는 방입니다\n방 ID를 확인해주세요"
+                            is com.dailymemo.domain.error.DomainError.InvalidRoomPassword ->
+                                "비밀번호가 일치하지 않습니다\n방 주인에게 비밀번호를 확인해주세요"
+                            is com.dailymemo.domain.error.DomainError.NoConnection ->
+                                "인터넷 연결을 확인해주세요"
+                            is com.dailymemo.domain.error.DomainError.Timeout ->
+                                "서버 응답 시간 초과\n잠시 후 다시 시도해주세요"
+                            is com.dailymemo.domain.error.DomainError.NetworkError ->
+                                "네트워크 오류가 발생했습니다\n연결 상태를 확인해주세요"
+                            else ->
+                                "방 참여에 실패했습니다\n잠시 후 다시 시도해주세요"
                         }
                     }
                 )
             } catch (e: Exception) {
-                _joinRoomError.value = "네트워크 오류: ${e.message}"
+                _joinRoomError.value = "예상치 못한 오류가 발생했습니다\n${e.message}"
             }
-            */
         }
     }
 

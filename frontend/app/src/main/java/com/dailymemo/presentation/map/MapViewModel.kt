@@ -2,6 +2,7 @@ package com.dailymemo.presentation.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dailymemo.data.datasources.local.AuthLocalDataSource
 import com.dailymemo.domain.models.Location
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.Place
@@ -27,7 +28,8 @@ class MapViewModel @Inject constructor(
     private val getMemosUseCase: GetMemosUseCase,
     private val searchPlacesUseCase: SearchPlacesUseCase,
     private val searchPlacesByCategoryUseCase: SearchPlacesByCategoryUseCase,
-    private val joinRoomUseCase: JoinRoomUseCase
+    private val joinRoomUseCase: JoinRoomUseCase,
+    private val authLocalDataSource: AuthLocalDataSource
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -367,13 +369,30 @@ class MapViewModel @Inject constructor(
             _joinRoomState.value = JoinRoomState.Loading
             joinRoomUseCase(roomId, roomPassword).fold(
                 onSuccess = {
+                    // Update current room ID
+                    authLocalDataSource.setCurrentRoomId(roomId.toInt())
                     _joinRoomState.value = JoinRoomState.Success
                     _showJoinRoomDialog.value = false
                     // Refresh memos to show the new room's memos
                     refreshMemos()
                 },
                 onFailure = { error ->
-                    _joinRoomState.value = JoinRoomState.Error(error)
+                    // Provide user-friendly error messages based on error type
+                    val errorWithMessage = when (error) {
+                        is com.dailymemo.domain.error.DomainError.RoomNotFound ->
+                            RuntimeException("존재하지 않는 방입니다\n방 ID를 확인해주세요")
+                        is com.dailymemo.domain.error.DomainError.InvalidRoomPassword ->
+                            RuntimeException("비밀번호가 일치하지 않습니다\n방 주인에게 비밀번호를 확인해주세요")
+                        is com.dailymemo.domain.error.DomainError.NoConnection ->
+                            RuntimeException("인터넷 연결을 확인해주세요")
+                        is com.dailymemo.domain.error.DomainError.Timeout ->
+                            RuntimeException("서버 응답 시간 초과\n잠시 후 다시 시도해주세요")
+                        is com.dailymemo.domain.error.DomainError.NetworkError ->
+                            RuntimeException("네트워크 오류가 발생했습니다\n연결 상태를 확인해주세요")
+                        else ->
+                            RuntimeException("방 참여에 실패했습니다\n잠시 후 다시 시도해주세요")
+                    }
+                    _joinRoomState.value = JoinRoomState.Error(errorWithMessage)
                 }
             )
         }

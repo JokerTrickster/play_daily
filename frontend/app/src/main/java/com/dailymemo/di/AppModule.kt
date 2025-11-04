@@ -57,10 +57,12 @@ object AppModule {
             // 다른 API는 토큰 추가
             val token = authLocalDataSource.getAccessTokenSync()
             android.util.Log.d("AuthInterceptor", "Request: ${originalRequest.url}, token: ${if (token != null) "exists (${token.take(20)}...)" else "null"}")
-            if (token != null) {
+
+            return@Interceptor if (token != null) {
                 val newRequest = originalRequest.newBuilder()
                     .header("tkn", token)
                     .build()
+                android.util.Log.d("AuthInterceptor", "Adding tkn header to request")
                 chain.proceed(newRequest)
             } else {
                 android.util.Log.e("AuthInterceptor", "No token available for: ${originalRequest.url}")

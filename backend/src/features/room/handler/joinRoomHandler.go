@@ -47,9 +47,12 @@ func (h *JoinRoomHandler) JoinRoom(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
 
-	// Validate request
-	if err := c.Validate(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	// Manual validation
+	if req.RoomID == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "room_id is required"})
+	}
+	if len(req.RoomPassword) != 4 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "room_password must be 4 characters"})
 	}
 
 	// Execute use case
