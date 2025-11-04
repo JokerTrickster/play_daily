@@ -12,6 +12,8 @@ func TokenChecker(next echo.HandlerFunc) echo.HandlerFunc {
 		ctx := c.Request().Context()
 		// get jwt Token
 		accessToken := c.Request().Header.Get("tkn")
+		println("TokenChecker - tkn header:", accessToken)
+		println("TokenChecker - all headers:", c.Request().Header)
 		if accessToken == "" {
 			return common.ErrorMsg(ctx, common.ErrBadParameter, common.Trace(), "no access token in header", common.ErrFromClient)
 		}
