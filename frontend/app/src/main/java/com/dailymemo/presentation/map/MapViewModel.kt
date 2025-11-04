@@ -29,7 +29,8 @@ class MapViewModel @Inject constructor(
     private val searchPlacesUseCase: SearchPlacesUseCase,
     private val searchPlacesByCategoryUseCase: SearchPlacesByCategoryUseCase,
     private val joinRoomUseCase: JoinRoomUseCase,
-    private val authLocalDataSource: AuthLocalDataSource
+    private val authLocalDataSource: AuthLocalDataSource,
+    private val memoRepository: com.dailymemo.domain.repositories.MemoRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MapUiState>(MapUiState.Loading)
@@ -135,15 +136,21 @@ class MapViewModel @Inject constructor(
                 WishlistFilter.WISHLIST_ONLY -> true
                 WishlistFilter.VISITED_ONLY -> false
             }
-            getMemosUseCase(isWishlist = isWishlist, page = 1, limit = 100).fold(
+            // 현재 방의 메모를 조회하기 위해 room_id를 명시적으로 전달
+            val currentRoomId = authLocalDataSource.getCurrentRoomId()
+            android.util.Log.d("MapViewModel", "loadMemos - currentRoomId: $currentRoomId, isWishlist: $isWishlist")
+
+            memoRepository.getMemos(isWishlist = isWishlist, roomId = currentRoomId, page = 1, limit = 100).fold(
                 onSuccess = { result ->
                     _memos.value = result.memos
                     _uiState.value = MapUiState.Success
+                    android.util.Log.d("MapViewModel", "loadMemos - success: ${result.memos.size} memos")
                 },
                 onFailure = { error ->
                     _uiState.value = MapUiState.Error(
                         error.message ?: "Failed to load memos"
                     )
+                    android.util.Log.e("MapViewModel", "loadMemos - error: ${error.message}", error)
                 }
             )
         }
