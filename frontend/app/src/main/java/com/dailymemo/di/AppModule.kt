@@ -50,17 +50,20 @@ object AppModule {
 
             // Auth API는 토큰 없이 요청
             if (originalRequest.url.encodedPath.contains("/auth/")) {
+                android.util.Log.d("AuthInterceptor", "Auth API - skipping token: ${originalRequest.url}")
                 return@Interceptor chain.proceed(originalRequest)
             }
 
             // 다른 API는 토큰 추가
             val token = authLocalDataSource.getAccessTokenSync()
+            android.util.Log.d("AuthInterceptor", "Request: ${originalRequest.url}, token: ${if (token != null) "exists (${token.take(20)}...)" else "null"}")
             if (token != null) {
                 val newRequest = originalRequest.newBuilder()
-                    .header("Authorization", "Bearer $token")
+                    .header("tkn", token)
                     .build()
                 chain.proceed(newRequest)
             } else {
+                android.util.Log.e("AuthInterceptor", "No token available for: ${originalRequest.url}")
                 chain.proceed(originalRequest)
             }
         }

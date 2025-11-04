@@ -1,13 +1,16 @@
 package com.dailymemo.domain.repositories
 
 import com.dailymemo.domain.models.Memo
+import com.dailymemo.domain.models.MemoListResult
 import com.dailymemo.domain.models.PlaceCategory
 
 interface MemoRepository {
     suspend fun getMemos(
         isWishlist: Boolean? = null,
-        roomId: Int? = null
-    ): Result<List<Memo>>
+        roomId: Int? = null,
+        page: Int = 1,
+        limit: Int = 10
+    ): Result<MemoListResult>
     suspend fun getMemo(id: Long): Result<Memo>
     suspend fun createMemo(
         title: String,

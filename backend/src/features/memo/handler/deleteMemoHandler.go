@@ -2,6 +2,7 @@ package handler
 
 import (
 	_interface "main/features/memo/model/interface"
+	_middleware "main/middleware"
 	"net/http"
 	"strconv"
 
@@ -16,7 +17,7 @@ func NewDeleteMemoHandler(c *echo.Echo, useCase _interface.IDeleteMemoUseCase) _
 	handler := &DeleteMemoHandler{
 		UseCase: useCase,
 	}
-	c.DELETE("/v0.1/memo/:id", handler.DeleteMemo)
+	c.DELETE("/v0.1/memo/:id", handler.DeleteMemo, _middleware.TokenChecker)
 	return handler
 }
 

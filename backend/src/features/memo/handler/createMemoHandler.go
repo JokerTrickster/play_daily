@@ -5,6 +5,7 @@ import (
 	"main/common"
 	_interface "main/features/memo/model/interface"
 	"main/features/memo/model/request"
+	_middleware "main/middleware"
 	"net/http"
 	"strconv"
 
@@ -19,7 +20,7 @@ func NewCreateMemoHandler(c *echo.Echo, useCase _interface.ICreateMemoUseCase) _
 	handler := &CreateMemoHandler{
 		UseCase: useCase,
 	}
-	c.POST("/v0.1/memo", handler.CreateMemo)
+	c.POST("/v0.1/memo", handler.CreateMemo, _middleware.TokenChecker)
 	return handler
 }
 

@@ -26,3 +26,11 @@ data class Memo(
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )
+
+data class MemoListResult(
+    val memos: List<Memo>,
+    val total: Long,
+    val page: Int,
+    val limit: Int,
+    val hasMore: Boolean
+)

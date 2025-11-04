@@ -2,6 +2,7 @@ package handler
 
 import (
 	_interface "main/features/memo/model/interface"
+	_middleware "main/middleware"
 	"net/http"
 	"strconv"
 
@@ -16,8 +17,8 @@ func NewGetMemoHandler(c *echo.Echo, useCase _interface.IGetMemoUseCase) _interf
 	handler := &GetMemoHandler{
 		UseCase: useCase,
 	}
-	c.GET("/v0.1/memo/:id", handler.GetMemo)
-	c.GET("/v0.1/memo", handler.GetMemoList)
+	c.GET("/v0.1/memo/:id", handler.GetMemo, _middleware.TokenChecker)
+	c.GET("/v0.1/memo", handler.GetMemoList, _middleware.TokenChecker)
 	return handler
 }
 

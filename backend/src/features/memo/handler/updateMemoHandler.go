@@ -5,6 +5,7 @@ import (
 	"main/common"
 	_interface "main/features/memo/model/interface"
 	"main/features/memo/model/request"
+	_middleware "main/middleware"
 	"net/http"
 	"strconv"
 
@@ -19,7 +20,7 @@ func NewUpdateMemoHandler(c *echo.Echo, useCase _interface.IUpdateMemoUseCase) _
 	handler := &UpdateMemoHandler{
 		UseCase: useCase,
 	}
-	c.PUT("/v0.1/memo/:id", handler.UpdateMemo)
+	c.PUT("/v0.1/memo/:id", handler.UpdateMemo, _middleware.TokenChecker)
 	return handler
 }
 

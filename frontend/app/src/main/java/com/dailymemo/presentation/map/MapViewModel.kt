@@ -133,9 +133,9 @@ class MapViewModel @Inject constructor(
                 WishlistFilter.WISHLIST_ONLY -> true
                 WishlistFilter.VISITED_ONLY -> false
             }
-            getMemosUseCase(isWishlist).fold(
-                onSuccess = { memos ->
-                    _memos.value = memos
+            getMemosUseCase(isWishlist = isWishlist, page = 1, limit = 100).fold(
+                onSuccess = { result ->
+                    _memos.value = result.memos
                     _uiState.value = MapUiState.Success
                 },
                 onFailure = { error ->

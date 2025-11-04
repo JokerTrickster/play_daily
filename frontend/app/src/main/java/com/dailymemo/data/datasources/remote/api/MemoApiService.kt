@@ -14,7 +14,9 @@ interface MemoApiService {
     @GET("/v0.1/memo")
     suspend fun getMemos(
         @Query("is_wishlist") isWishlist: Boolean? = null,
-        @Query("room_id") roomId: Int? = null
+        @Query("room_id") roomId: Int? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 10
     ): Response<MemoListDto>
 
     @GET("/v0.1/memo/{id}")

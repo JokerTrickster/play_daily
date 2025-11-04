@@ -36,13 +36,17 @@ class AuthLocalDataSource @Inject constructor(
         username: String,
         memoSpaceId: String
     ) {
+        android.util.Log.d("AuthLocalDataSource", "saveTokens - memoSpaceId: $memoSpaceId")
         dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN_KEY] = accessToken
             preferences[REFRESH_TOKEN_KEY] = refreshToken
             preferences[USER_ID_KEY] = userId
             preferences[USERNAME_KEY] = username
             preferences[MEMO_SPACE_ID_KEY] = memoSpaceId
+            // Also save memoSpaceId as current room_id
+            preferences[CURRENT_ROOM_ID_KEY] = memoSpaceId
         }
+        android.util.Log.d("AuthLocalDataSource", "saveTokens completed - saved room_id: $memoSpaceId")
     }
 
     suspend fun getAccessToken(): String? {
@@ -89,6 +93,8 @@ class AuthLocalDataSource @Inject constructor(
 
     suspend fun getCurrentRoomId(): Int? {
         val roomIdStr = dataStore.data.first()[CURRENT_ROOM_ID_KEY]
-        return roomIdStr?.toIntOrNull()
+        val roomId = roomIdStr?.toIntOrNull()
+        android.util.Log.d("AuthLocalDataSource", "getCurrentRoomId - roomIdStr: $roomIdStr, converted: $roomId")
+        return roomId
     }
 }

@@ -25,6 +25,11 @@ class MemoListViewModel @Inject constructor(
     private val _currentTab = MutableStateFlow(MemoTab.VISITED)
     val currentTab: StateFlow<MemoTab> = _currentTab.asStateFlow()
 
+    // 페이지네이션 상태
+    private var currentPage = 1
+    private var hasMore = true
+    private var isLoadingMore = false
+
     // 전체 메모 목록 (필터링 전)
     private val _allMemos = MutableStateFlow<List<Memo>>(emptyList())
 
@@ -104,14 +109,42 @@ class MemoListViewModel @Inject constructor(
     fun loadMemos() {
         viewModelScope.launch {
             _uiState.value = MemoListUiState.Loading
+            currentPage = 1
+            hasMore = true
+            _allMemos.value = emptyList()
+
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
-            getMemosUseCase(isWishlist = isWishlist).fold(
-                onSuccess = { memos ->
-                    _allMemos.value = memos
+            getMemosUseCase(isWishlist = isWishlist, page = currentPage, limit = 10).fold(
+                onSuccess = { result ->
+                    _allMemos.value = result.memos
+                    hasMore = result.hasMore
                     applyFilters()
                 },
                 onFailure = { error ->
                     _uiState.value = MemoListUiState.Error(ErrorHandler.Memo.loadError(error))
+                }
+            )
+        }
+    }
+
+    fun loadMoreMemos() {
+        if (!hasMore || isLoadingMore) return
+
+        viewModelScope.launch {
+            isLoadingMore = true
+            currentPage++
+
+            val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
+            getMemosUseCase(isWishlist = isWishlist, page = currentPage, limit = 10).fold(
+                onSuccess = { result ->
+                    _allMemos.value = _allMemos.value + result.memos
+                    hasMore = result.hasMore
+                    applyFilters()
+                    isLoadingMore = false
+                },
+                onFailure = { error ->
+                    currentPage-- // Rollback page on error
+                    isLoadingMore = false
                 }
             )
         }

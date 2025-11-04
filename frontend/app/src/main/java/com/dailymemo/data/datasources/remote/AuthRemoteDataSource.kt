@@ -35,7 +35,7 @@ class AuthRemoteDataSource @Inject constructor(
                         refreshToken = authResponse.refreshToken,
                         userId = authResponse.userId.toString(),
                         username = authResponse.accountId,
-                        memoSpaceId = authResponse.userId.toString() // Using userId as memoSpaceId
+                        memoSpaceId = authResponse.defaultRoomId?.toString() ?: authResponse.userId.toString()
                     )
                 )
             } else {
@@ -65,13 +65,14 @@ class AuthRemoteDataSource @Inject constructor(
 
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
+                android.util.Log.d("AuthRemoteDataSource", "Login response - userId: ${authResponse.userId}, defaultRoomId: ${authResponse.defaultRoomId}")
                 Result.success(
                     AuthTokenDto(
                         accessToken = authResponse.accessToken,
                         refreshToken = authResponse.refreshToken,
                         userId = authResponse.userId.toString(),
                         username = authResponse.accountId,
-                        memoSpaceId = authResponse.userId.toString() // Using userId as memoSpaceId
+                        memoSpaceId = authResponse.defaultRoomId?.toString() ?: authResponse.userId.toString()
                     )
                 )
             } else {

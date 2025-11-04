@@ -32,17 +32,33 @@ class MemoRepositoryImpl @Inject constructor(
 
     override suspend fun getMemos(
         isWishlist: Boolean?,
-        roomId: Int?
-    ): Result<List<Memo>> {
+        roomId: Int?,
+        page: Int,
+        limit: Int
+    ): Result<com.dailymemo.domain.models.MemoListResult> {
         return try {
-            val response = memoApiService.getMemos(isWishlist, roomId)
+            android.util.Log.d("MemoRepositoryImpl", "getMemos - isWishlist: $isWishlist, roomId: $roomId, page: $page, limit: $limit")
+            val response = memoApiService.getMemos(isWishlist, roomId, page, limit)
+            android.util.Log.d("MemoRepositoryImpl", "getMemos response - code: ${response.code()}, isSuccessful: ${response.isSuccessful}, body: ${response.body()}")
             if (response.isSuccessful && response.body() != null) {
-                val memos = response.body()!!.memos.map { it.toDomain() }
-                Result.success(memos)
+                val body = response.body()!!
+                val memos = body.memos.map { it.toDomain() }
+                val hasMore = (page * limit) < body.total
+                val result = com.dailymemo.domain.models.MemoListResult(
+                    memos = memos,
+                    total = body.total,
+                    page = body.page,
+                    limit = body.limit,
+                    hasMore = hasMore
+                )
+                android.util.Log.d("MemoRepositoryImpl", "getMemos success - total: ${body.total}, memos count: ${memos.size}")
+                Result.success(result)
             } else {
+                android.util.Log.e("MemoRepositoryImpl", "getMemos failed - code: ${response.code()}, message: ${response.message()}")
                 Result.failure(DomainError.MemoLoadFailed)
             }
         } catch (e: Exception) {
+            android.util.Log.e("MemoRepositoryImpl", "getMemos exception", e)
             val error = handleException(e)
             Result.failure(error)
         }

@@ -10,5 +10,6 @@ data class AuthResponseDto(
     @SerializedName("user_id") val userId: Long,
     @SerializedName("account_id") val accountId: String,
     @SerializedName("nickname") val nickname: String,
+    @SerializedName("default_room_id") val defaultRoomId: Int?,
     @SerializedName("room_password") val roomPassword: String
 )

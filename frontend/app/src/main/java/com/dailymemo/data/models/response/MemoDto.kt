@@ -51,5 +51,9 @@ data class MemoListDto(
     @SerializedName("memos")
     val memos: List<MemoDto>,
     @SerializedName("total")
-    val total: Long
+    val total: Long,
+    @SerializedName("page")
+    val page: Int,
+    @SerializedName("limit")
+    val limit: Int
 )

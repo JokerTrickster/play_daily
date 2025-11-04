@@ -27,7 +27,8 @@ class ProfileViewModel @Inject constructor(
     private val updateProfileUseCase: UpdateProfileUseCase,
     private val getMemosUseCase: com.dailymemo.domain.usecases.GetMemosUseCase,
     private val getLikedRoomsUseCase: com.dailymemo.domain.usecases.roomlike.GetLikedRoomsUseCase,
-    private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource
+    private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource,
+    private val logoutUseCase: com.dailymemo.domain.usecases.LogoutUseCase
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -82,9 +83,9 @@ class ProfileViewModel @Inject constructor(
 
     fun loadMemosWithLocation() {
         viewModelScope.launch {
-            getMemosUseCase(isWishlist = null).fold(
-                onSuccess = { memos ->
-                    _memosWithLocation.value = memos.filter {
+            getMemosUseCase(isWishlist = null, page = 1, limit = 100).fold(
+                onSuccess = { result ->
+                    _memosWithLocation.value = result.memos.filter {
                         it.latitude != null && it.longitude != null
                     }
                 },
@@ -377,9 +378,9 @@ class ProfileViewModel @Inject constructor(
         // TODO: 백엔드 연동 시 실제 사용자 정보 로드
         // 이름, 이메일은 제거하고 방 ID만 표시
         viewModelScope.launch {
-            getMemosUseCase(isWishlist = null).fold(
-                onSuccess = { memos ->
-                    _memoCount.value = memos.size
+            getMemosUseCase(isWishlist = null, page = 1, limit = 100).fold(
+                onSuccess = { result ->
+                    _memoCount.value = result.total.toInt()
                 },
                 onFailure = {
                     _memoCount.value = 0
@@ -390,9 +391,9 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadCurrentRoom() {
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 데이터 로드
+            val roomId = authLocalDataSource.getCurrentRoomId()
             _currentRoom.value = Room(
-                id = "room_${_currentUserId.value}",
+                id = roomId?.toString() ?: _currentUserId.value.toString(),
                 name = "내 일상 메모",
                 ownerId = _currentUserId.value,
                 ownerName = _userName.value,
@@ -507,9 +508,34 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun logout() {
-        // TODO: 백엔드 연동 시 실제 로그아웃 처리
-        // 1. 토큰 삭제
-        // 2. 로컬 데이터 정리
-        // 3. 로그인 화면으로 이동
+        viewModelScope.launch {
+            // Execute logout use case (clears all tokens, room_id, user info)
+            logoutUseCase()
+
+            // Reset all ViewModel states to initial values
+            _uiState.value = ProfileUiState.Loading
+            _nickname.value = ""
+            _currentPassword.value = ""
+            _newPassword.value = ""
+            _confirmPassword.value = ""
+            _selectedImageUri.value = null
+            _profileImageUrl.value = null
+            _roomPassword.value = ""
+            _receivedLikesCount.value = 0
+            _isLoading.value = false
+            _errorMessage.value = null
+            _successMessage.value = null
+            _memosWithLocation.value = emptyList()
+            _likedRooms.value = emptyList()
+            _userName.value = "사용자"
+            _userEmail.value = "user@example.com"
+            _memoCount.value = 0
+            _currentRoom.value = null
+            _currentUserId.value = 1L
+            _roomIdInput.value = ""
+            _roomPasswordInput.value = ""
+            _showJoinDialog.value = false
+            _joinRoomError.value = null
+        }
     }
 }

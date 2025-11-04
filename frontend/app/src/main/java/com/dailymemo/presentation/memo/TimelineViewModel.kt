@@ -55,9 +55,9 @@ class TimelineViewModel @Inject constructor(
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
 
-            getMemosUseCase(isWishlist = isWishlist).fold(
-                onSuccess = { memos ->
-                    val groupedMemos = groupMemosByDate(memos)
+            getMemosUseCase(isWishlist = isWishlist, page = 1, limit = 100).fold(
+                onSuccess = { result ->
+                    val groupedMemos = groupMemosByDate(result.memos)
                     _uiState.value = TimelineUiState.Success(groupedMemos)
                 },
                 onFailure = { error ->
