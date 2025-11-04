@@ -27,6 +27,8 @@ class AuthLocalDataSource @Inject constructor(
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val MEMO_SPACE_ID_KEY = stringPreferencesKey("memo_space_id")
         private val CURRENT_ROOM_ID_KEY = stringPreferencesKey("current_room_id")
+        private val DEFAULT_ROOM_ID_KEY = stringPreferencesKey("default_room_id")
+        private val ROOM_PASSWORD_KEY = stringPreferencesKey("room_password")
     }
 
     suspend fun saveTokens(
@@ -34,9 +36,11 @@ class AuthLocalDataSource @Inject constructor(
         refreshToken: String,
         userId: String,
         username: String,
-        memoSpaceId: String
+        memoSpaceId: String,
+        defaultRoomId: String? = null,
+        roomPassword: String? = null
     ) {
-        android.util.Log.d("AuthLocalDataSource", "saveTokens - memoSpaceId: $memoSpaceId")
+        android.util.Log.d("AuthLocalDataSource", "saveTokens - memoSpaceId: $memoSpaceId, defaultRoomId: $defaultRoomId, roomPassword: $roomPassword")
         dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN_KEY] = accessToken
             preferences[REFRESH_TOKEN_KEY] = refreshToken
@@ -45,8 +49,16 @@ class AuthLocalDataSource @Inject constructor(
             preferences[MEMO_SPACE_ID_KEY] = memoSpaceId
             // Also save memoSpaceId as current room_id
             preferences[CURRENT_ROOM_ID_KEY] = memoSpaceId
+
+            // Save default room ID and room password
+            if (defaultRoomId != null) {
+                preferences[DEFAULT_ROOM_ID_KEY] = defaultRoomId
+            }
+            if (roomPassword != null) {
+                preferences[ROOM_PASSWORD_KEY] = roomPassword
+            }
         }
-        android.util.Log.d("AuthLocalDataSource", "saveTokens completed - saved room_id: $memoSpaceId")
+        android.util.Log.d("AuthLocalDataSource", "saveTokens completed - saved room_id: $memoSpaceId, defaultRoomId: $defaultRoomId")
     }
 
     suspend fun getAccessToken(): String? {
@@ -96,5 +108,14 @@ class AuthLocalDataSource @Inject constructor(
         val roomId = roomIdStr?.toIntOrNull()
         android.util.Log.d("AuthLocalDataSource", "getCurrentRoomId - roomIdStr: $roomIdStr, converted: $roomId")
         return roomId
+    }
+
+    suspend fun getDefaultRoomId(): Int? {
+        val roomIdStr = dataStore.data.first()[DEFAULT_ROOM_ID_KEY]
+        return roomIdStr?.toIntOrNull()
+    }
+
+    suspend fun getRoomPassword(): String? {
+        return dataStore.data.first()[ROOM_PASSWORD_KEY]
     }
 }

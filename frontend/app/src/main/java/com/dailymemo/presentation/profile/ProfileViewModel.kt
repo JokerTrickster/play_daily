@@ -78,8 +78,21 @@ class ProfileViewModel @Inject constructor(
     val likedRooms: StateFlow<List<com.dailymemo.domain.models.LikedRoom>> = _likedRooms.asStateFlow()
 
     init {
+        loadRoomInfoFromLocal()
         loadMemosWithLocation()
         loadLikedRooms()
+    }
+
+    private fun loadRoomInfoFromLocal() {
+        viewModelScope.launch {
+            val defaultRoomId = authLocalDataSource.getDefaultRoomId()
+            val roomPassword = authLocalDataSource.getRoomPassword()
+
+            android.util.Log.d("ProfileViewModel", "loadRoomInfoFromLocal - defaultRoomId: $defaultRoomId, roomPassword: $roomPassword")
+
+            _myRoomId.value = defaultRoomId
+            _roomPassword.value = roomPassword ?: ""
+        }
     }
 
     fun loadMemosWithLocation() {

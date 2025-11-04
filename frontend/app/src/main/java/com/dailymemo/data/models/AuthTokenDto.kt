@@ -5,5 +5,7 @@ data class AuthTokenDto(
     val refreshToken: String,
     val userId: String,
     val username: String,
-    val memoSpaceId: String
+    val memoSpaceId: String,
+    val defaultRoomId: String? = null,
+    val roomPassword: String? = null
 )

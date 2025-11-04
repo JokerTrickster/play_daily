@@ -25,7 +25,9 @@ class AuthRepositoryImpl @Inject constructor(
                         refreshToken = tokenDto.refreshToken,
                         userId = tokenDto.userId,
                         username = tokenDto.username,
-                        memoSpaceId = tokenDto.memoSpaceId
+                        memoSpaceId = tokenDto.memoSpaceId,
+                        defaultRoomId = tokenDto.defaultRoomId,
+                        roomPassword = tokenDto.roomPassword
                     )
 
                     AuthResult.Success(
@@ -56,7 +58,9 @@ class AuthRepositoryImpl @Inject constructor(
                         refreshToken = tokenDto.refreshToken,
                         userId = tokenDto.userId,
                         username = tokenDto.username,
-                        memoSpaceId = tokenDto.memoSpaceId
+                        memoSpaceId = tokenDto.memoSpaceId,
+                        defaultRoomId = tokenDto.defaultRoomId,
+                        roomPassword = tokenDto.roomPassword
                     )
 
                     AuthResult.Success(

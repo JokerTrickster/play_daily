@@ -35,7 +35,9 @@ class AuthRemoteDataSource @Inject constructor(
                         refreshToken = authResponse.refreshToken,
                         userId = authResponse.userId.toString(),
                         username = authResponse.accountId,
-                        memoSpaceId = authResponse.defaultRoomId?.toString() ?: authResponse.userId.toString()
+                        memoSpaceId = authResponse.defaultRoomId?.toString() ?: authResponse.userId.toString(),
+                        defaultRoomId = authResponse.defaultRoomId?.toString(),
+                        roomPassword = authResponse.roomPassword
                     )
                 )
             } else {
@@ -65,14 +67,16 @@ class AuthRemoteDataSource @Inject constructor(
 
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                android.util.Log.d("AuthRemoteDataSource", "Login response - userId: ${authResponse.userId}, defaultRoomId: ${authResponse.defaultRoomId}")
+                android.util.Log.d("AuthRemoteDataSource", "Login response - userId: ${authResponse.userId}, defaultRoomId: ${authResponse.defaultRoomId}, roomPassword: ${authResponse.roomPassword}")
                 Result.success(
                     AuthTokenDto(
                         accessToken = authResponse.accessToken,
                         refreshToken = authResponse.refreshToken,
                         userId = authResponse.userId.toString(),
                         username = authResponse.accountId,
-                        memoSpaceId = authResponse.defaultRoomId?.toString() ?: authResponse.userId.toString()
+                        memoSpaceId = authResponse.defaultRoomId?.toString() ?: authResponse.userId.toString(),
+                        defaultRoomId = authResponse.defaultRoomId?.toString(),
+                        roomPassword = authResponse.roomPassword
                     )
                 )
             } else {
