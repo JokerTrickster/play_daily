@@ -35,8 +35,13 @@ func NewGetMemoHandler(c *echo.Echo, useCase _interface.IGetMemoUseCase) _interf
 func (h *GetMemoHandler) GetMemo(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// TODO: JWT에서 userID 추출
-	userID := uint(1)
+	// JWT에서 userID 추출
+	uID := c.Get("uID")
+	userIDUint64, ok := uID.(uint64)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user id"})
+	}
+	userID := uint(userIDUint64)
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -54,10 +59,12 @@ func (h *GetMemoHandler) GetMemo(c echo.Context) error {
 // GetMemoList 메모 목록 조회 API
 // @Router /v0.1/memo [get]
 // @Summary 메모 목록 조회 API
-// @Description 사용자의 모든 메모를 조회합니다 (is_wishlist, room_id 필터 지원)
+// @Description 사용자의 모든 메모를 조회합니다 (is_wishlist, room_id 필터 및 페이지네이션 지원)
 // @Produce json
 // @Param is_wishlist query bool false "Wishlist filter"
 // @Param room_id query int false "Room ID filter"
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 10, max: 100)"
 // @Success 200 {object} response.ResMemoList
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -65,8 +72,12 @@ func (h *GetMemoHandler) GetMemo(c echo.Context) error {
 func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// TODO: JWT에서 userID 추출
-	userID := uint(1)
+	// JWT에서 userID 추출
+	uID := c.Get("uID")
+	userID, ok := uID.(uint64)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user id"})
+	}
 
 	// is_wishlist 파싱 및 검증
 	var isWishlist *bool
@@ -91,8 +102,33 @@ func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
 		roomID = &roomIDUint
 	}
 
-	// 메모 목록 조회
-	memoList, err := h.UseCase.GetMemoList(ctx, userID, roomID, isWishlist)
+	// page 파싱 (기본값: 1)
+	page := 1
+	pageStr := c.QueryParam("page")
+	if pageStr != "" {
+		parsedPage, err := strconv.Atoi(pageStr)
+		if err != nil || parsedPage < 1 {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid page number (must be >= 1)"})
+		}
+		page = parsedPage
+	}
+
+	// limit 파싱 (기본값: 10, 최대값: 100)
+	limit := 10
+	limitStr := c.QueryParam("limit")
+	if limitStr != "" {
+		parsedLimit, err := strconv.Atoi(limitStr)
+		if err != nil || parsedLimit < 1 {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid limit (must be >= 1)"})
+		}
+		if parsedLimit > 100 {
+			parsedLimit = 100
+		}
+		limit = parsedLimit
+	}
+
+	// 메모 목록 조회 (페이지네이션 포함)
+	memoList, err := h.UseCase.GetMemoList(ctx, uint(userID), roomID, isWishlist, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
