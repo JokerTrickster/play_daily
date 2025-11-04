@@ -46,6 +46,8 @@ func (uc *SignInAuthUseCase) SignIn(ctx context.Context, req request.ReqSignIn) 
 		UserID:                user.ID,
 		AccountID:             user.AccountID,
 		Nickname:              user.Nickname,
+		DefaultRoomID:         user.DefaultRoomID,
+		RoomPassword:          user.RoomPassword,
 	}
 
 	return res, nil
