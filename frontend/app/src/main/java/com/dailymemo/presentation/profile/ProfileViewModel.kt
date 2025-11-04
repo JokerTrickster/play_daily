@@ -402,17 +402,22 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadCurrentRoom() {
         viewModelScope.launch {
-            val roomId = authLocalDataSource.getCurrentRoomId()
+            val currentRoomId = authLocalDataSource.getCurrentRoomId()
+            val myRoomId = _myRoomId.value
+
+            // Determine if current room is my room
+            val isMyRoom = currentRoomId == myRoomId
+
             _currentRoom.value = Room(
-                id = roomId?.toString() ?: _currentUserId.value.toString(),
+                id = currentRoomId?.toString() ?: myRoomId?.toString() ?: "1",
                 name = "내 일상 메모",
-                ownerId = _currentUserId.value,
+                ownerId = if (isMyRoom) _currentUserId.value else 999L, // Different owner if not my room
                 ownerName = _userName.value,
                 participants = listOf(
                     Participant(
                         id = _currentUserId.value,
                         name = _userName.value,
-                        isOwner = true,
+                        isOwner = isMyRoom,
                         joinedAt = LocalDateTime.now()
                     )
                 ),
