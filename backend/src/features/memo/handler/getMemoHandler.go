@@ -36,12 +36,10 @@ func (h *GetMemoHandler) GetMemo(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	// JWT에서 userID 추출
-	uID := c.Get("uID")
-	userIDUint64, ok := uID.(uint64)
+	userID, ok := c.Get("uID").(uint)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user id"})
 	}
-	userID := uint(userIDUint64)
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -73,8 +71,7 @@ func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	// JWT에서 userID 추출
-	uID := c.Get("uID")
-	userID, ok := uID.(uint64)
+	userID, ok := c.Get("uID").(uint)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user id"})
 	}
@@ -128,7 +125,7 @@ func (h *GetMemoHandler) GetMemoList(c echo.Context) error {
 	}
 
 	// 메모 목록 조회 (페이지네이션 포함)
-	memoList, err := h.UseCase.GetMemoList(ctx, uint(userID), roomID, isWishlist, page, limit)
+	memoList, err := h.UseCase.GetMemoList(ctx, userID, roomID, isWishlist, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
