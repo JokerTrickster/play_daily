@@ -32,8 +32,11 @@ func NewGetProfileHandler(c *echo.Echo, useCase _interface.IGetProfileUseCase) _
 func (h *GetProfileHandler) GetProfile(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// TODO: JWT에서 userID 추출
-	userID := uint(1)
+	// Get user ID from context (set by TokenChecker middleware)
+	userID, ok := c.Get("uID").(uint)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+	}
 
 	profile, err := h.UseCase.GetProfile(ctx, userID)
 	if err != nil {
