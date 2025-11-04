@@ -125,10 +125,16 @@ class ProfileViewModel @Inject constructor(
                     _receivedLikesCount.value = profile.receivedLikesCount
                     _isLoading.value = false
 
-                    // 프로필 로드 시 기본 방 ID를 현재 방으로 설정
+                    // Store my default room ID
+                    _myRoomId.value = profile.defaultRoomId
+
+                    // 프로필 로드 시 기본 방 ID를 현재 방으로 설정 (처음 로드 시에만)
                     profile.defaultRoomId?.let { roomId ->
                         viewModelScope.launch {
-                            authLocalDataSource.setCurrentRoomId(roomId)
+                            // Only set if not already set
+                            if (authLocalDataSource.getCurrentRoomId() == null) {
+                                authLocalDataSource.setCurrentRoomId(roomId)
+                            }
                         }
                     }
                 },
@@ -354,6 +360,10 @@ class ProfileViewModel @Inject constructor(
     private val _currentRoom = MutableStateFlow<Room?>(null)
     val currentRoom: StateFlow<Room?> = _currentRoom.asStateFlow()
 
+    // My default room ID (user's own room)
+    private val _myRoomId = MutableStateFlow<Int?>(null)
+    val myRoomId: StateFlow<Int?> = _myRoomId.asStateFlow()
+
     private val _currentUserId = MutableStateFlow(1L)
     val currentUserId: StateFlow<Long> = _currentUserId.asStateFlow()
 
@@ -496,8 +506,12 @@ class ProfileViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 방 나가기 API 호출
-            loadCurrentRoom()
+            // Reset to my default room
+            _myRoomId.value?.let { myRoomId ->
+                authLocalDataSource.setCurrentRoomId(myRoomId)
+                // TODO: 백엔드 연동 시 실제 방 나가기 API 호출
+                loadCurrentRoom()
+            }
         }
     }
 

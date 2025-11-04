@@ -47,6 +47,7 @@ fun ProfileScreen(
     val userEmail by viewModel.userEmail.collectAsState()
     val memoCount by viewModel.memoCount.collectAsState()
     val currentRoom by viewModel.currentRoom.collectAsState()
+    val myRoomId by viewModel.myRoomId.collectAsState()
     val roomIdInput by viewModel.roomIdInput.collectAsState()
     val showJoinDialog by viewModel.showJoinDialog.collectAsState()
     val memosWithLocation by viewModel.memosWithLocation.collectAsState()
@@ -82,9 +83,9 @@ fun ProfileScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Profile Header
+            // Profile Header - Shows MY room info only
             ProfileHeader(
-                roomId = currentRoom?.id ?: "로딩 중...",
+                roomId = myRoomId?.toString() ?: "로딩 중...",
                 roomPassword = roomPassword,
                 memoCount = memoCount,
                 receivedLikesCount = receivedLikesCount
@@ -583,7 +584,7 @@ fun RoomInfoSection(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "공유 중인 방",
+                        text = "접속 중인 방",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
