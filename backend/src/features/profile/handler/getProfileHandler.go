@@ -2,6 +2,7 @@ package handler
 
 import (
 	_interface "main/features/profile/model/interface"
+	_middleware "main/middleware"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -15,7 +16,7 @@ func NewGetProfileHandler(c *echo.Echo, useCase _interface.IGetProfileUseCase) _
 	handler := &GetProfileHandler{
 		UseCase: useCase,
 	}
-	c.GET("/v0.1/profile", handler.GetProfile)
+	c.GET("/v0.1/profile", handler.GetProfile, _middleware.TokenChecker)
 	return handler
 }
 

@@ -103,8 +103,13 @@ fun ProfileScreen(
 
             // Room Info Section
             currentRoom?.let { room ->
+                // Check if current room is MY room
+                val isMyRoom = room.id == myRoomId?.toString()
+                android.util.Log.d("ProfileScreen", "Room comparison - currentRoom.id: ${room.id}, myRoomId: $myRoomId, isMyRoom: $isMyRoom")
+
                 RoomInfoSection(
                     room = room,
+                    isMyRoom = isMyRoom,
                     isOwner = viewModel.isOwner(),
                     currentUserId = viewModel.currentUserId.collectAsState().value,
                     onJoinRoomClick = { viewModel.showJoinDialog() },
@@ -548,6 +553,7 @@ fun MenuItemCard(
 @Composable
 fun RoomInfoSection(
     room: com.dailymemo.domain.models.Room,
+    isMyRoom: Boolean,
     isOwner: Boolean,
     currentUserId: Long,
     onJoinRoomClick: () -> Unit,
@@ -692,7 +698,8 @@ fun RoomInfoSection(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Action Buttons
-            if (isOwner) {
+            if (isMyRoom) {
+                // 내 방에 접속 중: 방 참여하기 버튼만 표시
                 Button(
                     onClick = onJoinRoomClick,
                     modifier = Modifier
@@ -716,6 +723,7 @@ fun RoomInfoSection(
                     )
                 }
             } else {
+                // 다른 방에 접속 중: 방 나가기 버튼 표시
                 OutlinedButton(
                     onClick = onLeaveRoomClick,
                     modifier = Modifier
