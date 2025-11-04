@@ -33,8 +33,8 @@ func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (
 	return &memo, nil
 }
 
-// GetListByUserID 사용자의 메모 목록 조회 (Room ID 및 위시리스트 필터 옵션 포함)
-func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) ([]mysql.Memo, error) {
+// GetListByUserID 사용자의 메모 목록 조회 (Room ID, 위시리스트 필터, 페이지네이션 옵션 포함)
+func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, offset int, limit int) ([]mysql.Memo, error) {
 	var memos []mysql.Memo
 	query := r.GormDB.WithContext(ctx).Where("user_id = ?", userID)
 
@@ -48,13 +48,41 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 		query = query.Where("is_wishlist = ?", *isWishlist)
 	}
 
-	result := query.Order("is_pinned DESC, created_at DESC").Find(&memos)
+	result := query.
+		Order("is_pinned DESC, created_at DESC").
+		Offset(offset).
+		Limit(limit).
+		Find(&memos)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return memos, nil
+}
+
+// CountByUserID 사용자의 메모 총 개수 조회 (필터 조건 포함)
+func (r *GetMemoRepository) CountByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) (int64, error) {
+	var count int64
+	query := r.GormDB.WithContext(ctx).Model(&mysql.Memo{}).Where("user_id = ?", userID)
+
+	// roomID 필터 적용
+	if roomID != nil {
+		query = query.Where("room_id = ?", *roomID)
+	}
+
+	// isWishlist 필터 적용
+	if isWishlist != nil {
+		query = query.Where("is_wishlist = ?", *isWishlist)
+	}
+
+	result := query.Count(&count)
+
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return count, nil
 }
 
 // CheckUserLikedMemo 사용자가 특정 메모를 좋아요 했는지 확인

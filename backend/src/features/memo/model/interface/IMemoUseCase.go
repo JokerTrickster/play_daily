@@ -12,7 +12,7 @@ type ICreateMemoUseCase interface {
 
 type IGetMemoUseCase interface {
 	GetMemo(ctx context.Context, memoID uint, userID uint) (*response.ResMemo, error)
-	GetMemoList(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) (*response.ResMemoList, error)
+	GetMemoList(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, page int, limit int) (*response.ResMemoList, error)
 }
 
 type IUpdateMemoUseCase interface {

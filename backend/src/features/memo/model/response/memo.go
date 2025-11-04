@@ -33,4 +33,6 @@ type ResMemo struct {
 type ResMemoList struct {
 	Memos []ResMemo `json:"memos"`
 	Total int64     `json:"total"`
+	Page  int       `json:"page"`
+	Limit int       `json:"limit"`
 }
