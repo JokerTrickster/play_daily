@@ -699,7 +699,7 @@ fun RoomInfoSection(
 
             // Action Buttons
             if (isMyRoom) {
-                // 내 방에 접속 중: 방 참여하기 버튼만 표시
+                // 내 방에 접속 중: 다른 방 참여하기 버튼만 표시
                 Button(
                     onClick = onJoinRoomClick,
                     modifier = Modifier
@@ -723,32 +723,62 @@ fun RoomInfoSection(
                     )
                 }
             } else {
-                // 다른 방에 접속 중: 방 나가기 버튼 표시
-                OutlinedButton(
-                    onClick = onLeaveRoomClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.5.dp,
-                        MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(14.dp)
+                // 다른 방에 접속 중: 방 나가기 + 다른 방 참여하기 버튼 표시
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.ExitToApp,
-                        contentDescription = "방 나가기",
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "방 나가기",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
+                    // 방 나가기 버튼
+                    OutlinedButton(
+                        onClick = onLeaveRoomClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.5.dp,
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ExitToApp,
+                            contentDescription = "방 나가기",
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "방 나가기",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // 다른 방 참여하기 버튼
+                    Button(
+                        onClick = onJoinRoomClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = "방 참여",
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "다른 방 참여하기",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

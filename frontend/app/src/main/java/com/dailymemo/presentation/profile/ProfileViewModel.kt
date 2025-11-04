@@ -29,7 +29,8 @@ class ProfileViewModel @Inject constructor(
     private val getLikedRoomsUseCase: com.dailymemo.domain.usecases.roomlike.GetLikedRoomsUseCase,
     private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource,
     private val logoutUseCase: com.dailymemo.domain.usecases.LogoutUseCase,
-    private val joinRoomUseCase: com.dailymemo.domain.usecases.room.JoinRoomUseCase
+    private val joinRoomUseCase: com.dailymemo.domain.usecases.room.JoinRoomUseCase,
+    private val memoRepository: com.dailymemo.domain.repositories.MemoRepository
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -78,21 +79,8 @@ class ProfileViewModel @Inject constructor(
     val likedRooms: StateFlow<List<com.dailymemo.domain.models.LikedRoom>> = _likedRooms.asStateFlow()
 
     init {
-        loadRoomInfoFromLocal()
         loadMemosWithLocation()
         loadLikedRooms()
-    }
-
-    private fun loadRoomInfoFromLocal() {
-        viewModelScope.launch {
-            val defaultRoomId = authLocalDataSource.getDefaultRoomId()
-            val roomPassword = authLocalDataSource.getRoomPassword()
-
-            android.util.Log.d("ProfileViewModel", "loadRoomInfoFromLocal - defaultRoomId: $defaultRoomId, roomPassword: $roomPassword")
-
-            _myRoomId.value = defaultRoomId
-            _roomPassword.value = roomPassword ?: ""
-        }
     }
 
     fun loadMemosWithLocation() {
@@ -150,6 +138,9 @@ class ProfileViewModel @Inject constructor(
                             }
                         }
                     }
+
+                    // Load memo count for MY default room after profile is loaded
+                    loadUserInfo()
                 },
                 onFailure = { error ->
                     val errorMsg = error.message ?: "프로필을 불러올 수 없습니다. 다시 시도해주세요."
@@ -393,23 +384,32 @@ class ProfileViewModel @Inject constructor(
     val joinRoomError: StateFlow<String?> = _joinRoomError.asStateFlow()
 
     init {
-        loadProfile()
-        loadUserInfo()
+        loadProfile() // This will call loadUserInfo() after profile is loaded
         loadCurrentRoom()
     }
 
     private fun loadUserInfo() {
-        // TODO: 백엔드 연동 시 실제 사용자 정보 로드
-        // 이름, 이메일은 제거하고 방 ID만 표시
+        // Load memo count for MY default room (not current room)
         viewModelScope.launch {
-            getMemosUseCase(isWishlist = null, page = 1, limit = 100).fold(
-                onSuccess = { result ->
-                    _memoCount.value = result.total.toInt()
-                },
-                onFailure = {
-                    _memoCount.value = 0
-                }
-            )
+            val myRoomId = _myRoomId.value
+            android.util.Log.d("ProfileViewModel", "loadUserInfo - myRoomId: $myRoomId")
+
+            if (myRoomId != null) {
+                // Get memos for MY default room specifically
+                memoRepository.getMemos(isWishlist = null, roomId = myRoomId, page = 1, limit = 100).fold(
+                    onSuccess = { result ->
+                        _memoCount.value = result.total.toInt()
+                        android.util.Log.d("ProfileViewModel", "loadUserInfo - MY room memo count: ${result.total}")
+                    },
+                    onFailure = {
+                        android.util.Log.e("ProfileViewModel", "loadUserInfo - Failed to get MY room memos", it)
+                        _memoCount.value = 0
+                    }
+                )
+            } else {
+                android.util.Log.w("ProfileViewModel", "loadUserInfo - myRoomId is null")
+                _memoCount.value = 0
+            }
         }
     }
 
