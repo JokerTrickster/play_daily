@@ -420,64 +420,91 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val currentRoomId = authLocalDataSource.getCurrentRoomId()
             val myRoomId = _myRoomId.value
+            val currentUserId = authLocalDataSource.getUserId()?.toLongOrNull() ?: _currentUserId.value
 
-            // Determine if current room is my room
-            val isMyRoom = currentRoomId == myRoomId
+            android.util.Log.d("ProfileViewModel", "loadCurrentRoom - currentRoomId: $currentRoomId, myRoomId: $myRoomId, currentUserId: $currentUserId")
 
-            // Set permission based on room ownership
-            // If it's my room, I'm the OWNER. Otherwise, need to fetch from backend
-            if (isMyRoom) {
-                authLocalDataSource.setCurrentRoomPermission("OWNER")
-                android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Set permission to OWNER for my room")
-            } else {
-                // For other rooms, we need to query the permission from backend
-                // For now, default to READ_WRITE until we fetch actual permission
-                authLocalDataSource.setCurrentRoomPermission("READ_WRITE")
-                android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Set default permission to READ_WRITE for other room")
-
-                // Fetch actual permission from backend
-                if (currentRoomId != null) {
-                    try {
-                        getRoomMembersUseCase(currentRoomId.toLong()).fold(
-                            onSuccess = { members ->
-                                val currentUserId = authLocalDataSource.getUserId()?.toLongOrNull()
-                                val myMembership = members.find { it.userId == currentUserId }
-                                if (myMembership != null) {
-                                    authLocalDataSource.setCurrentRoomPermission(myMembership.permission.name)
-                                    android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Fetched permission: ${myMembership.permission.name}")
-                                }
-                            },
-                            onFailure = {
-                                android.util.Log.e("ProfileViewModel", "loadCurrentRoom - Failed to fetch room members", it)
-                            }
-                        )
-                    } catch (e: Exception) {
-                        android.util.Log.e("ProfileViewModel", "loadCurrentRoom - Exception while fetching room members", e)
-                    }
-                }
+            if (currentRoomId == null) {
+                android.util.Log.w("ProfileViewModel", "loadCurrentRoom - No current room ID")
+                _currentRoom.value = null
+                return@launch
             }
 
-            _currentRoom.value = Room(
-                id = currentRoomId?.toString() ?: myRoomId?.toString() ?: "1",
-                name = "내 일상 메모",
-                ownerId = if (isMyRoom) _currentUserId.value else 999L, // Different owner if not my room
-                ownerName = _userName.value,
-                participants = listOf(
-                    Participant(
-                        id = _currentUserId.value,
-                        name = _userName.value,
-                        isOwner = isMyRoom,
-                        joinedAt = LocalDateTime.now()
+            // Fetch room members from backend
+            getRoomMembersUseCase(currentRoomId.toLong()).fold(
+                onSuccess = { members ->
+                    android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Fetched ${members.size} members")
+
+                    // Find my membership info
+                    val myMembership = members.find { it.userId == currentUserId }
+                    if (myMembership != null) {
+                        // Update my permission
+                        authLocalDataSource.setCurrentRoomPermission(myMembership.permission.name)
+                        android.util.Log.d("ProfileViewModel", "loadCurrentRoom - My permission: ${myMembership.permission.name}")
+                    }
+
+                    // Find room owner
+                    val owner = members.find { it.permission == com.dailymemo.domain.models.RoomPermission.OWNER }
+                    val isMyRoom = currentRoomId == myRoomId
+
+                    // Convert RoomMember to Participant
+                    val participants = members.map { member ->
+                        Participant(
+                            id = member.userId,
+                            name = member.userName,
+                            isOwner = member.permission == com.dailymemo.domain.models.RoomPermission.OWNER,
+                            permission = member.permission,
+                            joinedAt = java.time.Instant.ofEpochMilli(member.joinedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
+                        )
+                    }
+
+                    _currentRoom.value = Room(
+                        id = currentRoomId.toString(),
+                        name = if (isMyRoom) "내 일상 메모" else "${owner?.userName ?: ""}님의 방",
+                        ownerId = owner?.userId ?: currentUserId,
+                        ownerName = owner?.userName ?: _userName.value,
+                        participants = participants,
+                        createdAt = LocalDateTime.now(),
+                        updatedAt = LocalDateTime.now()
                     )
-                ),
-                createdAt = LocalDateTime.now(),
-                updatedAt = LocalDateTime.now()
+
+                    android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Room loaded: ${_currentRoom.value?.name}, participants: ${participants.size}")
+                },
+                onFailure = { error ->
+                    android.util.Log.e("ProfileViewModel", "loadCurrentRoom - Failed to fetch room members: ${error.message}")
+
+                    // Fallback: create minimal room info
+                    val isMyRoom = currentRoomId == myRoomId
+                    _currentRoom.value = Room(
+                        id = currentRoomId.toString(),
+                        name = if (isMyRoom) "내 일상 메모" else "방",
+                        ownerId = if (isMyRoom) currentUserId else 0L,
+                        ownerName = if (isMyRoom) _userName.value else "Unknown",
+                        participants = listOf(
+                            Participant(
+                                id = currentUserId,
+                                name = _userName.value,
+                                isOwner = isMyRoom,
+                                permission = if (isMyRoom) com.dailymemo.domain.models.RoomPermission.OWNER else com.dailymemo.domain.models.RoomPermission.READ_WRITE,
+                                joinedAt = LocalDateTime.now()
+                            )
+                        ),
+                        createdAt = LocalDateTime.now(),
+                        updatedAt = LocalDateTime.now()
+                    )
+                }
             )
         }
     }
 
     fun isOwner(): Boolean {
         return _currentRoom.value?.ownerId == _currentUserId.value
+    }
+
+    fun refreshRoomInfo() {
+        android.util.Log.d("ProfileViewModel", "refreshRoomInfo - Reloading room info")
+        loadCurrentRoom()
+        loadProfile() // Also reload profile to get latest room password and info
     }
 
     fun onRoomIdInputChange(input: String) {
@@ -582,11 +609,9 @@ class ProfileViewModel @Inject constructor(
             // Call kick user API
             kickUserUseCase(roomId, participantId).fold(
                 onSuccess = {
-                    // Update UI by filtering out the kicked participant
-                    _currentRoom.value = currentRoom.copy(
-                        participants = currentRoom.participants.filter { it.id != participantId }
-                    )
                     android.util.Log.d("ProfileViewModel", "User $participantId kicked successfully")
+                    // Reload room info to get fresh data from backend
+                    loadCurrentRoom()
                 },
                 onFailure = { error ->
                     android.util.Log.e("ProfileViewModel", "Failed to kick user: ${error.message}")
@@ -604,17 +629,9 @@ class ProfileViewModel @Inject constructor(
             // Call update permission API
             updateMemberPermissionUseCase(roomId, userId, permission).fold(
                 onSuccess = {
-                    // Update UI by updating the participant's permission
-                    _currentRoom.value = currentRoom.copy(
-                        participants = currentRoom.participants.map { participant ->
-                            if (participant.id == userId) {
-                                participant.copy(permission = permission)
-                            } else {
-                                participant
-                            }
-                        }
-                    )
                     android.util.Log.d("ProfileViewModel", "User $userId permission updated to $permission")
+                    // Reload room info to get fresh data from backend
+                    loadCurrentRoom()
                 },
                 onFailure = { error ->
                     android.util.Log.e("ProfileViewModel", "Failed to update permission: ${error.message}")
