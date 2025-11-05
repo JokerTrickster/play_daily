@@ -114,7 +114,10 @@ fun ProfileScreen(
                     currentUserId = viewModel.currentUserId.collectAsState().value,
                     onJoinRoomClick = { viewModel.showJoinDialog() },
                     onLeaveRoomClick = { viewModel.leaveRoom() },
-                    onKickParticipant = { viewModel.kickParticipant(it) }
+                    onKickParticipant = { viewModel.kickParticipant(it) },
+                    onPermissionChange = { userId, permission ->
+                        viewModel.updateMemberPermission(userId, permission)
+                    }
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -558,7 +561,8 @@ fun RoomInfoSection(
     currentUserId: Long,
     onJoinRoomClick: () -> Unit,
     onLeaveRoomClick: () -> Unit,
-    onKickParticipant: (Long) -> Unit
+    onKickParticipant: (Long) -> Unit,
+    onPermissionChange: (Long, com.dailymemo.domain.models.RoomPermission) -> Unit = { _, _ -> }
 ) {
     Card(
         modifier = Modifier
@@ -692,7 +696,8 @@ fun RoomInfoSection(
                 participants = room.participants,
                 currentUserId = currentUserId,
                 isOwner = isOwner,
-                onKickParticipant = onKickParticipant
+                onKickParticipant = onKickParticipant,
+                onPermissionChange = onPermissionChange
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -790,7 +795,8 @@ fun ParticipantsList(
     participants: List<com.dailymemo.domain.models.Participant>,
     currentUserId: Long,
     isOwner: Boolean,
-    onKickParticipant: (Long) -> Unit
+    onKickParticipant: (Long) -> Unit,
+    onPermissionChange: (Long, com.dailymemo.domain.models.RoomPermission) -> Unit = { _, _ -> }
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -817,7 +823,10 @@ fun ParticipantsList(
                         participant = participant,
                         currentUserId = currentUserId,
                         isOwner = isOwner,
-                        onKick = { onKickParticipant(participant.id) }
+                        onKick = { onKickParticipant(participant.id) },
+                        onPermissionChange = { permission ->
+                            onPermissionChange(participant.id, permission)
+                        }
                     )
                     if (index < participants.size - 1) {
                         HorizontalDivider(
@@ -836,8 +845,10 @@ fun ParticipantItem(
     participant: com.dailymemo.domain.models.Participant,
     currentUserId: Long,
     isOwner: Boolean,
-    onKick: () -> Unit
+    onKick: () -> Unit,
+    onPermissionChange: (com.dailymemo.domain.models.RoomPermission) -> Unit = {}
 ) {
+    var showPermissionMenu by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -873,28 +884,82 @@ fun ParticipantItem(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (participant.isOwner) FontWeight.Bold else FontWeight.Medium
                 )
-                if (participant.isOwner) {
-                    Text(
-                        text = "방장",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                // Show permission badge
+                Text(
+                    text = when (participant.permission) {
+                        com.dailymemo.domain.models.RoomPermission.OWNER -> "방장"
+                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> "읽기/쓰기"
+                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> "읽기 전용"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = when (participant.permission) {
+                        com.dailymemo.domain.models.RoomPermission.OWNER -> MaterialTheme.colorScheme.primary
+                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.tertiary
+                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
             }
         }
 
-        // Show kick button only if: user is owner AND participant is not owner AND not self
+        // Show controls only if: user is owner AND participant is not owner AND not self
         if (isOwner && !participant.isOwner && participant.id != currentUserId) {
-            IconButton(
-                onClick = onKick,
-                modifier = Modifier.size(36.dp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.RemoveCircle,
-                    contentDescription = "추방",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.error
-                )
+                // Permission change button
+                Box {
+                    IconButton(
+                        onClick = { showPermissionMenu = true },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "권한 변경",
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    androidx.compose.material3.DropdownMenu(
+                        expanded = showPermissionMenu,
+                        onDismissRequest = { showPermissionMenu = false }
+                    ) {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("읽기/쓰기") },
+                            onClick = {
+                                onPermissionChange(com.dailymemo.domain.models.RoomPermission.READ_WRITE)
+                                showPermissionMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Outlined.Edit, contentDescription = null)
+                            }
+                        )
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("읽기 전용") },
+                            onClick = {
+                                onPermissionChange(com.dailymemo.domain.models.RoomPermission.READ_ONLY)
+                                showPermissionMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Outlined.Visibility, contentDescription = null)
+                            }
+                        )
+                    }
+                }
+
+                // Kick button
+                IconButton(
+                    onClick = onKick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.RemoveCircle,
+                        contentDescription = "추방",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

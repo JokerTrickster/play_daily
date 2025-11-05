@@ -26,4 +26,9 @@ interface RoomApiService {
     suspend fun getRoomMembers(
         @Query("room_id") roomId: Long
     ): Response<RoomMembersResponseDto>
+
+    @POST("/v0.1/room/permission")
+    suspend fun updateMemberPermission(
+        @Body request: Map<String, Any>
+    ): Response<Map<String, String>>
 }

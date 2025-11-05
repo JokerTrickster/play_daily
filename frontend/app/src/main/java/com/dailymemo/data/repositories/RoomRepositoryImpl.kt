@@ -102,4 +102,43 @@ class RoomRepositoryImpl @Inject constructor(
             Result.failure(error)
         }
     }
+
+    override suspend fun updateMemberPermission(
+        roomId: Long,
+        userId: Long,
+        permission: RoomPermission
+    ): Result<Unit> {
+        return try {
+            val permissionString = when (permission) {
+                RoomPermission.OWNER -> "OWNER"
+                RoomPermission.READ_WRITE -> "READ_WRITE"
+                RoomPermission.READ_ONLY -> "READ_ONLY"
+            }
+            val request = mapOf(
+                "room_id" to roomId,
+                "user_id" to userId,
+                "permission" to permissionString
+            )
+            val response = roomApiService.updateMemberPermission(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val error = when (response.code()) {
+                    403 -> DomainError.Forbidden
+                    400 -> DomainError.BadRequest
+                    404 -> DomainError.RoomNotFound
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
 }

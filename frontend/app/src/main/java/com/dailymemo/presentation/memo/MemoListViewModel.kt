@@ -108,10 +108,12 @@ class MemoListViewModel @Inject constructor(
 
     fun loadMemos() {
         viewModelScope.launch {
-            _uiState.value = MemoListUiState.Loading
+            // Only show loading if we don't have data yet (prevents flickering on ON_RESUME)
+            if (_allMemos.value.isEmpty()) {
+                _uiState.value = MemoListUiState.Loading
+            }
             currentPage = 1
             hasMore = true
-            _allMemos.value = emptyList()
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
             getMemosUseCase(isWishlist = isWishlist, page = currentPage, limit = 10).fold(

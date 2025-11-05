@@ -32,6 +32,7 @@ class ProfileViewModel @Inject constructor(
     private val joinRoomUseCase: com.dailymemo.domain.usecases.room.JoinRoomUseCase,
     private val kickUserUseCase: com.dailymemo.domain.usecases.room.KickUserUseCase,
     private val getRoomMembersUseCase: com.dailymemo.domain.usecases.room.GetRoomMembersUseCase,
+    private val updateMemberPermissionUseCase: com.dailymemo.domain.usecases.room.UpdateMemberPermissionUseCase,
     private val memoRepository: com.dailymemo.domain.repositories.MemoRepository
 ) : ViewModel() {
 
@@ -589,6 +590,34 @@ class ProfileViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     android.util.Log.e("ProfileViewModel", "Failed to kick user: ${error.message}")
+                    // TODO: Show error message to user
+                }
+            )
+        }
+    }
+
+    fun updateMemberPermission(userId: Long, permission: com.dailymemo.domain.models.RoomPermission) {
+        viewModelScope.launch {
+            val currentRoom = _currentRoom.value ?: return@launch
+            val roomId = currentRoom.id.toLongOrNull() ?: return@launch
+
+            // Call update permission API
+            updateMemberPermissionUseCase(roomId, userId, permission).fold(
+                onSuccess = {
+                    // Update UI by updating the participant's permission
+                    _currentRoom.value = currentRoom.copy(
+                        participants = currentRoom.participants.map { participant ->
+                            if (participant.id == userId) {
+                                participant.copy(permission = permission)
+                            } else {
+                                participant
+                            }
+                        }
+                    )
+                    android.util.Log.d("ProfileViewModel", "User $userId permission updated to $permission")
+                },
+                onFailure = { error ->
+                    android.util.Log.e("ProfileViewModel", "Failed to update permission: ${error.message}")
                     // TODO: Show error message to user
                 }
             )
