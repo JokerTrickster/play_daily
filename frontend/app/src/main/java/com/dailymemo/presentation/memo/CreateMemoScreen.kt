@@ -1,10 +1,13 @@
 package com.dailymemo.presentation.memo
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -126,6 +129,16 @@ fun CreateMemoScreen(
     ) { success ->
         if (success) {
             viewModel.onImageUriChange(tempImageUri)
+        }
+    }
+
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted, launch camera
+            cameraLauncher.launch(tempImageUri)
         }
     }
 
@@ -597,7 +610,20 @@ fun CreateMemoScreen(
                 },
                 onCameraClick = {
                     showImagePickerDialog = false
-                    cameraLauncher.launch(tempImageUri)
+                    // Check camera permission before launching
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) -> {
+                            // Permission already granted, launch camera
+                            cameraLauncher.launch(tempImageUri)
+                        }
+                        else -> {
+                            // Request permission
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
                 }
             )
         }
