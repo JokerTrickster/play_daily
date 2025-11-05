@@ -114,3 +114,28 @@ type MemoLike struct {
 func (MemoLike) TableName() string {
 	return "memo_likes"
 }
+
+// RoomPermission 방 권한 레벨
+type RoomPermission string
+
+const (
+	PermissionReadOnly  RoomPermission = "READ_ONLY"  // 읽기 전용 (공유 보기만 가능)
+	PermissionReadWrite RoomPermission = "READ_WRITE" // 읽기+쓰기 (메모 작성 가능)
+	PermissionOwner     RoomPermission = "OWNER"      // 소유자 (전체 권한)
+)
+
+// RoomMember 방 멤버 및 권한 관리 테이블
+type RoomMember struct {
+	gorm.Model
+	RoomID     uint           `json:"room_id" gorm:"column:room_id;not null;index;comment:방 ID"`
+	UserID     uint           `json:"user_id" gorm:"column:user_id;not null;index;comment:사용자 ID"`
+	Permission RoomPermission `json:"permission" gorm:"column:permission;type:enum('READ_ONLY','READ_WRITE','OWNER');default:'READ_ONLY';index;comment:권한 레벨"`
+	JoinedAt   int64          `json:"joined_at" gorm:"column:joined_at;autoCreateTime;comment:참여 시간"`
+	Room       *Room          `json:"room,omitempty" gorm:"foreignKey:RoomID"`
+	User       *User          `json:"user,omitempty" gorm:"foreignKey:UserID"`
+}
+
+// TableName RoomMember 테이블명 지정
+func (RoomMember) TableName() string {
+	return "room_members"
+}
