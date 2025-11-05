@@ -43,6 +43,11 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
+    // Prevent back navigation from login screen
+    androidx.activity.compose.BackHandler {
+        // Do nothing - block back navigation
+    }
+
     LaunchedEffect(state) {
         if (state is AuthState.Success) {
             onLoginSuccess()
