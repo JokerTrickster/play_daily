@@ -30,6 +30,8 @@ class ProfileViewModel @Inject constructor(
     private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource,
     private val logoutUseCase: com.dailymemo.domain.usecases.LogoutUseCase,
     private val joinRoomUseCase: com.dailymemo.domain.usecases.room.JoinRoomUseCase,
+    private val kickUserUseCase: com.dailymemo.domain.usecases.room.KickUserUseCase,
+    private val getRoomMembersUseCase: com.dailymemo.domain.usecases.room.GetRoomMembersUseCase,
     private val memoRepository: com.dailymemo.domain.repositories.MemoRepository
 ) : ViewModel() {
 
@@ -421,6 +423,39 @@ class ProfileViewModel @Inject constructor(
             // Determine if current room is my room
             val isMyRoom = currentRoomId == myRoomId
 
+            // Set permission based on room ownership
+            // If it's my room, I'm the OWNER. Otherwise, need to fetch from backend
+            if (isMyRoom) {
+                authLocalDataSource.setCurrentRoomPermission("OWNER")
+                android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Set permission to OWNER for my room")
+            } else {
+                // For other rooms, we need to query the permission from backend
+                // For now, default to READ_WRITE until we fetch actual permission
+                authLocalDataSource.setCurrentRoomPermission("READ_WRITE")
+                android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Set default permission to READ_WRITE for other room")
+
+                // Fetch actual permission from backend
+                if (currentRoomId != null) {
+                    try {
+                        getRoomMembersUseCase(currentRoomId.toLong()).fold(
+                            onSuccess = { members ->
+                                val currentUserId = authLocalDataSource.getUserId()?.toLongOrNull()
+                                val myMembership = members.find { it.userId == currentUserId }
+                                if (myMembership != null) {
+                                    authLocalDataSource.setCurrentRoomPermission(myMembership.permission.name)
+                                    android.util.Log.d("ProfileViewModel", "loadCurrentRoom - Fetched permission: ${myMembership.permission.name}")
+                                }
+                            },
+                            onFailure = {
+                                android.util.Log.e("ProfileViewModel", "loadCurrentRoom - Failed to fetch room members", it)
+                            }
+                        )
+                    } catch (e: Exception) {
+                        android.util.Log.e("ProfileViewModel", "loadCurrentRoom - Exception while fetching room members", e)
+                    }
+                }
+            }
+
             _currentRoom.value = Room(
                 id = currentRoomId?.toString() ?: myRoomId?.toString() ?: "1",
                 name = "내 일상 메모",
@@ -540,10 +575,22 @@ class ProfileViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 추방 API 호출
             val currentRoom = _currentRoom.value ?: return@launch
-            _currentRoom.value = currentRoom.copy(
-                participants = currentRoom.participants.filter { it.id != participantId }
+            val roomId = currentRoom.id.toLongOrNull() ?: return@launch
+
+            // Call kick user API
+            kickUserUseCase(roomId, participantId).fold(
+                onSuccess = {
+                    // Update UI by filtering out the kicked participant
+                    _currentRoom.value = currentRoom.copy(
+                        participants = currentRoom.participants.filter { it.id != participantId }
+                    )
+                    android.util.Log.d("ProfileViewModel", "User $participantId kicked successfully")
+                },
+                onFailure = { error ->
+                    android.util.Log.e("ProfileViewModel", "Failed to kick user: ${error.message}")
+                    // TODO: Show error message to user
+                }
             )
         }
     }

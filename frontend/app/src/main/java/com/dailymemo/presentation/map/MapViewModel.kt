@@ -79,9 +79,26 @@ class MapViewModel @Inject constructor(
     private val _selectedSearchPlace = MutableStateFlow<Place?>(null)
     val selectedSearchPlace: StateFlow<Place?> = _selectedSearchPlace.asStateFlow()
 
+    // Room permission state
+    private val _canCreateMemo = MutableStateFlow(true)
+    val canCreateMemo: StateFlow<Boolean> = _canCreateMemo.asStateFlow()
+
     init {
         loadMemos()
         startLocationUpdates()
+        loadCurrentRoomPermission()
+    }
+
+    private fun loadCurrentRoomPermission() {
+        viewModelScope.launch {
+            val permission = authLocalDataSource.getCurrentRoomPermission()
+            _canCreateMemo.value = permission != "READ_ONLY"
+            android.util.Log.d("MapViewModel", "loadCurrentRoomPermission - permission: $permission, canCreateMemo: ${_canCreateMemo.value}")
+        }
+    }
+
+    fun refreshPermission() {
+        loadCurrentRoomPermission()
     }
 
     fun getCurrentLocation() {
@@ -131,6 +148,10 @@ class MapViewModel @Inject constructor(
     private fun loadMemos() {
         viewModelScope.launch {
             _uiState.value = MapUiState.Loading
+
+            // Reload permission when loading memos (in case room was switched)
+            loadCurrentRoomPermission()
+
             val isWishlist = when (_wishlistFilter.value) {
                 WishlistFilter.ALL -> null
                 WishlistFilter.WISHLIST_ONLY -> true

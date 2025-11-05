@@ -29,6 +29,7 @@ class AuthLocalDataSource @Inject constructor(
         private val CURRENT_ROOM_ID_KEY = stringPreferencesKey("current_room_id")
         private val DEFAULT_ROOM_ID_KEY = stringPreferencesKey("default_room_id")
         private val ROOM_PASSWORD_KEY = stringPreferencesKey("room_password")
+        private val CURRENT_ROOM_PERMISSION_KEY = stringPreferencesKey("current_room_permission")
     }
 
     suspend fun saveTokens(
@@ -117,5 +118,18 @@ class AuthLocalDataSource @Inject constructor(
 
     suspend fun getRoomPassword(): String? {
         return dataStore.data.first()[ROOM_PASSWORD_KEY]
+    }
+
+    suspend fun setCurrentRoomPermission(permission: String) {
+        dataStore.edit { preferences ->
+            preferences[CURRENT_ROOM_PERMISSION_KEY] = permission
+        }
+        android.util.Log.d("AuthLocalDataSource", "setCurrentRoomPermission: $permission")
+    }
+
+    suspend fun getCurrentRoomPermission(): String? {
+        val permission = dataStore.data.first()[CURRENT_ROOM_PERMISSION_KEY]
+        android.util.Log.d("AuthLocalDataSource", "getCurrentRoomPermission: $permission")
+        return permission
     }
 }

@@ -19,6 +19,8 @@ fun DomainError.toUserMessage(context: Context): String {
             is DomainError.RoomNotFound -> R.string.error_room_not_found
             is DomainError.InvalidRoomPassword -> R.string.error_invalid_room_password
             is DomainError.RoomJoinFailed -> R.string.error_room_join_failed
+            is DomainError.Forbidden -> R.string.error_forbidden
+            is DomainError.BadRequest -> R.string.error_bad_request
             is DomainError.MemoNotFound -> R.string.error_memo_not_found
             is DomainError.MemoLoadFailed -> R.string.error_memo_load_failed
             is DomainError.MemoCreateFailed -> R.string.error_memo_create_failed

@@ -27,7 +27,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -75,8 +77,11 @@ fun MapScreen(
     val joinRoomState by viewModel.joinRoomState.collectAsState()
     val wishlistFilter by viewModel.wishlistFilter.collectAsState()
     val selectedSearchPlace by viewModel.selectedSearchPlace.collectAsState()
+    val canCreateMemo by viewModel.canCreateMemo.collectAsState()
     var showPlaceDialog by remember { mutableStateOf(false) }
     var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     var kakaoMap: KakaoMap? by remember { mutableStateOf(null) }
 
@@ -515,13 +520,25 @@ fun MapScreen(
 
                 // Create Memo Button
                 FloatingActionButton(
-                    onClick = onNavigateToCreateMemo,
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    onClick = {
+                        if (canCreateMemo) {
+                            onNavigateToCreateMemo()
+                        } else {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "읽기 전용 권한으로 메모를 작성할 수 없습니다",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    },
+                    containerColor = if (canCreateMemo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.size(64.dp)
                 ) {
                     Icon(
                         Icons.Filled.Add,
                         contentDescription = "메모 추가",
+                        tint = if (canCreateMemo) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
                         modifier = Modifier.size(32.dp)
                     )
                 }

@@ -68,6 +68,8 @@
     <string name="error_room_not_found">방을 찾을 수 없습니다</string>
     <string name="error_invalid_room_password">비밀번호가 일치하지 않습니다</string>
     <string name="error_room_join_failed">방 입장에 실패했습니다</string>
+    <string name="error_forbidden">권한이 없습니다</string>
+    <string name="error_bad_request">잘못된 요청입니다</string>
     <string name="error_memo_not_found">메모를 찾을 수 없습니다</string>
     <string name="error_memo_load_failed">메모 목록을 불러오는데 실패했습니다</string>
     <string name="error_memo_create_failed">메모 생성에 실패했습니다</string>

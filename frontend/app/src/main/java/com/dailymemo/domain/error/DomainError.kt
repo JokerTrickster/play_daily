@@ -23,6 +23,8 @@ sealed class DomainError(
     data object RoomNotFound : DomainError("error_room_not_found")
     data object InvalidRoomPassword : DomainError("error_invalid_room_password")
     data object RoomJoinFailed : DomainError("error_room_join_failed")
+    data object Forbidden : DomainError("error_forbidden")
+    data object BadRequest : DomainError("error_bad_request")
 
     // Memo Errors
     data object MemoNotFound : DomainError("error_memo_not_found")
