@@ -40,10 +40,9 @@ func (uc *JoinRoomUseCase) JoinRoom(ctx context.Context, userID uint, req *reque
 		return nil, errors.New("invalid room password")
 	}
 
-	// 3. Update user's default room
-	if err := uc.Repository.UpdateUserDefaultRoom(ctx, userID, req.RoomID); err != nil {
-		return nil, err
-	}
+	// 3. DO NOT update user's default_room_id
+	// default_room_id should remain as the user's own room ID
+	// The frontend will manage current_room_id separately in local storage
 
 	return room, nil
 }

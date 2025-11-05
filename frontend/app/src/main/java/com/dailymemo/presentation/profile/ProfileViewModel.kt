@@ -131,6 +131,7 @@ class ProfileViewModel @Inject constructor(
 
                     // Store my default room ID
                     _myRoomId.value = profile.defaultRoomId
+                    android.util.Log.d("ProfileViewModel", "loadProfile - userId: ${profile.userId}, defaultRoomId: ${profile.defaultRoomId}, currentRoomId: ${authLocalDataSource.getCurrentRoomId()}")
 
                     // 프로필 로드 시 기본 방 ID를 현재 방으로 설정 (처음 로드 시에만)
                     profile.defaultRoomId?.let { roomId ->
@@ -138,6 +139,7 @@ class ProfileViewModel @Inject constructor(
                             // Only set if not already set
                             if (authLocalDataSource.getCurrentRoomId() == null) {
                                 authLocalDataSource.setCurrentRoomId(roomId)
+                                android.util.Log.d("ProfileViewModel", "loadProfile - Set current room to default room: $roomId")
                             }
                         }
                     }
