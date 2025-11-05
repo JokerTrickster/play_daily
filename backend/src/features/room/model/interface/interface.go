@@ -21,3 +21,16 @@ type IJoinRoomRepository interface {
 	VerifyRoomPassword(ctx context.Context, roomID uint, password string) (bool, error)
 	UpdateUserDefaultRoom(ctx context.Context, userID uint, roomID uint) error
 }
+
+type IKickUserHandler interface {
+	KickUser(c echo.Context) error
+}
+
+type IKickUserUseCase interface {
+	KickUser(ctx context.Context, ownerUserID uint, req *request.ReqKickUser) error
+}
+
+type IKickUserRepository interface {
+	CheckRoomOwner(ctx context.Context, roomID uint, userID uint) (bool, error)
+	KickUserFromRoom(ctx context.Context, roomID uint, targetUserID uint) error
+}
