@@ -34,3 +34,16 @@ type IKickUserRepository interface {
 	CheckRoomOwner(ctx context.Context, roomID uint, userID uint) (bool, error)
 	KickUserFromRoom(ctx context.Context, roomID uint, targetUserID uint) error
 }
+
+type IGetRoomMembersHandler interface {
+	GetRoomMembers(c echo.Context) error
+}
+
+type IGetRoomMembersUseCase interface {
+	GetRoomMembers(ctx context.Context, userID uint, roomID uint) (*response.ResRoomMembers, error)
+}
+
+type IGetRoomMembersRepository interface {
+	GetRoomMembers(ctx context.Context, roomID uint) (*response.ResRoomMembers, error)
+	CheckRoomMember(ctx context.Context, roomID uint, userID uint) (bool, error)
+}
