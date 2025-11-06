@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	authHandler "main/features/auth/handler"
+	categoryHandler "main/features/category/handler"
 	commentHandler "main/features/comment/handler"
 	memoHandler "main/features/memo/handler"
 	memolikeHandler "main/features/memolike/handler"
@@ -23,6 +24,7 @@ func InitHandler(e *echo.Echo) error {
 	})
 
 	authHandler.NewAuthHandler(e)
+	categoryHandler.NewCategoryHandlers(e)
 	memoHandler.NewMemoHandlers(e)
 	commentHandler.NewCommentHandler(e)
 	profileHandler.NewProfileHandlers(e)

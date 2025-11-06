@@ -29,7 +29,13 @@ FROM memos_backup_20251106;
 -- PHASE 2: TRUNCATE EXISTING DATA
 -- ==============================================================================
 
+-- Disable foreign key checks to allow truncation
+SET FOREIGN_KEY_CHECKS = 0;
+
 TRUNCATE TABLE memos;
+
+-- Re-enable foreign key checks
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- Verify truncation
 SELECT
@@ -58,12 +64,12 @@ CREATE TABLE IF NOT EXISTS memo_categories (
 -- Create memo_category_selections junction table
 CREATE TABLE IF NOT EXISTS memo_category_selections (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    memo_id INT NOT NULL COMMENT '메모 ID (FK)',
+    memo_id BIGINT UNSIGNED NOT NULL COMMENT '메모 ID (FK)',
     category_id INT NOT NULL COMMENT '카테고리 ID (FK)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_memo_category (memo_id, category_id) COMMENT '중복 선택 방지',
-    FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE COMMENT '메모 삭제 시 연관 삭제',
-    FOREIGN KEY (category_id) REFERENCES memo_categories(id) ON DELETE RESTRICT COMMENT '카테고리 삭제 방지',
+    FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES memo_categories(id) ON DELETE RESTRICT,
     KEY idx_memo_id (memo_id),
     KEY idx_category_id (category_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='메모-카테고리 연결 테이블 (다대다 관계)';
@@ -73,10 +79,11 @@ CREATE TABLE IF NOT EXISTS memo_category_selections (
 -- ==============================================================================
 
 -- Remove content column (no longer needed)
-ALTER TABLE memos DROP COLUMN IF EXISTS content;
+-- Note: If column doesn't exist, migration will fail - that's intentional for safety
+ALTER TABLE memos DROP COLUMN content;
 
 -- Add creation_mode enum column
-ALTER TABLE memos ADD COLUMN IF NOT EXISTS creation_mode ENUM('map', 'list') NOT NULL DEFAULT 'list'
+ALTER TABLE memos ADD COLUMN creation_mode ENUM('map', 'list') NOT NULL DEFAULT 'list'
     COMMENT '생성 방식 (map: 지도 기반 자동 제목, list: 사용자 입력 제목)' AFTER title;
 
 -- Update title column comment for clarity

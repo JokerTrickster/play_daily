@@ -1,6 +1,8 @@
 package mysql
 
 import (
+	"time"
+
 	"gorm.io/gorm"
 )
 
@@ -138,4 +140,37 @@ type RoomMember struct {
 // TableName RoomMember 테이블명 지정
 func (RoomMember) TableName() string {
 	return "room_members"
+}
+
+// MemoCategory 메모 카테고리 마스터 테이블
+type MemoCategory struct {
+	ID           uint      `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	NameKo       string    `json:"name_ko" gorm:"column:name_ko;type:varchar(100);not null;uniqueIndex;comment:카테고리 이름 (한국어)"`
+	Sentiment    string    `json:"sentiment" gorm:"column:sentiment;type:enum('positive','negative','neutral');not null;index;comment:감정 분류"`
+	DisplayOrder int       `json:"display_order" gorm:"column:display_order;not null;index;comment:표시 순서 (UI 정렬용)"`
+	ColorHex     string    `json:"color_hex" gorm:"column:color_hex;type:varchar(7);not null;comment:UI 색상 코드 (#RRGGBB)"`
+	CreatedAt    time.Time `json:"created_at" gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt    time.Time `json:"updated_at" gorm:"column:updated_at;autoUpdateTime"`
+}
+
+// TableName MemoCategory 테이블명 지정
+func (MemoCategory) TableName() string {
+	return "memo_categories"
+}
+
+// MemoCategorySelection 메모-카테고리 연결 테이블 (다대다 관계)
+type MemoCategorySelection struct {
+	ID         uint          `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	MemoID     uint          `json:"memo_id" gorm:"column:memo_id;not null;index;comment:메모 ID (FK)"`
+	CategoryID uint          `json:"category_id" gorm:"column:category_id;not null;index;comment:카테고리 ID (FK)"`
+	CreatedAt  int64         `json:"created_at" gorm:"column:created_at;autoCreateTime;comment:선택 시간"`
+	UpdatedAt  int64         `json:"updated_at" gorm:"column:updated_at;autoUpdateTime;comment:수정 시간"`
+	DeletedAt  *int64        `json:"deleted_at,omitempty" gorm:"column:deleted_at;index;comment:삭제 시간"`
+	Memo       *Memo         `json:"memo,omitempty" gorm:"foreignKey:MemoID"`
+	Category   *MemoCategory `json:"category,omitempty" gorm:"foreignKey:CategoryID"`
+}
+
+// TableName MemoCategorySelection 테이블명 지정
+func (MemoCategorySelection) TableName() string {
+	return "memo_category_selections"
 }
