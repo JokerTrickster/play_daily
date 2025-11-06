@@ -6,7 +6,9 @@ data class Memo(
     val id: Long,
     val userId: Long,
     val title: String,
-    val content: String,
+    val content: String, // Deprecated - will be removed
+    val creationMode: CreationMode = CreationMode.LIST, // NEW: 생성 방식 (map/list)
+    val categories: List<MemoCategory> = emptyList(), // NEW: 선택된 카테고리 목록
     val imageUrl: String?,
     val imageUrls: List<String> = emptyList(), // 여러 이미지 지원
     val rating: Float, // 0.0 ~ 5.0 (0.5 단위)
@@ -16,7 +18,7 @@ data class Memo(
     val latitude: Double?,
     val longitude: Double?,
     val locationName: String?,
-    val category: PlaceCategory = PlaceCategory.OTHER,
+    val category: PlaceCategory = PlaceCategory.OTHER, // Deprecated
     val isWishlist: Boolean = false, // 위시리스트 여부 (true=가고싶은곳, false=방문한곳)
     val businessName: String? = null, // 장소/가게명
     val businessPhone: String? = null, // 전화번호

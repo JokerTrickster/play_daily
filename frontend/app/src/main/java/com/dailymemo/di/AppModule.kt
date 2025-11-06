@@ -5,12 +5,15 @@ import com.dailymemo.data.datasources.local.AuthLocalDataSource
 import com.dailymemo.data.datasources.local.LocationDataSource
 import com.dailymemo.data.datasources.remote.AuthRemoteDataSource
 import com.dailymemo.data.datasources.remote.api.AuthApiService
+import com.dailymemo.data.datasources.remote.api.CategoryApiService
 import com.dailymemo.data.datasources.remote.api.ProfileApiService
 import com.dailymemo.data.repositories.AuthRepositoryImpl
+import com.dailymemo.data.repositories.CategoryRepositoryImpl
 import com.dailymemo.data.repositories.ProfileRepositoryImpl
 import com.dailymemo.data.repositories.LocationRepositoryImpl
 import com.dailymemo.data.repositories.PlaceRepositoryImpl
 import com.dailymemo.domain.repositories.AuthRepository
+import com.dailymemo.domain.repositories.CategoryRepository
 import com.dailymemo.domain.repositories.LocationRepository
 import com.dailymemo.domain.repositories.PlaceRepository
 import com.dailymemo.domain.repositories.ProfileRepository
@@ -237,5 +240,19 @@ object AppModule {
         roomApiService: com.dailymemo.data.datasources.remote.api.RoomApiService
     ): com.dailymemo.domain.repositories.RoomRepository {
         return com.dailymemo.data.repositories.RoomRepositoryImpl(roomApiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCategoryApiService(retrofit: Retrofit): CategoryApiService {
+        return retrofit.create(CategoryApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCategoryRepository(
+        categoryApiService: CategoryApiService
+    ): CategoryRepository {
+        return CategoryRepositoryImpl(categoryApiService)
     }
 }
