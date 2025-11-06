@@ -47,7 +47,7 @@ func convertMemoToResponse(memo *mysql.Memo, isLiked bool) *response.ResMemo {
 		ID:              memo.ID,
 		UserID:          memo.UserID,
 		Title:           memo.Title,
-		Content:         memo.Content, // Deprecated
+		Content:         "", // Content field removed from model, returning empty string for backward compatibility
 		CreationMode:    memo.CreationMode, // NEW
 		Categories:      categories, // NEW
 		ImageURL:        memo.ImageURL,

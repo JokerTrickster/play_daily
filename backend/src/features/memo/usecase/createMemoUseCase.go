@@ -55,7 +55,7 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		UserID:          userID,
 		RoomID:          req.RoomID,
 		Title:           req.Title,
-		Content:         req.Content, // Deprecated - 비워둠
+		// Content field removed - using categories instead
 		CreationMode:    req.CreationMode, // NEW
 		ImageURL:        imageURL,
 		Rating:          req.Rating,

@@ -46,7 +46,7 @@ type Memo struct {
 	UserID          uint            `json:"user_id" gorm:"column:user_id;not null;index;comment:작성자 ID"`
 	RoomID          uint            `json:"room_id" gorm:"column:room_id;not null;index;comment:메모가 속한 방 ID"`
 	Title           string          `json:"title" gorm:"column:title;type:varchar(200);not null;comment:메모 제목"`
-	Content         string          `json:"content" gorm:"column:content;type:text;comment:메모 내용"` // Deprecated
+	// Content field removed - using categories instead
 	CreationMode    string          `json:"creation_mode" gorm:"column:creation_mode;type:enum('map','list');not null;default:'list';comment:생성 방식 (map/list)"` // NEW
 	ImageURL        string          `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
 	Rating          uint8           `json:"rating" gorm:"column:rating;type:tinyint unsigned;default:0;index;comment:평점 (0-5) 또는 관심도 (1-5)"`

@@ -56,7 +56,7 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 
 	updateMemo := &mysql.Memo{
 		Title:           req.Title,
-		Content:         req.Content,
+		// Content field removed - using categories instead
 		ImageURL:        imageURL,
 		Rating:          req.Rating,
 		IsPinned:        req.IsPinned,
