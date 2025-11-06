@@ -162,14 +162,14 @@ func (MemoCategory) TableName() string {
 
 // MemoCategorySelection 메모-카테고리 연결 테이블 (다대다 관계)
 type MemoCategorySelection struct {
-	ID         uint          `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
-	MemoID     uint          `json:"memo_id" gorm:"column:memo_id;not null;index;comment:메모 ID (FK)"`
-	CategoryID uint          `json:"category_id" gorm:"column:category_id;not null;index;comment:카테고리 ID (FK)"`
-	CreatedAt  int64         `json:"created_at" gorm:"column:created_at;autoCreateTime;comment:선택 시간"`
-	UpdatedAt  int64         `json:"updated_at" gorm:"column:updated_at;autoUpdateTime;comment:수정 시간"`
-	DeletedAt  *int64        `json:"deleted_at,omitempty" gorm:"column:deleted_at;index;comment:삭제 시간"`
-	Memo       *Memo         `json:"memo,omitempty" gorm:"foreignKey:MemoID"`
-	Category   *MemoCategory `json:"category,omitempty" gorm:"foreignKey:CategoryID"`
+	ID         uint           `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	MemoID     uint           `json:"memo_id" gorm:"column:memo_id;not null;index;comment:메모 ID (FK)"`
+	CategoryID uint           `json:"category_id" gorm:"column:category_id;not null;index;comment:카테고리 ID (FK)"`
+	CreatedAt  time.Time      `json:"created_at" gorm:"column:created_at;autoCreateTime;comment:선택 시간"`
+	UpdatedAt  time.Time      `json:"updated_at" gorm:"column:updated_at;autoUpdateTime;comment:수정 시간"`
+	DeletedAt  *time.Time     `json:"deleted_at,omitempty" gorm:"column:deleted_at;index;comment:삭제 시간"`
+	Memo       *Memo          `json:"memo,omitempty" gorm:"foreignKey:MemoID"`
+	Category   *MemoCategory  `json:"category,omitempty" gorm:"foreignKey:CategoryID"`
 }
 
 // TableName MemoCategorySelection 테이블명 지정
