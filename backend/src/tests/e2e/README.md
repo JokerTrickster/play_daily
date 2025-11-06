@@ -24,7 +24,14 @@ tests/e2e/
 
 - Go 1.21 이상
 - MySQL 데이터베이스 (테스트 환경)
-- `.env` 파일 설정
+- **중요**: 운영 DB가 아닌 테스트 전용 DB 사용 (`daily_test`)
+
+**테스트 DB 생성:**
+```bash
+# EC2 MySQL에 테스트 DB 생성 (최초 1회만)
+docker run -i --rm mysql:8.0 mysql -h 13.203.37.93 -u root -pexamplepassword \
+  -e "CREATE DATABASE IF NOT EXISTS daily_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
 
 ### 2. 의존성 설치
 

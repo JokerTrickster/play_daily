@@ -22,12 +22,16 @@ if [ ! -f "main.go" ]; then
     exit 1
 fi
 
-# 환경 변수 설정 (필요시)
-if [ -f ".env" ]; then
-    echo -e "${GREEN}✓ .env file found${NC}"
-else
-    echo -e "${YELLOW}⚠ .env file not found, using environment variables${NC}"
-fi
+# 테스트 전용 환경 변수 설정
+echo -e "${YELLOW}Setting up test environment...${NC}"
+export DB_USER=${DB_USER:-root}
+export DB_PASSWORD=${DB_PASSWORD:-examplepassword}
+export DB_HOST=${DB_HOST:-13.203.37.93}
+export DB_PORT=${DB_PORT:-3306}
+export DB_NAME=daily_test  # 테스트 전용 DB
+export GO_ENV=local
+
+echo -e "${GREEN}✓ Test database: ${DB_HOST}:${DB_PORT}/${DB_NAME}${NC}"
 
 # Go 모듈 다운로드
 echo -e "${YELLOW}Downloading dependencies...${NC}"
