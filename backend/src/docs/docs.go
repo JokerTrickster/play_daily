@@ -1464,8 +1464,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Daily Memo API Server with Comments",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
