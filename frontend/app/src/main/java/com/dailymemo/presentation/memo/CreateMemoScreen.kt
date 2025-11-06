@@ -62,7 +62,10 @@ fun CreateMemoScreen(
     LaunchedEffect(placeName, address, latitude, longitude, categoryName, isWishlist, naverPlaceUrl) {
         // 카카오맵에서 검색한 장소 정보를 장소 검색 필드에 자동 입력
         if (placeName != null) {
+            // 지도에서 선택한 장소 이름을 제목에도 자동 입력
+            viewModel.onTitleChange(placeName)
             viewModel.onLocationNameChange(placeName)
+            viewModel.setCreationMode(com.dailymemo.domain.models.CreationMode.MAP)
         }
         if (address != null) {
             viewModel.onBusinessAddressChange(address)

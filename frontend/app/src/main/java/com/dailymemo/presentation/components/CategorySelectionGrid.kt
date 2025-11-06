@@ -1,6 +1,7 @@
 package com.dailymemo.presentation.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,10 +16,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,19 +59,21 @@ fun CategorySelectionGrid(
     onSelectionChange: (Set<Int>) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showCustomInput by remember { mutableStateOf(false) }
+    var customCategoryText by remember { mutableStateOf("") }
     val groupedCategories = categories.groupBy { it.sentiment }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // 긍정 카테고리
         groupedCategories[CategorySentiment.POSITIVE]?.let { positiveCategories ->
             if (positiveCategories.isNotEmpty()) {
                 CategorySection(
-                    title = "긍정",
+                    title = "😊 긍정",
                     titleColor = Color(0xFF10B981),
+                    backgroundColor = Color(0xFFD1FAE5),
                     categories = positiveCategories,
                     selectedIds = selectedCategoryIds,
                     onToggle = { id ->
@@ -69,7 +83,6 @@ fun CategorySelectionGrid(
                         onSelectionChange(newSelection)
                     }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -77,8 +90,9 @@ fun CategorySelectionGrid(
         groupedCategories[CategorySentiment.NEGATIVE]?.let { negativeCategories ->
             if (negativeCategories.isNotEmpty()) {
                 CategorySection(
-                    title = "부정",
+                    title = "😞 부정",
                     titleColor = Color(0xFFEF4444),
+                    backgroundColor = Color(0xFFFEE2E2),
                     categories = negativeCategories,
                     selectedIds = selectedCategoryIds,
                     onToggle = { id ->
@@ -88,7 +102,6 @@ fun CategorySelectionGrid(
                         onSelectionChange(newSelection)
                     }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -96,8 +109,9 @@ fun CategorySelectionGrid(
         groupedCategories[CategorySentiment.NEUTRAL]?.let { neutralCategories ->
             if (neutralCategories.isNotEmpty()) {
                 CategorySection(
-                    title = "중립",
+                    title = "😐 중립",
                     titleColor = Color(0xFF6B7280),
+                    backgroundColor = Color(0xFFF3F4F6),
                     categories = neutralCategories,
                     selectedIds = selectedCategoryIds,
                     onToggle = { id ->
@@ -106,6 +120,78 @@ fun CategorySelectionGrid(
                         else newSelection.add(id)
                         onSelectionChange(newSelection)
                     }
+                )
+            }
+        }
+
+        // 직접 작성 섹션
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFEF3C7), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "✏️ 직접 작성",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color(0xFF92400E),
+                    fontWeight = FontWeight.Bold
+                )
+                FilterChip(
+                    selected = showCustomInput,
+                    onClick = { showCustomInput = !showCustomInput },
+                    label = { Text(if (showCustomInput) "닫기" else "추가") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (showCustomInput) Icons.Default.Edit else Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFFFBBF24),
+                        selectedLabelColor = Color.White,
+                        containerColor = Color.White
+                    )
+                )
+            }
+
+            if (showCustomInput) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customCategoryText,
+                    onValueChange = { customCategoryText = it },
+                    placeholder = { Text("나만의 카테고리를 입력하세요") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp),
+                    trailingIcon = {
+                        if (customCategoryText.isNotBlank()) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "추가",
+                                modifier = Modifier
+                                    .clickable {
+                                        // TODO: 커스텀 카테고리 추가 로직
+                                        // 현재는 UI만 구현
+                                        customCategoryText = ""
+                                    }
+                                    .padding(8.dp),
+                                tint = Color(0xFF10B981)
+                            )
+                        }
+                    }
+                )
+                Text(
+                    text = "💡 직접 작성한 카테고리는 이 메모에만 적용됩니다",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF92400E).copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
@@ -119,6 +205,7 @@ fun CategorySelectionGrid(
  *
  * @param title 섹션 제목
  * @param titleColor 제목 색상
+ * @param backgroundColor 배경 색상
  * @param categories 표시할 카테고리 목록
  * @param selectedIds 선택된 카테고리 ID 집합
  * @param onToggle 카테고리 토글 시 호출되는 콜백
@@ -128,28 +215,35 @@ fun CategorySelectionGrid(
 private fun CategorySection(
     title: String,
     titleColor: Color,
+    backgroundColor: Color,
     categories: List<MemoCategory>,
     selectedIds: Set<Int>,
     onToggle: (Int) -> Unit
 ) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
             color = titleColor,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             categories.forEach { category ->
-                CategoryCheckbox(
+                CategoryChip(
                     category = category,
                     isSelected = category.id in selectedIds,
-                    onToggle = { onToggle(category.id) }
+                    onToggle = { onToggle(category.id) },
+                    accentColor = titleColor
                 )
             }
         }
@@ -157,46 +251,57 @@ private fun CategorySection(
 }
 
 /**
- * 카테고리 체크박스 컴포넌트
+ * 카테고리 칩 컴포넌트
  *
- * 개별 카테고리를 체크박스와 함께 표시합니다.
- * 44x44dp 최소 터치 영역을 준수합니다.
+ * 개별 카테고리를 FilterChip 스타일로 표시합니다.
  *
  * @param category 표시할 카테고리
  * @param isSelected 선택 여부
  * @param onToggle 토글 시 호출되는 콜백
+ * @param accentColor 강조 색상
  */
 @Composable
-private fun CategoryCheckbox(
+private fun CategoryChip(
     category: MemoCategory,
     isSelected: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    accentColor: Color
 ) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                if (isSelected) Color(0xFFE0F2FE)
-                else Color(0xFFF3F4F6)
+    FilterChip(
+        selected = isSelected,
+        onClick = onToggle,
+        label = {
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
             )
-            .clickable(onClick = onToggle)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .heightIn(min = 44.dp), // 접근성: 최소 44dp 터치 영역
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = isSelected,
-            onCheckedChange = { onToggle() },
-            modifier = Modifier.size(24.dp)
+        },
+        leadingIcon = if (isSelected) {
+            {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "선택됨",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        } else null,
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = accentColor,
+            selectedLabelColor = Color.White,
+            selectedLeadingIconColor = Color.White,
+            containerColor = Color.White,
+            labelColor = accentColor
+        ),
+        border = FilterChipDefaults.filterChipBorder(
+            enabled = true,
+            selected = isSelected,
+            borderColor = accentColor.copy(alpha = 0.3f),
+            selectedBorderColor = accentColor,
+            borderWidth = 1.dp,
+            selectedBorderWidth = 2.dp
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = category.name,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface
-        )
-    }
+    )
 }
 
 /**
