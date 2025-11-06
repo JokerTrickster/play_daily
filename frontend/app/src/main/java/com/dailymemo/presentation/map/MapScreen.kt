@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,6 +66,7 @@ fun MapScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val focusManager = LocalFocusManager.current
     val currentLocation by viewModel.currentLocation.collectAsState()
     val memos by viewModel.memos.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -344,6 +346,7 @@ fun MapScreen(
                         keyboardActions = KeyboardActions(
                             onSearch = {
                                 if (searchQuery.length >= 2) {
+                                    focusManager.clearFocus()
                                     viewModel.searchPlaces(searchQuery)
                                 }
                             }
@@ -354,6 +357,7 @@ fun MapScreen(
                     Button(
                         onClick = {
                             if (searchQuery.length >= 2) {
+                                focusManager.clearFocus()
                                 viewModel.searchPlaces(searchQuery)
                             }
                         },
