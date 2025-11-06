@@ -1,5 +1,6 @@
 package com.dailymemo.domain.repositories
 
+import com.dailymemo.domain.models.CreationMode
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.MemoListResult
 import com.dailymemo.domain.models.PlaceCategory
@@ -14,7 +15,9 @@ interface MemoRepository {
     suspend fun getMemo(id: Long): Result<Memo>
     suspend fun createMemo(
         title: String,
-        content: String,
+        content: String = "", // Deprecated
+        creationMode: CreationMode = CreationMode.LIST, // NEW
+        categoryIds: List<Int> = emptyList(), // NEW
         imageUri: android.net.Uri? = null,
         imageUrls: List<String> = emptyList(),
         rating: Float = 0f,
@@ -22,7 +25,7 @@ interface MemoRepository {
         latitude: Double? = null,
         longitude: Double? = null,
         locationName: String? = null,
-        category: PlaceCategory? = null,
+        category: PlaceCategory? = null, // Deprecated
         isWishlist: Boolean = false,
         businessName: String? = null,
         businessPhone: String? = null,

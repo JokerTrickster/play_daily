@@ -86,6 +86,8 @@ class MemoRepositoryImpl @Inject constructor(
     override suspend fun createMemo(
         title: String,
         content: String,
+        creationMode: com.dailymemo.domain.models.CreationMode,
+        categoryIds: List<Int>,
         imageUri: Uri?,
         imageUrls: List<String>,
         rating: Float,
@@ -104,6 +106,8 @@ class MemoRepositoryImpl @Inject constructor(
             // multipart/form-data 요청 파라미터 생성
             val titlePart = title.toRequestBody("text/plain".toMediaTypeOrNull())
             val contentPart = content.toRequestBody("text/plain".toMediaTypeOrNull())
+            val creationModePart = creationMode.toApiValue().toRequestBody("text/plain".toMediaTypeOrNull()) // NEW
+            val categoryIdsPart = com.google.gson.Gson().toJson(categoryIds).toRequestBody("text/plain".toMediaTypeOrNull()) // NEW
             val ratingPart = rating.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             val isPinnedPart = isPinned.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             val latitudePart = latitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -122,6 +126,8 @@ class MemoRepositoryImpl @Inject constructor(
             val response = memoApiService.createMemo(
                 title = titlePart,
                 content = contentPart,
+                creationMode = creationModePart, // NEW
+                categoryIds = categoryIdsPart, // NEW
                 rating = ratingPart,
                 isPinned = isPinnedPart,
                 latitude = latitudePart,

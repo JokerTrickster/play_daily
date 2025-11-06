@@ -18,7 +18,8 @@ import javax.inject.Inject
 class CreateMemoViewModel @Inject constructor(
     private val createMemoUseCase: CreateMemoUseCase,
     private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
-    private val searchPlacesUseCase: com.dailymemo.domain.usecases.place.SearchPlacesUseCase
+    private val searchPlacesUseCase: com.dailymemo.domain.usecases.place.SearchPlacesUseCase,
+    private val categoryRepository: com.dailymemo.domain.repositories.CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CreateMemoUiState>(CreateMemoUiState.Initial)
@@ -72,18 +73,52 @@ class CreateMemoViewModel @Inject constructor(
     private val _showSearchDialog = MutableStateFlow(false)
     val showSearchDialog: StateFlow<Boolean> = _showSearchDialog.asStateFlow()
 
+    // NEW: Category state
+    private val _categories = MutableStateFlow<List<com.dailymemo.domain.models.MemoCategory>>(emptyList())
+    val categories: StateFlow<List<com.dailymemo.domain.models.MemoCategory>> = _categories.asStateFlow()
+
+    private val _selectedCategoryIds = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedCategoryIds: StateFlow<Set<Int>> = _selectedCategoryIds.asStateFlow()
+
+    private val _creationMode = MutableStateFlow(com.dailymemo.domain.models.CreationMode.LIST)
+    val creationMode: StateFlow<com.dailymemo.domain.models.CreationMode> = _creationMode.asStateFlow()
+
     // Flag to track if location was explicitly set (from map search)
     private var isLocationExplicitlySet = false
 
     init {
         // Automatically get current location when creating memo
         getCurrentLocation()
+        // Load categories
+        loadCategories()
     }
 
     fun setWishlistMode(isWishlist: Boolean) {
         android.util.Log.d("CreateMemoVM", "setWishlistMode called with: $isWishlist")
         _isWishlist.value = isWishlist
         android.util.Log.d("CreateMemoVM", "_isWishlist.value is now: ${_isWishlist.value}")
+    }
+
+    fun setCreationMode(mode: com.dailymemo.domain.models.CreationMode) {
+        _creationMode.value = mode
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            categoryRepository.getCategories().fold(
+                onSuccess = { categories ->
+                    _categories.value = categories
+                },
+                onFailure = { error ->
+                    android.util.Log.e("CreateMemoVM", "Failed to load categories: ${error.message}")
+                    // Keep empty list on failure
+                }
+            )
+        }
+    }
+
+    fun onCategorySelectionChange(newSelection: Set<Int>) {
+        _selectedCategoryIds.value = newSelection
     }
 
     fun onBusinessNameChange(newName: String) {
@@ -213,19 +248,27 @@ class CreateMemoViewModel @Inject constructor(
     }
 
     fun createMemo() {
-        if (_title.value.isBlank() || _content.value.isBlank()) {
-            _uiState.value = CreateMemoUiState.Error("제목과 내용을 입력해주세요")
+        // Validation
+        if (_title.value.isBlank()) {
+            _uiState.value = CreateMemoUiState.Error("제목을 입력해주세요")
+            return
+        }
+
+        if (_selectedCategoryIds.value.isEmpty()) {
+            _uiState.value = CreateMemoUiState.Error("카테고리를 최소 1개 이상 선택해주세요")
             return
         }
 
         viewModelScope.launch {
             _uiState.value = CreateMemoUiState.Loading
 
-            android.util.Log.d("CreateMemoVM", "createMemo called - isWishlist: ${_isWishlist.value}")
+            android.util.Log.d("CreateMemoVM", "createMemo called - isWishlist: ${_isWishlist.value}, creationMode: ${_creationMode.value}, categoryIds: ${_selectedCategoryIds.value}")
 
             createMemoUseCase(
                 title = _title.value.trim(),
                 content = _content.value.trim(),
+                creationMode = _creationMode.value,
+                categoryIds = _selectedCategoryIds.value.toList(),
                 imageUri = _imageUri.value,
                 rating = _rating.value,
                 isPinned = _isPinned.value,

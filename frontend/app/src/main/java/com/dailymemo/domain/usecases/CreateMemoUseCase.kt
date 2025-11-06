@@ -1,5 +1,6 @@
 package com.dailymemo.domain.usecases
 
+import com.dailymemo.domain.models.CreationMode
 import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.repositories.MemoRepository
@@ -10,7 +11,9 @@ class CreateMemoUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         title: String,
-        content: String,
+        content: String = "", // Deprecated - kept for backward compatibility
+        creationMode: CreationMode = CreationMode.LIST, // NEW
+        categoryIds: List<Int> = emptyList(), // NEW
         imageUri: android.net.Uri? = null,
         imageUrls: List<String> = emptyList(),
         rating: Float = 0f,
@@ -18,7 +21,7 @@ class CreateMemoUseCase @Inject constructor(
         latitude: Double? = null,
         longitude: Double? = null,
         locationName: String? = null,
-        category: PlaceCategory? = null,
+        category: PlaceCategory? = null, // Deprecated
         isWishlist: Boolean = false,
         businessName: String? = null,
         businessPhone: String? = null,
@@ -28,6 +31,8 @@ class CreateMemoUseCase @Inject constructor(
         return repository.createMemo(
             title = title,
             content = content,
+            creationMode = creationMode,
+            categoryIds = categoryIds,
             imageUri = imageUri,
             imageUrls = imageUrls,
             rating = rating,

@@ -82,13 +82,11 @@ fun CreateMemoScreen(
     }
     val uiState by viewModel.uiState.collectAsState()
     val title by viewModel.title.collectAsState()
-    val content by viewModel.content.collectAsState()
     val imageUri by viewModel.imageUri.collectAsState()
     val rating by viewModel.rating.collectAsState()
     val isPinned by viewModel.isPinned.collectAsState()
     val currentLocation by viewModel.currentLocation.collectAsState()
     val locationName by viewModel.locationName.collectAsState()
-    val category by viewModel.category.collectAsState()
     val businessName by viewModel.businessName.collectAsState()
     val businessPhone by viewModel.businessPhone.collectAsState()
     val businessAddress by viewModel.businessAddress.collectAsState()
@@ -141,6 +139,11 @@ fun CreateMemoScreen(
             cameraLauncher.launch(tempImageUri)
         }
     }
+
+    // NEW: Collect category state
+    val categories by viewModel.categories.collectAsState()
+    val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsState()
+    val creationMode by viewModel.creationMode.collectAsState()
 
     LaunchedEffect(uiState) {
         if (uiState is CreateMemoUiState.Success) {
@@ -203,7 +206,23 @@ fun CreateMemoScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Title Input
+                // Creation Mode Badge
+                if (creationMode == com.dailymemo.domain.models.CreationMode.MAP) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Text(
+                            text = "🗺️ 지도에서 선택한 장소",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+
+                // Title Input (read-only in MAP mode)
                 OutlinedTextField(
                     value = title,
                     onValueChange = viewModel::onTitleChange,
@@ -211,28 +230,12 @@ fun CreateMemoScreen(
                     placeholder = { Text("메모 제목을 입력하세요") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    enabled = creationMode != com.dailymemo.domain.models.CreationMode.MAP,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    )
-                )
-
-                // Content Input
-                OutlinedTextField(
-                    value = content,
-                    onValueChange = viewModel::onContentChange,
-                    label = { Text("내용") },
-                    placeholder = { Text("메모 내용을 입력하세요") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 200.dp),
-                    minLines = 8,
-                    maxLines = 15,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 )
 
@@ -312,7 +315,7 @@ fun CreateMemoScreen(
                     }
                 }
 
-                // Category Section - 그리드 레이아웃
+                // NEW: Category Selection Section with CategorySelectionGrid
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -325,101 +328,30 @@ fun CreateMemoScreen(
                         modifier = Modifier.padding(20.dp)
                     ) {
                         Text(
-                            text = "카테고리 선택",
+                            text = "카테고리 선택 (필수)",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        if (category != null) {
+                        if (selectedCategoryIds.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = category?.icon ?: "",
-                                        style = MaterialTheme.typography.titleLarge
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = category?.displayName ?: "",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    IconButton(
-                                        onClick = { viewModel.onCategoryChange(null) },
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "선택 취소",
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                }
-                            }
+                            Text(
+                                text = "${selectedCategoryIds.size}개 선택됨",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 주요 카테고리 그리드 (4x2)
-                        val mainCategories = listOf(
-                            PlaceCategory.RESTAURANT,
-                            PlaceCategory.CAFE,
-                            PlaceCategory.SHOPPING,
-                            PlaceCategory.CULTURAL,
-                            PlaceCategory.ENTERTAINMENT,
-                            PlaceCategory.ACCOMMODATION,
-                            PlaceCategory.SPORTS,
-                            PlaceCategory.OTHER
+                        // Use CategorySelectionGrid component
+                        com.dailymemo.presentation.components.CategorySelectionGrid(
+                            categories = categories,
+                            selectedCategoryIds = selectedCategoryIds,
+                            onSelectionChange = viewModel::onCategorySelectionChange,
+                            modifier = Modifier.fillMaxWidth()
                         )
-
-                        // 2줄의 그리드
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            // 첫 번째 줄
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                mainCategories.take(4).forEach { cat ->
-                                    CategoryItem(
-                                        category = cat,
-                                        isSelected = category == cat,
-                                        onClick = {
-                                            viewModel.onCategoryChange(if (category == cat) null else cat)
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                            // 두 번째 줄
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                mainCategories.drop(4).forEach { cat ->
-                                    CategoryItem(
-                                        category = cat,
-                                        isSelected = category == cat,
-                                        onClick = {
-                                            viewModel.onCategoryChange(if (category == cat) null else cat)
-                                        },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
 
@@ -566,7 +498,7 @@ fun CreateMemoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = uiState !is CreateMemoUiState.Loading && title.isNotBlank() && content.isNotBlank(),
+                    enabled = uiState !is CreateMemoUiState.Loading && title.isNotBlank() && selectedCategoryIds.isNotEmpty(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     if (uiState is CreateMemoUiState.Loading) {

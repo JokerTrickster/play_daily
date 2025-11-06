@@ -29,12 +29,14 @@ interface MemoApiService {
     suspend fun createMemo(
         @Part("title") title: RequestBody,
         @Part("content") content: RequestBody?,
+        @Part("creation_mode") creationMode: RequestBody, // NEW
+        @Part("category_ids") categoryIds: RequestBody, // NEW
         @Part("rating") rating: RequestBody?,
         @Part("is_pinned") isPinned: RequestBody?,
         @Part("latitude") latitude: RequestBody?,
         @Part("longitude") longitude: RequestBody?,
         @Part("location_name") locationName: RequestBody?,
-        @Part("category") category: RequestBody?,
+        @Part("category") category: RequestBody?, // Deprecated
         @Part("is_wishlist") isWishlist: RequestBody?,
         @Part("business_name") businessName: RequestBody?,
         @Part("business_phone") businessPhone: RequestBody?,
