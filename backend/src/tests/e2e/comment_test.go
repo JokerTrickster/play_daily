@@ -126,6 +126,8 @@ func TestCommentFlow(t *testing.T) {
 		newUserReq := map[string]interface{}{
 			"account_id": "testuser_comment_" + timestamp,
 			"password":   "testpass123",
+			"auth_code":  "5508",
+			"nickname":   "댓글테스트유저",
 		}
 
 		signupResp, signupBody, err := makeRequest("POST", "/v0.1/auth/signup", newUserReq, "")

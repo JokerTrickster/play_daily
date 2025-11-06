@@ -19,11 +19,13 @@ func TestAuthFlow(t *testing.T) {
 		reqBody := map[string]interface{}{
 			"account_id": accountID,
 			"password":   password,
+			"auth_code":  "5508",
+			"nickname":   "테스트유저",
 		}
 
 		resp, body, err := makeRequest("POST", "/v0.1/auth/signup", reqBody, "")
 		assert.NoError(t, err)
-		assertStatusCode(t, 201, resp.StatusCode, body)
+		assertStatusCode(t, 200, resp.StatusCode, body)
 
 		var result map[string]interface{}
 		parseJSONResponse(t, body, &result)
@@ -46,6 +48,8 @@ func TestAuthFlow(t *testing.T) {
 		reqBody := map[string]interface{}{
 			"account_id": accountID,
 			"password":   password,
+			"auth_code":  "5508",
+			"nickname":   "테스트유저2",
 		}
 
 		resp, body, err := makeRequest("POST", "/v0.1/auth/signup", reqBody, "")
@@ -94,7 +98,7 @@ func TestAuthFlow(t *testing.T) {
 
 		resp, body, err := makeRequest("POST", "/v0.1/auth/signin", reqBody, "")
 		assert.NoError(t, err)
-		assertStatusCode(t, 404, resp.StatusCode, body)
+		assertStatusCode(t, 401, resp.StatusCode, body)
 	})
 
 	t.Run("6. 토큰으로 프로필 조회 성공", func(t *testing.T) {
