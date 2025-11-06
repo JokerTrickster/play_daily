@@ -1,5 +1,28 @@
 basePath: /
 definitions:
+  request.ReqCreateComment:
+    properties:
+      content:
+        maxLength: 1000
+        minLength: 1
+        type: string
+      rating:
+        maximum: 5
+        minimum: 0
+        type: integer
+    required:
+    - content
+    type: object
+  request.ReqJoinRoom:
+    properties:
+      room_id:
+        type: integer
+      room_password:
+        type: string
+    required:
+    - room_id
+    - room_password
+    type: object
   request.ReqSignIn:
     properties:
       account_id:
@@ -26,6 +49,40 @@ definitions:
     - nickname
     - password
     type: object
+  request.ReqUpdateProfile:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        type: string
+      nickname:
+        type: string
+      profile_image_url:
+        type: string
+    required:
+    - current_password
+    type: object
+  response.CategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/response.Category'
+        type: array
+    type: object
+  response.Category:
+    properties:
+      color:
+        type: string
+      display_order:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      sentiment:
+        description: '"positive", "negative", "neutral"'
+        type: string
+    type: object
   response.ResAuth:
     properties:
       access_token:
@@ -34,35 +91,124 @@ definitions:
         type: integer
       account_id:
         type: string
+      default_room_id:
+        type: integer
       nickname:
         type: string
       refresh_token:
         type: string
       refresh_token_expired_at:
         type: integer
+      room_password:
+        type: string
       user_id:
         type: integer
     type: object
-  response.ResMemo:
+  response.ResCategory:
     properties:
-      category:
+      color:
         type: string
+      display_order:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      sentiment:
+        type: string
+    type: object
+  response.ResComment:
+    properties:
       content:
         type: string
       created_at:
         type: string
       id:
         type: integer
+      memo_id:
+        type: integer
+      rating:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      user_name:
+        type: string
+    type: object
+  response.ResCommentList:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/response.ResComment'
+        type: array
+      total:
+        type: integer
+    type: object
+  response.ResLikedRoom:
+    properties:
+      liked_at:
+        type: string
+      likes_count:
+        type: integer
+      owner_id:
+        type: integer
+      room_code:
+        type: string
+      room_id:
+        type: integer
+      room_name:
+        type: string
+    type: object
+  response.ResMemo:
+    properties:
+      business_address:
+        type: string
+      business_name:
+        type: string
+      business_phone:
+        type: string
+      categories:
+        description: 'NEW: 선택된 카테고리 배열'
+        items:
+          $ref: '#/definitions/response.ResCategory'
+        type: array
+      category:
+        description: Deprecated
+        type: string
+      comments:
+        items:
+          $ref: '#/definitions/response.ResComment'
+        type: array
+      content:
+        description: Deprecated - will be empty after migration
+        type: string
+      created_at:
+        type: string
+      creation_mode:
+        description: 'NEW: map or list'
+        type: string
+      id:
+        type: integer
       image_url:
         type: string
+      is_liked:
+        type: boolean
       is_pinned:
+        type: boolean
+      is_wishlist:
+        description: 'Wishlist fields (Issue #19)'
         type: boolean
       latitude:
         type: number
+      likes_count:
+        type: integer
       location_name:
         type: string
       longitude:
         type: number
+      naver_place_url:
+        type: string
       rating:
         type: integer
       title:
@@ -74,19 +220,57 @@ definitions:
     type: object
   response.ResMemoList:
     properties:
+      limit:
+        type: integer
       memos:
         items:
           $ref: '#/definitions/response.ResMemo'
         type: array
+      page:
+        type: integer
       total:
+        type: integer
+    type: object
+  response.ResProfile:
+    properties:
+      account_id:
+        type: string
+      default_room_id:
+        type: integer
+      nickname:
+        type: string
+      profile_image_url:
+        type: string
+      received_likes_count:
+        description: 내 방이 받은 좋아요 개수
+        type: integer
+      room_password:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  response.ResRoom:
+    properties:
+      id:
+        type: integer
+      owner_id:
+        type: integer
+      room_password:
+        type: string
+    type: object
+  response.ResRoomLikeStatus:
+    properties:
+      is_liked:
+        type: boolean
+      likes_count:
         type: integer
     type: object
 host: localhost:8080
 info:
   contact: {}
-  description: Daily Memo API Server
+  description: Daily Memo API Server with Comments
   title: Play Daily API
-  version: "1.0"
+  version: "1.1"
 paths:
   /v0.1/auth/signin:
     post:
@@ -157,9 +341,87 @@ paths:
       summary: 회원가입 api
       tags:
       - auth
+  /v0.1/categories:
+    get:
+      description: 모든 메모 카테고리를 조회합니다 (10개 고정, 감정별 분류)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.CategoriesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 카테고리 목록 조회 API
+      tags:
+      - category
+  /v0.1/comments/{comment_id}:
+    delete:
+      description: 댓글을 삭제합니다 (본인 댓글만 삭제 가능)
+      parameters:
+      - description: 댓글 ID
+        in: path
+        name: comment_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 댓글 삭제 API
+      tags:
+      - comment
   /v0.1/memo:
     get:
-      description: 사용자의 모든 메모를 조회합니다
+      description: 사용자의 모든 메모를 조회합니다 (is_wishlist, room_id, category_ids 필터 및 페이지네이션
+        지원)
+      parameters:
+      - description: Wishlist filter
+        in: query
+        name: is_wishlist
+        type: boolean
+      - description: Room ID filter
+        in: query
+        name: room_id
+        type: integer
+      - collectionFormat: csv
+        description: Category IDs filter (comma-separated)
+        in: query
+        items:
+          type: integer
+        name: category_ids
+        type: array
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 10, max: 100)'
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
@@ -167,6 +429,11 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.ResMemoList'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
           schema:
@@ -185,9 +452,19 @@ paths:
         name: title
         required: true
         type: string
-      - description: 메모 내용
+      - description: 메모 내용 (Deprecated)
         in: formData
         name: content
+        type: string
+      - description: 생성 방식 (map 또는 list)
+        in: formData
+        name: creation_mode
+        required: true
+        type: string
+      - description: 카테고리 ID 배열 (JSON 배열 형식)
+        in: formData
+        name: category_ids
+        required: true
         type: string
       - description: 이미지 파일
         in: formData
@@ -213,7 +490,7 @@ paths:
         in: formData
         name: location_name
         type: string
-      - description: 카테고리
+      - description: 카테고리 (Deprecated)
         in: formData
         name: category
         type: string
@@ -371,4 +648,330 @@ paths:
       summary: 메모 수정 API
       tags:
       - memo
+  /v0.1/memo/{memo_id}/comments:
+    get:
+      description: 특정 메모의 댓글 목록을 조회합니다
+      parameters:
+      - description: 메모 ID
+        in: path
+        name: memo_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResCommentList'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 댓글 목록 조회 API
+      tags:
+      - comment
+    post:
+      consumes:
+      - application/json
+      description: 메모에 댓글을 작성합니다
+      parameters:
+      - description: 메모 ID
+        in: path
+        name: memo_id
+        required: true
+        type: integer
+      - description: 댓글 내용
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqCreateComment'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResComment'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 댓글 생성 API
+      tags:
+      - comment
+  /v0.1/memo/{memo_id}/like:
+    post:
+      consumes:
+      - application/json
+      description: 메모에 좋아요를 추가하거나 제거합니다 (토글)
+      parameters:
+      - description: 메모 ID
+        in: path
+        name: memo_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '좋아요 상태 반환 (is_liked: true/false)'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 메모 좋아요 토글 API
+      tags:
+      - memolike
+  /v0.1/profile:
+    get:
+      description: 현재 사용자의 프로필 정보를 조회합니다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResProfile'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 프로필 조회 API
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      description: 사용자의 프로필 정보를 업데이트합니다
+      parameters:
+      - description: Update Profile Request
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqUpdateProfile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResProfile'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 프로필 업데이트 API
+      tags:
+      - profile
+  /v0.1/room/{room_id}/like:
+    delete:
+      consumes:
+      - application/json
+      description: 방의 좋아요를 취소합니다
+      parameters:
+      - description: 방 ID
+        in: path
+        name: room_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 방 좋아요 취소 API
+      tags:
+      - roomlike
+    post:
+      consumes:
+      - application/json
+      description: 방에 좋아요를 추가합니다
+      parameters:
+      - description: 방 ID
+        in: path
+        name: room_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 방 좋아요 추가 API
+      tags:
+      - roomlike
+  /v0.1/room/{room_id}/like/status:
+    get:
+      consumes:
+      - application/json
+      description: 방의 좋아요 상태와 총 좋아요 개수를 조회합니다
+      parameters:
+      - description: 방 ID
+        in: path
+        name: room_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResRoomLikeStatus'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 방 좋아요 상태 조회 API
+      tags:
+      - roomlike
+  /v0.1/room/join:
+    post:
+      consumes:
+      - application/json
+      description: Join an existing room by providing room ID and password
+      parameters:
+      - description: Join room request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReqJoinRoom'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResRoom'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - Bearer: []
+      summary: Join a room with password
+      tags:
+      - room
+  /v0.1/room/liked:
+    get:
+      consumes:
+      - application/json
+      description: 사용자가 좋아요한 방 목록을 조회합니다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/response.ResLikedRoom'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 좋아요한 방 목록 조회 API
+      tags:
+      - roomlike
 swagger: "2.0"

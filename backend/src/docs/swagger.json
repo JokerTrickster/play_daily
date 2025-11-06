@@ -1,10 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Daily Memo API Server",
+        "description": "Daily Memo API Server with Comments",
         "title": "Play Daily API",
         "contact": {},
-        "version": "1.0"
+        "version": "1.1"
     },
     "host": "localhost:8080",
     "basePath": "/",
@@ -112,9 +112,87 @@
                 }
             }
         },
+        "/v0.1/categories": {
+            "get": {
+                "description": "모든 메모 카테고리를 조회합니다 (10개 고정, 감정별 분류)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "카테고리 목록 조회 API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.CategoriesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/comments/{comment_id}": {
+            "delete": {
+                "description": "댓글을 삭제합니다 (본인 댓글만 삭제 가능)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comment"
+                ],
+                "summary": "댓글 삭제 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "댓글 ID",
+                        "name": "comment_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/v0.1/memo": {
             "get": {
-                "description": "사용자의 모든 메모를 조회합니다",
+                "description": "사용자의 모든 메모를 조회합니다 (is_wishlist, room_id, category_ids 필터 및 페이지네이션 지원)",
                 "produces": [
                     "application/json"
                 ],
@@ -122,11 +200,54 @@
                     "memo"
                 ],
                 "summary": "메모 목록 조회 API",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Wishlist filter",
+                        "name": "is_wishlist",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Room ID filter",
+                        "name": "room_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Category IDs filter (comma-separated)",
+                        "name": "category_ids",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default: 10, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.ResMemoList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
@@ -160,9 +281,23 @@
                     },
                     {
                         "type": "string",
-                        "description": "메모 내용",
+                        "description": "메모 내용 (Deprecated)",
                         "name": "content",
                         "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "생성 방식 (map 또는 list)",
+                        "name": "creation_mode",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "카테고리 ID 배열 (JSON 배열 형식)",
+                        "name": "category_ids",
+                        "in": "formData",
+                        "required": true
                     },
                     {
                         "type": "file",
@@ -202,7 +337,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "카테고리",
+                        "description": "카테고리 (Deprecated)",
                         "name": "category",
                         "in": "formData"
                     }
@@ -427,9 +562,524 @@
                     }
                 }
             }
+        },
+        "/v0.1/memo/{memo_id}/comments": {
+            "get": {
+                "description": "특정 메모의 댓글 목록을 조회합니다",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comment"
+                ],
+                "summary": "댓글 목록 조회 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "메모 ID",
+                        "name": "memo_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResCommentList"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "메모에 댓글을 작성합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comment"
+                ],
+                "summary": "댓글 생성 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "메모 ID",
+                        "name": "memo_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "댓글 내용",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ReqCreateComment"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResComment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/memo/{memo_id}/like": {
+            "post": {
+                "description": "메모에 좋아요를 추가하거나 제거합니다 (토글)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "memolike"
+                ],
+                "summary": "메모 좋아요 토글 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "메모 ID",
+                        "name": "memo_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "좋아요 상태 반환 (is_liked: true/false)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/profile": {
+            "get": {
+                "description": "현재 사용자의 프로필 정보를 조회합니다",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "프로필 조회 API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResProfile"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "사용자의 프로필 정보를 업데이트합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "프로필 업데이트 API",
+                "parameters": [
+                    {
+                        "description": "Update Profile Request",
+                        "name": "req",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ReqUpdateProfile"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/room/join": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Join an existing room by providing room ID and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "room"
+                ],
+                "summary": "Join a room with password",
+                "parameters": [
+                    {
+                        "description": "Join room request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ReqJoinRoom"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResRoom"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/room/liked": {
+            "get": {
+                "description": "사용자가 좋아요한 방 목록을 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "roomlike"
+                ],
+                "summary": "좋아요한 방 목록 조회 API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.ResLikedRoom"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/room/{room_id}/like": {
+            "post": {
+                "description": "방에 좋아요를 추가합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "roomlike"
+                ],
+                "summary": "방 좋아요 추가 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "방 ID",
+                        "name": "room_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "방의 좋아요를 취소합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "roomlike"
+                ],
+                "summary": "방 좋아요 취소 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "방 ID",
+                        "name": "room_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/v0.1/room/{room_id}/like/status": {
+            "get": {
+                "description": "방의 좋아요 상태와 총 좋아요 개수를 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "roomlike"
+                ],
+                "summary": "방 좋아요 상태 조회 API",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "방 ID",
+                        "name": "room_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResRoomLikeStatus"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "request.ReqCreateComment": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 1
+                },
+                "rating": {
+                    "type": "integer",
+                    "maximum": 5,
+                    "minimum": 0
+                }
+            }
+        },
+        "request.ReqJoinRoom": {
+            "type": "object",
+            "required": [
+                "room_id",
+                "room_password"
+            ],
+            "properties": {
+                "room_id": {
+                    "type": "integer"
+                },
+                "room_password": {
+                    "type": "string"
+                }
+            }
+        },
         "request.ReqSignIn": {
             "type": "object",
             "required": [
@@ -468,6 +1118,58 @@
                 }
             }
         },
+        "request.ReqUpdateProfile": {
+            "type": "object",
+            "required": [
+                "current_password"
+            ],
+            "properties": {
+                "current_password": {
+                    "type": "string"
+                },
+                "new_password": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "profile_image_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.CategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.Category"
+                    }
+                }
+            }
+        },
+        "response.Category": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sentiment": {
+                    "description": "\"positive\", \"negative\", \"neutral\"",
+                    "type": "string"
+                }
+            }
+        },
         "response.ResAuth": {
             "type": "object",
             "properties": {
@@ -480,6 +1182,9 @@
                 "account_id": {
                     "type": "string"
                 },
+                "default_room_id": {
+                    "type": "integer"
+                },
                 "nickname": {
                     "type": "string"
                 },
@@ -489,17 +1194,37 @@
                 "refresh_token_expired_at": {
                     "type": "integer"
                 },
+                "room_password": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
             }
         },
-        "response.ResMemo": {
+        "response.ResCategory": {
             "type": "object",
             "properties": {
-                "category": {
+                "color": {
                     "type": "string"
                 },
+                "display_order": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sentiment": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ResComment": {
+            "type": "object",
+            "properties": {
                 "content": {
                     "type": "string"
                 },
@@ -509,20 +1234,130 @@
                 "id": {
                     "type": "integer"
                 },
+                "memo_id": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ResCommentList": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.ResComment"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.ResLikedRoom": {
+            "type": "object",
+            "properties": {
+                "liked_at": {
+                    "type": "string"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "owner_id": {
+                    "type": "integer"
+                },
+                "room_code": {
+                    "type": "string"
+                },
+                "room_id": {
+                    "type": "integer"
+                },
+                "room_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ResMemo": {
+            "type": "object",
+            "properties": {
+                "business_address": {
+                    "type": "string"
+                },
+                "business_name": {
+                    "type": "string"
+                },
+                "business_phone": {
+                    "type": "string"
+                },
+                "categories": {
+                    "description": "NEW: 선택된 카테고리 배열",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.ResCategory"
+                    }
+                },
+                "category": {
+                    "description": "Deprecated",
+                    "type": "string"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.ResComment"
+                    }
+                },
+                "content": {
+                    "description": "Deprecated - will be empty after migration",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "creation_mode": {
+                    "description": "NEW: map or list",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
                 "image_url": {
                     "type": "string"
+                },
+                "is_liked": {
+                    "type": "boolean"
                 },
                 "is_pinned": {
                     "type": "boolean"
                 },
+                "is_wishlist": {
+                    "description": "Wishlist fields (Issue #19)",
+                    "type": "boolean"
+                },
                 "latitude": {
                     "type": "number"
+                },
+                "likes_count": {
+                    "type": "integer"
                 },
                 "location_name": {
                     "type": "string"
                 },
                 "longitude": {
                     "type": "number"
+                },
+                "naver_place_url": {
+                    "type": "string"
                 },
                 "rating": {
                     "type": "integer"
@@ -541,13 +1376,71 @@
         "response.ResMemoList": {
             "type": "object",
             "properties": {
+                "limit": {
+                    "type": "integer"
+                },
                 "memos": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.ResMemo"
                     }
                 },
+                "page": {
+                    "type": "integer"
+                },
                 "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.ResProfile": {
+            "type": "object",
+            "properties": {
+                "account_id": {
+                    "type": "string"
+                },
+                "default_room_id": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "profile_image_url": {
+                    "type": "string"
+                },
+                "received_likes_count": {
+                    "description": "내 방이 받은 좋아요 개수",
+                    "type": "integer"
+                },
+                "room_password": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.ResRoom": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "owner_id": {
+                    "type": "integer"
+                },
+                "room_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ResRoomLikeStatus": {
+            "type": "object",
+            "properties": {
+                "is_liked": {
+                    "type": "boolean"
+                },
+                "likes_count": {
                     "type": "integer"
                 }
             }
