@@ -102,6 +102,9 @@ class MemoDetailViewModel @Inject constructor(
     private val _latitude = MutableStateFlow<Double?>(null)
     private val _longitude = MutableStateFlow<Double?>(null)
 
+    private val _categories = MutableStateFlow<List<com.dailymemo.domain.models.MemoCategory>>(emptyList())
+    val categories: StateFlow<List<com.dailymemo.domain.models.MemoCategory>> = _categories.asStateFlow()
+
     init {
         loadMemo()
     }
@@ -170,6 +173,7 @@ class MemoDetailViewModel @Inject constructor(
                     _isWishlist.value = memo.isWishlist
                     _latitude.value = memo.latitude
                     _longitude.value = memo.longitude
+                    _categories.value = memo.categories
 
                     // 댓글 로드 (API에서 함께 반환됨)
                     _comments.value = memo.comments

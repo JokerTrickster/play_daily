@@ -425,16 +425,14 @@ fun MemoListItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 내용
-            Text(
-                text = memo.content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
+            // Category chips (replaced content preview)
+            if (memo.categories.isNotEmpty()) {
+                com.dailymemo.presentation.components.CategoryChipRow(
+                    categories = memo.categories,
+                    maxVisible = 3
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             // 푸터 (날짜 + 별점)
             Row(

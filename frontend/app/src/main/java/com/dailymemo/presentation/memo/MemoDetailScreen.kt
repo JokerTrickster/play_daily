@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -40,7 +41,7 @@ import com.dailymemo.presentation.memo.components.HalfStarRating
 import com.dailymemo.presentation.memo.components.HalfStarRatingDisplay
 import com.dailymemo.presentation.memo.components.MemoImageSection
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MemoDetailScreen(
     onNavigateBack: () -> Unit,
@@ -49,7 +50,6 @@ fun MemoDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val title by viewModel.title.collectAsState()
-    val content by viewModel.content.collectAsState()
     val imageUrl by viewModel.imageUrl.collectAsState()
     val imageUris by viewModel.imageUris.collectAsState()
     val existingImageUrls by viewModel.existingImageUrls.collectAsState()
@@ -64,10 +64,8 @@ fun MemoDetailScreen(
     val businessPhone by viewModel.businessPhone.collectAsState()
     val businessAddress by viewModel.businessAddress.collectAsState()
     val locationName by viewModel.locationName.collectAsState()
-    val category by viewModel.category.collectAsState()
-    val isWishlist by viewModel.isWishlist.collectAsState()
     val isLiked by viewModel.isLiked.collectAsState()
-    val likesCount by viewModel.likesCount.collectAsState()
+    val categories by viewModel.categories.collectAsState()
 
     val scrollState = rememberScrollState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -227,23 +225,6 @@ fun MemoDetailScreen(
                                 label = { Text("제목") },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                                )
-                            )
-
-                            // Content Input
-                            OutlinedTextField(
-                                value = content,
-                                onValueChange = viewModel::onContentChange,
-                                label = { Text("내용") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 200.dp),
-                                minLines = 8,
-                                maxLines = 15,
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -485,7 +466,7 @@ fun MemoDetailScreen(
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(56.dp),
-                                    enabled = uiState !is MemoDetailUiState.Updating && title.isNotBlank() && content.isNotBlank(),
+                                    enabled = uiState !is MemoDetailUiState.Updating && title.isNotBlank(),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     if (uiState is MemoDetailUiState.Updating) {
@@ -540,16 +521,32 @@ fun MemoDetailScreen(
                                 }
                             }
 
-                            // Content
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text(
-                                    text = content,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(16.dp)
-                                )
+                            // Categories (replaced content section)
+                            if (categories.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "카테고리",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        androidx.compose.foundation.layout.FlowRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            categories.forEach { cat ->
+                                                com.dailymemo.presentation.components.CategoryChip(category = cat)
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
                             // Business Info Section
@@ -561,43 +558,6 @@ fun MemoDetailScreen(
 
                             // Image Section
                             MemoImageSection(imageUrl = imageUrl)
-
-                            // Category
-                            if (category != null) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = category?.icon ?: "",
-                                            style = MaterialTheme.typography.headlineSmall
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column {
-                                            Text(
-                                                text = "카테고리",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                            )
-                                            Text(
-                                                text = category?.displayName ?: "",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
-                                    }
-                                }
-                            }
 
                             // Rating (항상 표시)
                             Card(
