@@ -10,8 +10,40 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Run E2E Tests
+        working-directory: ./backend/src
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: 3306
+          DB_NAME: daily_test
+          GO_ENV: local
+        run: |
+          echo "Running E2E tests on test database (daily_test)..."
+          go test -v ./tests/e2e -run "TestAuthFlow|TestCategoryFlow" -timeout 120s
+
+      - name: Test Results
+        if: failure()
+        run: |
+          echo "❌ Tests failed - deployment blocked"
+          exit 1
+
   deploy:
     runs-on: self-hosted
+    needs: test
 
     steps:
       - name: Clean workspace
