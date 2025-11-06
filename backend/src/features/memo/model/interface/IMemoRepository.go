@@ -7,6 +7,7 @@ import (
 
 type ICreateMemoRepository interface {
 	Create(ctx context.Context, memo *mysql.Memo) error
+	CreateWithCategories(ctx context.Context, memo *mysql.Memo, categoryIDs []uint) error
 }
 
 type IGetMemoRepository interface {

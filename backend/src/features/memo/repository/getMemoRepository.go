@@ -18,12 +18,13 @@ func NewGetMemoRepository(gormDB *gorm.DB) _interface.IGetMemoRepository {
 	}
 }
 
-// GetByID 특정 메모 조회 (댓글 포함)
+// GetByID 특정 메모 조회 (댓글 및 카테고리 포함)
 // 다른 사용자의 방에 있는 메모도 조회 가능하도록 user_id 필터 제거
 func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error) {
 	var memo mysql.Memo
 	result := r.GormDB.WithContext(ctx).
 		Preload("Comments.User").
+		Preload("Categories"). // NEW: 카테고리 정보 포함
 		Where("id = ?", id).
 		First(&memo)
 
@@ -54,6 +55,7 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 	}
 
 	result := query.
+		Preload("Categories"). // NEW: 카테고리 정보 포함
 		Order("is_pinned DESC, created_at DESC").
 		Offset(offset).
 		Limit(limit).

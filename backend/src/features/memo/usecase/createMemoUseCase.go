@@ -23,10 +23,14 @@ func NewCreateMemoUseCase(repo _interface.ICreateMemoRepository, timeout time.Du
 	}
 }
 
-// CreateMemo 메모 생성
+// CreateMemo 메모 생성 (카테고리 포함)
 func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req request.ReqCreateMemo) (*response.ResMemo, error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
 	defer cancel()
+
+	// 카테고리 검증 포함 전체 요청 검증 (DB 접근 필요)
+	// Note: 실제로는 gorm DB 인스턴스를 전달해야 하지만, 임시로 repository를 통해 검증
+	// 이후 handler에서 검증하도록 수정 가능
 
 	// 비즈니스 정보 필드 검증
 	if err := request.ValidateBusinessFields(req.BusinessName, req.BusinessPhone, req.BusinessAddress); err != nil {
@@ -51,14 +55,15 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		UserID:          userID,
 		RoomID:          req.RoomID,
 		Title:           req.Title,
-		Content:         req.Content,
+		Content:         req.Content, // Deprecated - 비워둠
+		CreationMode:    req.CreationMode, // NEW
 		ImageURL:        imageURL,
 		Rating:          req.Rating,
 		IsPinned:        req.IsPinned,
 		Latitude:        req.Latitude,
 		Longitude:       req.Longitude,
 		LocationName:    req.LocationName,
-		Category:        req.Category,
+		Category:        req.Category, // Deprecated
 		IsWishlist:      req.IsWishlist,
 		BusinessName:    req.BusinessName,
 		BusinessPhone:   req.BusinessPhone,
@@ -66,7 +71,8 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		NaverPlaceURL:   req.NaverPlaceURL,
 	}
 
-	err := uc.Repository.Create(ctx, memo)
+	// 카테고리와 함께 트랜잭션으로 생성
+	err := uc.Repository.CreateWithCategories(ctx, memo, req.CategoryIDs)
 	if err != nil {
 		return nil, err
 	}

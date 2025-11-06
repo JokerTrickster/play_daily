@@ -43,27 +43,29 @@ func (User) TableName() string {
 // Memo 메모 정보 테이블
 type Memo struct {
 	gorm.Model
-	UserID          uint      `json:"user_id" gorm:"column:user_id;not null;index;comment:작성자 ID"`
-	RoomID          uint      `json:"room_id" gorm:"column:room_id;not null;index;comment:메모가 속한 방 ID"`
-	Title           string    `json:"title" gorm:"column:title;type:varchar(200);not null;comment:메모 제목"`
-	Content         string    `json:"content" gorm:"column:content;type:text;comment:메모 내용"`
-	ImageURL        string    `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
-	Rating          uint8     `json:"rating" gorm:"column:rating;type:tinyint unsigned;default:0;index;comment:평점 (0-5) 또는 관심도 (1-5)"`
-	IsPinned        bool      `json:"is_pinned" gorm:"column:is_pinned;default:false;index;comment:고정 여부"`
-	LikesCount      uint      `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
-	Latitude        *float64  `json:"latitude" gorm:"column:latitude;type:double;comment:위도"`
-	Longitude       *float64  `json:"longitude" gorm:"column:longitude;type:double;comment:경도"`
-	LocationName    *string   `json:"location_name" gorm:"column:location_name;type:varchar(255);comment:위치 이름"`
-	Category        *string   `json:"category" gorm:"column:category;type:varchar(50);comment:장소 카테고리"`
+	UserID          uint            `json:"user_id" gorm:"column:user_id;not null;index;comment:작성자 ID"`
+	RoomID          uint            `json:"room_id" gorm:"column:room_id;not null;index;comment:메모가 속한 방 ID"`
+	Title           string          `json:"title" gorm:"column:title;type:varchar(200);not null;comment:메모 제목"`
+	Content         string          `json:"content" gorm:"column:content;type:text;comment:메모 내용"` // Deprecated
+	CreationMode    string          `json:"creation_mode" gorm:"column:creation_mode;type:enum('map','list');not null;default:'list';comment:생성 방식 (map/list)"` // NEW
+	ImageURL        string          `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
+	Rating          uint8           `json:"rating" gorm:"column:rating;type:tinyint unsigned;default:0;index;comment:평점 (0-5) 또는 관심도 (1-5)"`
+	IsPinned        bool            `json:"is_pinned" gorm:"column:is_pinned;default:false;index;comment:고정 여부"`
+	LikesCount      uint            `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
+	Latitude        *float64        `json:"latitude" gorm:"column:latitude;type:double;comment:위도"`
+	Longitude       *float64        `json:"longitude" gorm:"column:longitude;type:double;comment:경도"`
+	LocationName    *string         `json:"location_name" gorm:"column:location_name;type:varchar(255);comment:위치 이름"`
+	Category        *string         `json:"category" gorm:"column:category;type:varchar(50);comment:장소 카테고리"` // Deprecated
 	// Wishlist fields (Issue #19)
-	IsWishlist      bool      `json:"is_wishlist" gorm:"column:is_wishlist;default:false;not null;index:idx_user_wishlist;comment:위시리스트 여부 (true=가고싶은곳, false=방문한곳)"`
-	BusinessName    *string   `json:"business_name,omitempty" gorm:"column:business_name;type:varchar(255);comment:장소/가게명 (카카오/네이버)"`
-	BusinessPhone   *string   `json:"business_phone,omitempty" gorm:"column:business_phone;type:varchar(50);comment:전화번호"`
-	BusinessAddress *string   `json:"business_address,omitempty" gorm:"column:business_address;type:text;comment:주소"`
-	NaverPlaceURL   *string   `json:"naver_place_url,omitempty" gorm:"column:naver_place_url;type:varchar(500);comment:네이버 플레이스 URL"`
-	User            *User     `json:"user,omitempty" gorm:"foreignKey:UserID"`
-	Room            *Room     `json:"room,omitempty" gorm:"foreignKey:RoomID"`
-	Comments        []Comment `json:"comments,omitempty" gorm:"foreignKey:MemoID;constraint:OnDelete:CASCADE"`
+	IsWishlist      bool            `json:"is_wishlist" gorm:"column:is_wishlist;default:false;not null;index:idx_user_wishlist;comment:위시리스트 여부 (true=가고싶은곳, false=방문한곳)"`
+	BusinessName    *string         `json:"business_name,omitempty" gorm:"column:business_name;type:varchar(255);comment:장소/가게명 (카카오/네이버)"`
+	BusinessPhone   *string         `json:"business_phone,omitempty" gorm:"column:business_phone;type:varchar(50);comment:전화번호"`
+	BusinessAddress *string         `json:"business_address,omitempty" gorm:"column:business_address;type:text;comment:주소"`
+	NaverPlaceURL   *string         `json:"naver_place_url,omitempty" gorm:"column:naver_place_url;type:varchar(500);comment:네이버 플레이스 URL"`
+	User            *User           `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Room            *Room           `json:"room,omitempty" gorm:"foreignKey:RoomID"`
+	Comments        []Comment       `json:"comments,omitempty" gorm:"foreignKey:MemoID;constraint:OnDelete:CASCADE"`
+	Categories      []MemoCategory  `json:"categories,omitempty" gorm:"many2many:memo_category_selections;"` // NEW: Many-to-many 관계
 }
 
 // TableName Memo 테이블명 지정

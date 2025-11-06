@@ -31,11 +31,25 @@ func convertMemoToResponse(memo *mysql.Memo, isLiked bool) *response.ResMemo {
 		}
 	}
 
+	// 카테고리 변환 (NEW)
+	categories := make([]response.ResCategory, len(memo.Categories))
+	for i, cat := range memo.Categories {
+		categories[i] = response.ResCategory{
+			ID:           cat.ID,
+			Name:         cat.NameKo,
+			Sentiment:    cat.Sentiment,
+			Color:        cat.ColorHex,
+			DisplayOrder: cat.DisplayOrder,
+		}
+	}
+
 	return &response.ResMemo{
 		ID:              memo.ID,
 		UserID:          memo.UserID,
 		Title:           memo.Title,
-		Content:         memo.Content,
+		Content:         memo.Content, // Deprecated
+		CreationMode:    memo.CreationMode, // NEW
+		Categories:      categories, // NEW
 		ImageURL:        memo.ImageURL,
 		Rating:          memo.Rating,
 		IsPinned:        memo.IsPinned,
@@ -44,7 +58,7 @@ func convertMemoToResponse(memo *mysql.Memo, isLiked bool) *response.ResMemo {
 		Latitude:        memo.Latitude,
 		Longitude:       memo.Longitude,
 		LocationName:    memo.LocationName,
-		Category:        memo.Category,
+		Category:        memo.Category, // Deprecated
 		IsWishlist:      memo.IsWishlist,
 		BusinessName:    memo.BusinessName,
 		BusinessPhone:   memo.BusinessPhone,

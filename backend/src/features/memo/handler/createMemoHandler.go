@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"main/common"
+	"main/common/db/mysql"
 	_interface "main/features/memo/model/interface"
 	"main/features/memo/model/request"
 	_middleware "main/middleware"
@@ -31,14 +33,16 @@ func NewCreateMemoHandler(c *echo.Echo, useCase _interface.ICreateMemoUseCase) _
 // @Accept multipart/form-data
 // @Produce json
 // @Param title formData string true "메모 제목"
-// @Param content formData string false "메모 내용"
+// @Param content formData string false "메모 내용 (Deprecated)"
+// @Param creation_mode formData string true "생성 방식 (map 또는 list)"
+// @Param category_ids formData string true "카테고리 ID 배열 (JSON 배열 형식)"
 // @Param image formData file false "이미지 파일"
 // @Param rating formData integer false "평점 (0-5)"
 // @Param is_pinned formData boolean false "고정 여부"
 // @Param latitude formData number false "위도"
 // @Param longitude formData number false "경도"
 // @Param location_name formData string false "장소명"
-// @Param category formData string false "카테고리"
+// @Param category formData string false "카테고리 (Deprecated)"
 // @Success 201 {object} response.ResMemo
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -126,6 +130,24 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 		req.NaverPlaceURL = &naverPlaceURL
 	}
 
+	// CreationMode 파싱 (NEW)
+	req.CreationMode = c.FormValue("creation_mode")
+	if req.CreationMode == "" {
+		req.CreationMode = "list" // 기본값 설정
+	}
+
+	// CategoryIDs 파싱 (NEW) - JSON 배열 형식으로 받음
+	categoryIDsStr := c.FormValue("category_ids")
+	if categoryIDsStr != "" {
+		var categoryIDs []uint
+		if err := json.Unmarshal([]byte(categoryIDsStr), &categoryIDs); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "invalid category_ids format (expected JSON array)",
+			})
+		}
+		req.CategoryIDs = categoryIDs
+	}
+
 	// 이미지 파일 검증 및 처리
 	fileHeader, err := c.FormFile("image")
 	if err == nil && fileHeader != nil {
@@ -153,6 +175,11 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 	// 제목 필수 검증
 	if req.Title == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "title is required"})
+	}
+
+	// 요청 전체 검증 (카테고리 검증 포함)
+	if err := req.ValidateCreateMemo(mysql.GormMysqlDB); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
 	memo, err := h.UseCase.CreateMemo(ctx, userID, req)
