@@ -14,8 +14,17 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Clean workspace before checkout
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+          sudo chmod -R u+w $GITHUB_WORKSPACE || true
+          sudo rm -rf $GITHUB_WORKSPACE/* $GITHUB_WORKSPACE/.*  || true
+        continue-on-error: true
+
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -46,13 +55,17 @@ jobs:
     needs: test
 
     steps:
-      - name: Clean workspace
+      - name: Clean workspace before checkout
         run: |
-          sudo rm -rf backend/logs backend/uploads || true
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+          sudo chmod -R u+w $GITHUB_WORKSPACE || true
+          sudo rm -rf $GITHUB_WORKSPACE/* $GITHUB_WORKSPACE/.* || true
         continue-on-error: true
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Stop existing container
         run: |
@@ -165,3 +178,10 @@ jobs:
 
           # Remove .env file
           rm -f ./backend/.env.production
+
+      - name: Fix workspace permissions
+        if: always()
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE || true
+          sudo chmod -R u+w $GITHUB_WORKSPACE || true
+        continue-on-error: true
