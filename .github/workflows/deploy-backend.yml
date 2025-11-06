@@ -31,6 +31,36 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Update test database schema
+        working-directory: ./backend/src
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+        run: |
+          echo "Updating test database schema..."
+
+          # Check and add room_password column if missing
+          docker run -i --rm mysql:8.0 mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD daily_test <<'EOF' 2>&1 | grep -v "Warning" || true
+            SET @col_exists = (
+              SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+              WHERE TABLE_SCHEMA = 'daily_test'
+              AND TABLE_NAME = 'users'
+              AND COLUMN_NAME = 'room_password'
+            );
+
+            SET @query = IF(@col_exists = 0,
+              'ALTER TABLE users ADD COLUMN room_password VARCHAR(4) COMMENT ''방 비밀번호 (4자리)'' AFTER default_room_id;',
+              'SELECT ''room_password column already exists'' AS info;'
+            );
+
+            PREPARE stmt FROM @query;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+          EOF
+
+          echo "✓ Test database schema updated"
+
       - name: Run E2E Tests
         working-directory: ./backend/src
         env:
