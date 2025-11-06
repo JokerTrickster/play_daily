@@ -35,8 +35,8 @@ func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (
 	return &memo, nil
 }
 
-// GetListByUserID 사용자의 메모 목록 조회 (Room ID, 위시리스트 필터, 페이지네이션 옵션 포함)
-func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, offset int, limit int) ([]mysql.Memo, error) {
+// GetListByUserID 사용자의 메모 목록 조회 (Room ID, 위시리스트 필터, 카테고리 필터, 페이지네이션 옵션 포함)
+func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint, offset int, limit int) ([]mysql.Memo, error) {
 	var memos []mysql.Memo
 	query := r.GormDB.WithContext(ctx)
 
@@ -54,6 +54,13 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 		query = query.Where("is_wishlist = ?", *isWishlist)
 	}
 
+	// categoryIDs 필터 적용 (OR 조건: 선택된 카테고리 중 하나라도 포함된 메모)
+	if len(categoryIDs) > 0 {
+		query = query.Joins("JOIN memo_category_selections ON memos.id = memo_category_selections.memo_id").
+			Where("memo_category_selections.category_id IN ?", categoryIDs).
+			Distinct()
+	}
+
 	result := query.
 		Preload("Categories"). // NEW: 카테고리 정보 포함
 		Order("is_pinned DESC, created_at DESC").
@@ -69,7 +76,7 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 }
 
 // CountByUserID 사용자의 메모 총 개수 조회 (필터 조건 포함)
-func (r *GetMemoRepository) CountByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) (int64, error) {
+func (r *GetMemoRepository) CountByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint) (int64, error) {
 	var count int64
 	query := r.GormDB.WithContext(ctx).Model(&mysql.Memo{})
 
@@ -85,6 +92,13 @@ func (r *GetMemoRepository) CountByUserID(ctx context.Context, userID uint, room
 	// isWishlist 필터 적용
 	if isWishlist != nil {
 		query = query.Where("is_wishlist = ?", *isWishlist)
+	}
+
+	// categoryIDs 필터 적용 (OR 조건: 선택된 카테고리 중 하나라도 포함된 메모)
+	if len(categoryIDs) > 0 {
+		query = query.Joins("JOIN memo_category_selections ON memos.id = memo_category_selections.memo_id").
+			Where("memo_category_selections.category_id IN ?", categoryIDs).
+			Distinct()
 	}
 
 	result := query.Count(&count)

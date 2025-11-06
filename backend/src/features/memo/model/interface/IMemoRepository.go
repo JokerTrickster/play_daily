@@ -12,8 +12,8 @@ type ICreateMemoRepository interface {
 
 type IGetMemoRepository interface {
 	GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error)
-	GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, offset int, limit int) ([]mysql.Memo, error)
-	CountByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool) (int64, error)
+	GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint, offset int, limit int) ([]mysql.Memo, error)
+	CountByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint) (int64, error)
 	CheckUserLikedMemo(ctx context.Context, memoID uint, userID uint) (bool, error)
 }
 

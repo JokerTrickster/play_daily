@@ -38,8 +38,8 @@ func (uc *GetMemoUseCase) GetMemo(ctx context.Context, memoID uint, userID uint)
 	return convertMemoToResponse(memo, isLiked), nil
 }
 
-// GetMemoList 메모 목록 조회 (Room ID, 위시리스트 필터, 페이지네이션 옵션 포함)
-func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, page int, limit int) (*response.ResMemoList, error) {
+// GetMemoList 메모 목록 조회 (Room ID, 위시리스트 필터, 카테고리 필터, 페이지네이션 옵션 포함)
+func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint, page int, limit int) (*response.ResMemoList, error) {
 	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
 	defer cancel()
 
@@ -47,13 +47,13 @@ func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint, roomID *
 	offset := (page - 1) * limit
 
 	// 전체 카운트 조회
-	total, err := uc.Repository.CountByUserID(ctx, userID, roomID, isWishlist)
+	total, err := uc.Repository.CountByUserID(ctx, userID, roomID, isWishlist, categoryIDs)
 	if err != nil {
 		return nil, err
 	}
 
 	// 메모 목록 조회 (페이지네이션 적용)
-	memos, err := uc.Repository.GetListByUserID(ctx, userID, roomID, isWishlist, offset, limit)
+	memos, err := uc.Repository.GetListByUserID(ctx, userID, roomID, isWishlist, categoryIDs, offset, limit)
 	if err != nil {
 		return nil, err
 	}
