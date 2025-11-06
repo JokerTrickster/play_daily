@@ -83,7 +83,23 @@ Currently testing:
 2. GitHub Actions triggers workflow
 3. **Test stage**: E2E tests run on `daily_test` DB
 4. If tests pass → **Deploy stage**: Production deployment
-5. If tests fail → Deployment blocked, notification sent
+5. **Cleanup stage**: Remove old Docker images/containers
+6. If tests fail → Deployment blocked, notification sent
+
+### Docker Cleanup Strategy
+
+To prevent disk space issues, the pipeline automatically cleans up:
+
+- **Dangling images**: Untagged images removed
+- **Old images**: Images older than 7 days (168h) not in use
+- **Stopped containers**: Containers stopped for more than 24h
+- **Unused volumes**: Volumes not attached to any container
+- **Build cache**: Build cache older than 7 days
+
+**Retention Policy**:
+- Current image: `play-daily-backend:latest` (always kept)
+- Recent images: < 7 days (kept as rollback buffer)
+- Old images: > 7 days (automatically removed)
 
 ### Monitoring
 

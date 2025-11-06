@@ -140,6 +140,28 @@ jobs:
 
           echo "Backend is healthy!"
 
-      - name: Cleanup
+      - name: Cleanup unused Docker resources
         run: |
+          echo "Cleaning up unused Docker images and containers..."
+
+          # Remove dangling images (untagged)
+          docker image prune -f
+
+          # Remove unused images (not attached to any container)
+          docker image prune -a -f --filter "until=168h"
+
+          # Remove stopped containers older than 1 day
+          docker container prune -f --filter "until=24h"
+
+          # Remove unused volumes
+          docker volume prune -f
+
+          # Show disk usage before and after
+          echo "Docker disk usage after cleanup:"
+          docker system df
+
+          # Optional: Remove all build cache older than 7 days
+          docker builder prune -f --filter "until=168h" || true
+
+          # Remove .env file
           rm -f ./backend/.env.production
