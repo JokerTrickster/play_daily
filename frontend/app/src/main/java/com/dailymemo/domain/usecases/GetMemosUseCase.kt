@@ -12,10 +12,11 @@ class GetMemosUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         isWishlist: Boolean? = null,
+        categoryIds: List<Int>? = null,
         page: Int = 1,
         limit: Int = 10
     ): Result<MemoListResult> {
         val currentRoomId = authLocalDataSource.getCurrentRoomId()
-        return repository.getMemos(isWishlist, currentRoomId, page, limit)
+        return repository.getMemos(isWishlist, currentRoomId, categoryIds, page, limit)
     }
 }

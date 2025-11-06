@@ -33,12 +33,13 @@ class MemoRepositoryImpl @Inject constructor(
     override suspend fun getMemos(
         isWishlist: Boolean?,
         roomId: Int?,
+        categoryIds: List<Int>?,
         page: Int,
         limit: Int
     ): Result<com.dailymemo.domain.models.MemoListResult> {
         return try {
-            android.util.Log.d("MemoRepositoryImpl", "getMemos - isWishlist: $isWishlist, roomId: $roomId, page: $page, limit: $limit")
-            val response = memoApiService.getMemos(isWishlist, roomId, page, limit)
+            android.util.Log.d("MemoRepositoryImpl", "getMemos - isWishlist: $isWishlist, roomId: $roomId, categoryIds: $categoryIds, page: $page, limit: $limit")
+            val response = memoApiService.getMemos(isWishlist, roomId, categoryIds, page, limit)
             android.util.Log.d("MemoRepositoryImpl", "getMemos response - code: ${response.code()}, isSuccessful: ${response.isSuccessful}, body: ${response.body()}")
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!

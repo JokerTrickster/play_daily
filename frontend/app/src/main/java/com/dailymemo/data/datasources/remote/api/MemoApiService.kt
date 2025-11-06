@@ -15,6 +15,7 @@ interface MemoApiService {
     suspend fun getMemos(
         @Query("is_wishlist") isWishlist: Boolean? = null,
         @Query("room_id") roomId: Int? = null,
+        @Query("category_ids") categoryIds: List<Int>? = null,
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 10
     ): Response<MemoListDto>

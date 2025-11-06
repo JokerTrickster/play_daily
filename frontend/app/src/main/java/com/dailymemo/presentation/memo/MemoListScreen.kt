@@ -26,7 +26,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +62,9 @@ fun MemoListScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val minRating by viewModel.minRating.collectAsState()
     val showFilters by viewModel.showFilters.collectAsState()
+    val categories by viewModel.categories.collectAsState()
+    val filterCategoryIds by viewModel.filterCategoryIds.collectAsState()
+    var showCategoryFilterSheet by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Reload memos when screen comes back to foreground
@@ -107,18 +112,35 @@ fun MemoListScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (currentTab == MemoTab.WISHLIST) {
-                        onNavigateToCreateWishlist()
-                    } else {
-                        onNavigateToCreate()
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                shape = CircleShape
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "새 메모 작성")
+                // Category Filter FAB
+                SmallFloatingActionButton(
+                    onClick = { showCategoryFilterSheet = true },
+                    containerColor = if (filterCategoryIds.isNotEmpty()) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    }
+                ) {
+                    Icon(Icons.Default.FilterList, contentDescription = "카테고리 필터")
+                }
+                // Add Memo FAB
+                FloatingActionButton(
+                    onClick = {
+                        if (currentTab == MemoTab.WISHLIST) {
+                            onNavigateToCreateWishlist()
+                        } else {
+                            onNavigateToCreate()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "새 메모 작성")
+                }
             }
         }
     ) { paddingValues ->
@@ -166,6 +188,36 @@ fun MemoListScreen(
                 ),
                 singleLine = true
             )
+
+            // Active category filter indicator
+            if (filterCategoryIds.isNotEmpty()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.FilterList,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${filterCategoryIds.size}개 카테고리로 필터링 중",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        TextButton(onClick = { viewModel.clearCategoryFilter() }) {
+                            Text("초기화")
+                        }
+                    }
+                }
+            }
 
             // 필터 섹션
             if (showFilters) {
@@ -353,6 +405,17 @@ fun MemoListScreen(
             }
         }
         }
+    }
+
+    // Category Filter Bottom Sheet
+    if (showCategoryFilterSheet) {
+        CategoryFilterBottomSheet(
+            categories = categories,
+            selectedCategoryIds = filterCategoryIds,
+            onApplyFilter = { viewModel.applyCategoryFilter(it) },
+            onClearFilter = { viewModel.clearCategoryFilter() },
+            onDismiss = { showCategoryFilterSheet = false }
+        )
     }
 }
 

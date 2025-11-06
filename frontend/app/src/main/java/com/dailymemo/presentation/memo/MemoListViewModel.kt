@@ -16,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MemoListViewModel @Inject constructor(
     private val getMemosUseCase: GetMemosUseCase,
-    private val deleteMemoUseCase: DeleteMemoUseCase
+    private val deleteMemoUseCase: DeleteMemoUseCase,
+    private val categoryRepository: com.dailymemo.domain.repositories.CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MemoListUiState>(MemoListUiState.Loading)
@@ -46,8 +47,29 @@ class MemoListViewModel @Inject constructor(
     private val _showFilters = MutableStateFlow(false)
     val showFilters: StateFlow<Boolean> = _showFilters.asStateFlow()
 
+    // NEW: Category filter state
+    private val _categories = MutableStateFlow<List<com.dailymemo.domain.models.MemoCategory>>(emptyList())
+    val categories: StateFlow<List<com.dailymemo.domain.models.MemoCategory>> = _categories.asStateFlow()
+
+    private val _filterCategoryIds = MutableStateFlow<Set<Int>>(emptySet())
+    val filterCategoryIds: StateFlow<Set<Int>> = _filterCategoryIds.asStateFlow()
+
     init {
+        loadCategories()
         loadMemos()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            categoryRepository.getCategories().fold(
+                onSuccess = { categories ->
+                    _categories.value = categories
+                },
+                onFailure = { error ->
+                    android.util.Log.e("MemoListViewModel", "Failed to load categories: ${error.message}")
+                }
+            )
+        }
     }
 
     fun switchTab(tab: MemoTab) {
@@ -78,7 +100,18 @@ class MemoListViewModel @Inject constructor(
         _searchQuery.value = ""
         _selectedCategory.value = null
         _minRating.value = 0f
-        applyFilters()
+        _filterCategoryIds.value = emptySet()
+        loadMemos() // Reload without category filter
+    }
+
+    fun applyCategoryFilter(categoryIds: Set<Int>) {
+        _filterCategoryIds.value = categoryIds
+        loadMemos() // Reload with category filter
+    }
+
+    fun clearCategoryFilter() {
+        _filterCategoryIds.value = emptySet()
+        loadMemos() // Reload without category filter
     }
 
     private fun applyFilters() {
@@ -116,7 +149,8 @@ class MemoListViewModel @Inject constructor(
             hasMore = true
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
-            getMemosUseCase(isWishlist = isWishlist, page = currentPage, limit = 10).fold(
+            val categoryIds = if (_filterCategoryIds.value.isNotEmpty()) _filterCategoryIds.value.toList() else null
+            getMemosUseCase(isWishlist = isWishlist, categoryIds = categoryIds, page = currentPage, limit = 10).fold(
                 onSuccess = { result ->
                     _allMemos.value = result.memos
                     hasMore = result.hasMore
@@ -137,7 +171,8 @@ class MemoListViewModel @Inject constructor(
             currentPage++
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
-            getMemosUseCase(isWishlist = isWishlist, page = currentPage, limit = 10).fold(
+            val categoryIds = if (_filterCategoryIds.value.isNotEmpty()) _filterCategoryIds.value.toList() else null
+            getMemosUseCase(isWishlist = isWishlist, categoryIds = categoryIds, page = currentPage, limit = 10).fold(
                 onSuccess = { result ->
                     _allMemos.value = _allMemos.value + result.memos
                     hasMore = result.hasMore

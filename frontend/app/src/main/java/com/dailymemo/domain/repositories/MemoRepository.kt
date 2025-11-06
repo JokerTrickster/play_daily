@@ -9,6 +9,7 @@ interface MemoRepository {
     suspend fun getMemos(
         isWishlist: Boolean? = null,
         roomId: Int? = null,
+        categoryIds: List<Int>? = null,
         page: Int = 1,
         limit: Int = 10
     ): Result<MemoListResult>
