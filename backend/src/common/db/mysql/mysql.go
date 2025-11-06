@@ -33,7 +33,7 @@ func InitMySQL() error {
 	}
 
 	// MySQL 연결 문자열 생성
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4",
 		dbUser,
 		dbPassword,
 		dbHost,
