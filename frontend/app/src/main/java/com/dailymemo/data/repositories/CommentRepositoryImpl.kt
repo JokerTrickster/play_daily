@@ -38,9 +38,9 @@ class CommentRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun createComment(memoId: Long, content: String): Result<Comment> {
+    override suspend fun createComment(memoId: Long, content: String, rating: Int): Result<Comment> {
         return try {
-            val request = CreateCommentRequestDto(content = content, rating = 0)
+            val request = CreateCommentRequestDto(content = content, rating = rating)
             val response = commentApiService.createComment(memoId, request)
             if (response.isSuccessful) {
                 val dto = response.body()

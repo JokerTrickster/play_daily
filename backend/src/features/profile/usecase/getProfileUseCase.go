@@ -28,10 +28,11 @@ func (uc *GetProfileUseCase) GetProfile(ctx context.Context, userID uint) (*resp
 		return nil, err
 	}
 
-	// 내 방이 받은 좋아요 개수 가져오기
-	var receivedLikesCount uint
-	if user.DefaultRoom != nil {
-		receivedLikesCount = user.DefaultRoom.LikesCount
+	// 내 메모들이 받은 총 좋아요 개수 가져오기
+	memoLikesCount, err := uc.Repository.GetUserMemoLikesCount(ctx, userID)
+	if err != nil {
+		// 에러가 나도 0으로 처리
+		memoLikesCount = 0
 	}
 
 	return &response.ResProfile{
@@ -41,6 +42,6 @@ func (uc *GetProfileUseCase) GetProfile(ctx context.Context, userID uint) (*resp
 		ProfileImageURL:    user.ProfileImageURL,
 		DefaultRoomID:      user.DefaultRoomID,
 		RoomPassword:       user.RoomPassword,
-		ReceivedLikesCount: receivedLikesCount,
+		ReceivedLikesCount: memoLikesCount, // 메모 좋아요 개수로 변경
 	}, nil
 }

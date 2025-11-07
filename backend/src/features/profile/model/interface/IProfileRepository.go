@@ -7,6 +7,7 @@ import (
 
 type IGetProfileRepository interface {
 	GetByUserID(ctx context.Context, userID uint) (*mysql.User, error)
+	GetUserMemoLikesCount(ctx context.Context, userID uint) (uint, error)
 }
 
 type IUpdateProfileRepository interface {

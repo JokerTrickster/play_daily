@@ -121,7 +121,7 @@ class MemoDetailViewModel @Inject constructor(
         if (_commentInput.value.isBlank()) return
 
         viewModelScope.launch {
-            createCommentUseCase(memoId, _commentInput.value.trim()).fold(
+            createCommentUseCase(memoId, _commentInput.value.trim(), _commentRating.value).fold(
                 onSuccess = { newComment ->
                     _comments.value = _comments.value + newComment
                     _commentInput.value = ""

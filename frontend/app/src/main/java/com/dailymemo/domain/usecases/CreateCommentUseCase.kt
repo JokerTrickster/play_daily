@@ -7,7 +7,7 @@ import javax.inject.Inject
 class CreateCommentUseCase @Inject constructor(
     private val commentRepository: CommentRepository
 ) {
-    suspend operator fun invoke(memoId: Long, content: String): Result<Comment> {
-        return commentRepository.createComment(memoId, content)
+    suspend operator fun invoke(memoId: Long, content: String, rating: Int): Result<Comment> {
+        return commentRepository.createComment(memoId, content, rating)
     }
 }
