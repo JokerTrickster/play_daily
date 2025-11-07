@@ -15,6 +15,7 @@ type IGetMemoRepository interface {
 	GetListByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint, offset int, limit int) ([]mysql.Memo, error)
 	CountByUserID(ctx context.Context, userID uint, roomID *uint, isWishlist *bool, categoryIDs []uint) (int64, error)
 	CheckUserLikedMemo(ctx context.Context, memoID uint, userID uint) (bool, error)
+	CheckUserLikedMemos(ctx context.Context, memoIDs []uint, userID uint) (map[uint]bool, error) // NEW: Batch like check
 }
 
 type IUpdateMemoRepository interface {

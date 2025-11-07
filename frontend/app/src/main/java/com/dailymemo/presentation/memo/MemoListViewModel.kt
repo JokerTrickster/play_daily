@@ -109,12 +109,14 @@ class MemoListViewModel @Inject constructor(
 
     fun applyCategoryFilter(categoryIds: Set<Int>) {
         _filterCategoryIds.value = categoryIds
-        loadMemos() // Reload with category filter
+        // Use client-side filtering to avoid full reload
+        applyFilters()
     }
 
     fun clearCategoryFilter() {
         _filterCategoryIds.value = emptySet()
-        loadMemos() // Reload without category filter
+        // Use client-side filtering to avoid full reload
+        applyFilters()
     }
 
     private fun applyFilters() {
@@ -128,15 +130,22 @@ class MemoListViewModel @Inject constructor(
                 memo.locationName?.contains(_searchQuery.value, ignoreCase = true) == true
             }
 
-            // 카테고리 필터
+            // 카테고리 필터 (deprecated PlaceCategory)
             val matchesCategory = _selectedCategory.value?.let { selectedCat ->
                 memo.category == selectedCat
             } ?: true
 
+            // 새로운 카테고리 필터 (MemoCategory IDs)
+            val matchesCategoryIds = if (_filterCategoryIds.value.isNotEmpty()) {
+                memo.categories.any { it.id in _filterCategoryIds.value }
+            } else {
+                true
+            }
+
             // 평점 필터
             val matchesRating = memo.rating >= _minRating.value
 
-            matchesSearch && matchesCategory && matchesRating
+            matchesSearch && matchesCategory && matchesCategoryIds && matchesRating
         }
 
         _uiState.value = MemoListUiState.Success(filtered)
@@ -152,8 +161,8 @@ class MemoListViewModel @Inject constructor(
             _hasMore.value = true
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
-            val categoryIds = if (_filterCategoryIds.value.isNotEmpty()) _filterCategoryIds.value.toList() else null
-            getMemosUseCase(isWishlist = isWishlist, categoryIds = categoryIds, page = currentPage, limit = 10).fold(
+            // Don't send categoryIds to server - we'll filter client-side for better UX
+            getMemosUseCase(isWishlist = isWishlist, categoryIds = null, page = currentPage, limit = 10).fold(
                 onSuccess = { result ->
                     _allMemos.value = result.memos
                     _hasMore.value = result.hasMore
@@ -174,8 +183,8 @@ class MemoListViewModel @Inject constructor(
             currentPage++
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
-            val categoryIds = if (_filterCategoryIds.value.isNotEmpty()) _filterCategoryIds.value.toList() else null
-            getMemosUseCase(isWishlist = isWishlist, categoryIds = categoryIds, page = currentPage, limit = 10).fold(
+            // Don't send categoryIds to server - we'll filter client-side for better UX
+            getMemosUseCase(isWishlist = isWishlist, categoryIds = null, page = currentPage, limit = 10).fold(
                 onSuccess = { result ->
                     _allMemos.value = _allMemos.value + result.memos
                     _hasMore.value = result.hasMore

@@ -128,3 +128,27 @@ func (r *GetMemoRepository) CheckUserLikedMemo(ctx context.Context, memoID uint,
 
 	return count > 0, nil
 }
+
+// CheckUserLikedMemos 사용자가 여러 메모를 좋아요 했는지 배치 확인 (N+1 query 해결)
+func (r *GetMemoRepository) CheckUserLikedMemos(ctx context.Context, memoIDs []uint, userID uint) (map[uint]bool, error) {
+	if len(memoIDs) == 0 {
+		return make(map[uint]bool), nil
+	}
+
+	var likes []mysql.MemoLike
+	result := r.GormDB.WithContext(ctx).
+		Where("memo_id IN ? AND user_id = ?", memoIDs, userID).
+		Select("memo_id").
+		Find(&likes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	likedMap := make(map[uint]bool)
+	for _, like := range likes {
+		likedMap[like.MemoID] = true
+	}
+
+	return likedMap, nil
+}

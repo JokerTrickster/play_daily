@@ -56,16 +56,16 @@ fun MemoListScreen(
     onNavigateToCreateWishlist: () -> Unit = {},
     onNavigateToDetail: (Long) -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val currentTab by viewModel.currentTab.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedCategory by viewModel.selectedCategory.collectAsState()
-    val minRating by viewModel.minRating.collectAsState()
-    val showFilters by viewModel.showFilters.collectAsState()
-    val categories by viewModel.categories.collectAsState()
-    val filterCategoryIds by viewModel.filterCategoryIds.collectAsState()
-    val hasMore by viewModel.hasMore.collectAsState()
-    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
+    val minRating by viewModel.minRating.collectAsStateWithLifecycle()
+    val showFilters by viewModel.showFilters.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val filterCategoryIds by viewModel.filterCategoryIds.collectAsStateWithLifecycle()
+    val hasMore by viewModel.hasMore.collectAsStateWithLifecycle()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
     var showCategoryFilterSheet by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -372,11 +372,16 @@ fun MemoListScreen(
                             }
                         }
 
-                        // Infinite scroll logic
-                        LaunchedEffect(listState) {
+                        // Infinite scroll logic with optimizations
+                        LaunchedEffect(listState, state.memos.size, hasMore, isLoadingMore) {
                             snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+                                .distinctUntilChanged()
                                 .collect { lastVisibleIndex ->
-                                    if (lastVisibleIndex != null && lastVisibleIndex >= state.memos.size - 2) {
+                                    val threshold = state.memos.size - 5 // Load 5 items before end
+                                    if (lastVisibleIndex != null &&
+                                        lastVisibleIndex >= threshold &&
+                                        hasMore &&
+                                        !isLoadingMore) {
                                         viewModel.loadMoreMemos()
                                     }
                                 }

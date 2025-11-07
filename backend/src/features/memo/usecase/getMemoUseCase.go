@@ -58,13 +58,22 @@ func (uc *GetMemoUseCase) GetMemoList(ctx context.Context, userID uint, roomID *
 		return nil, err
 	}
 
+	// 모든 메모 ID 수집
+	memoIDs := make([]uint, len(memos))
+	for i, memo := range memos {
+		memoIDs[i] = memo.ID
+	}
+
+	// 배치로 좋아요 상태 확인 (N+1 query 해결)
+	likedMap, err := uc.Repository.CheckUserLikedMemos(ctx, memoIDs, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 응답 변환
 	resMemos := make([]response.ResMemo, len(memos))
 	for i, memo := range memos {
-		// 각 메모에 대해 사용자가 좋아요 했는지 확인
-		isLiked, err := uc.Repository.CheckUserLikedMemo(ctx, memo.ID, userID)
-		if err != nil {
-			return nil, err
-		}
+		isLiked := likedMap[memo.ID]
 		resMemos[i] = *convertMemoToResponse(&memo, isLiked)
 	}
 
