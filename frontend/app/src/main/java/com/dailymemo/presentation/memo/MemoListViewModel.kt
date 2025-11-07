@@ -28,8 +28,11 @@ class MemoListViewModel @Inject constructor(
 
     // 페이지네이션 상태
     private var currentPage = 1
-    private var hasMore = true
-    private var isLoadingMore = false
+    private val _hasMore = MutableStateFlow(true)
+    val hasMore: StateFlow<Boolean> = _hasMore.asStateFlow()
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
 
     // 전체 메모 목록 (필터링 전)
     private val _allMemos = MutableStateFlow<List<Memo>>(emptyList())
@@ -146,14 +149,14 @@ class MemoListViewModel @Inject constructor(
                 _uiState.value = MemoListUiState.Loading
             }
             currentPage = 1
-            hasMore = true
+            _hasMore.value = true
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
             val categoryIds = if (_filterCategoryIds.value.isNotEmpty()) _filterCategoryIds.value.toList() else null
             getMemosUseCase(isWishlist = isWishlist, categoryIds = categoryIds, page = currentPage, limit = 10).fold(
                 onSuccess = { result ->
                     _allMemos.value = result.memos
-                    hasMore = result.hasMore
+                    _hasMore.value = result.hasMore
                     applyFilters()
                 },
                 onFailure = { error ->
@@ -164,10 +167,10 @@ class MemoListViewModel @Inject constructor(
     }
 
     fun loadMoreMemos() {
-        if (!hasMore || isLoadingMore) return
+        if (!_hasMore.value || _isLoadingMore.value) return
 
         viewModelScope.launch {
-            isLoadingMore = true
+            _isLoadingMore.value = true
             currentPage++
 
             val isWishlist = (_currentTab.value == MemoTab.WISHLIST)
@@ -175,13 +178,13 @@ class MemoListViewModel @Inject constructor(
             getMemosUseCase(isWishlist = isWishlist, categoryIds = categoryIds, page = currentPage, limit = 10).fold(
                 onSuccess = { result ->
                     _allMemos.value = _allMemos.value + result.memos
-                    hasMore = result.hasMore
+                    _hasMore.value = result.hasMore
                     applyFilters()
-                    isLoadingMore = false
+                    _isLoadingMore.value = false
                 },
                 onFailure = { error ->
                     currentPage-- // Rollback page on error
-                    isLoadingMore = false
+                    _isLoadingMore.value = false
                 }
             )
         }

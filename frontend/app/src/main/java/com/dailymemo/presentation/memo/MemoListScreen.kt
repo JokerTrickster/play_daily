@@ -64,6 +64,8 @@ fun MemoListScreen(
     val showFilters by viewModel.showFilters.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val filterCategoryIds by viewModel.filterCategoryIds.collectAsState()
+    val hasMore by viewModel.hasMore.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     var showCategoryFilterSheet by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -353,17 +355,19 @@ fun MemoListScreen(
                                 )
                             }
 
-                            // Loading indicator at bottom (only shown when there's more data)
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                            // Loading indicator at bottom (only shown when loading more data)
+                            if (hasMore && isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

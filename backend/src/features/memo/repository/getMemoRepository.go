@@ -24,7 +24,7 @@ func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (
 	var memo mysql.Memo
 	result := r.GormDB.WithContext(ctx).
 		Preload("Comments.User").
-		Preload("Categories"). // NEW: 카테고리 정보 포함
+		Preload("Categories", "memo_category_selections.deleted_at IS NULL"). // NEW: soft delete 제외
 		Where("id = ?", id).
 		First(&memo)
 
@@ -62,7 +62,7 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 	}
 
 	result := query.
-		Preload("Categories"). // NEW: 카테고리 정보 포함
+		Preload("Categories", "memo_category_selections.deleted_at IS NULL"). // NEW: soft delete 제외
 		Order("is_pinned DESC, created_at DESC").
 		Offset(offset).
 		Limit(limit).

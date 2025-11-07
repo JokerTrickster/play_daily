@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -378,6 +380,54 @@ fun MemoDetailScreen(
                                         starSize = 36.dp,
                                         showLabel = true
                                     )
+                                }
+                            }
+
+                            // Categories Section
+                            if (categories.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "선택한 카테고리",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        androidx.compose.foundation.layout.FlowRow(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            categories.forEach { category ->
+                                                val categoryColor = try {
+                                                    Color(android.graphics.Color.parseColor(category.color))
+                                                } catch (e: Exception) {
+                                                    MaterialTheme.colorScheme.primary
+                                                }
+                                                Surface(
+                                                    shape = RoundedCornerShape(16.dp),
+                                                    color = categoryColor.copy(alpha = 0.2f),
+                                                    border = BorderStroke(1.dp, categoryColor)
+                                                ) {
+                                                    Text(
+                                                        text = category.name,
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = categoryColor,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
 

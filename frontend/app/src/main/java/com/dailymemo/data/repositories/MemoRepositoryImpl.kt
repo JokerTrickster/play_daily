@@ -316,6 +316,19 @@ class MemoRepositoryImpl @Inject constructor(
             userId = userId,
             title = title,
             content = content,
+            creationMode = when (creationMode) {
+                "map" -> com.dailymemo.domain.models.CreationMode.MAP
+                else -> com.dailymemo.domain.models.CreationMode.LIST
+            },
+            categories = categories?.map { categoryDto ->
+                com.dailymemo.domain.models.MemoCategory(
+                    id = categoryDto.id,
+                    name = categoryDto.name,
+                    sentiment = com.dailymemo.domain.models.CategorySentiment.fromString(categoryDto.sentiment),
+                    color = categoryDto.color,
+                    displayOrder = categoryDto.displayOrder
+                )
+            } ?: emptyList(),
             imageUrl = imageUrl,
             rating = rating,
             isPinned = isPinned,

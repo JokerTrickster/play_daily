@@ -2,6 +2,19 @@ package com.dailymemo.data.models.response
 
 import com.google.gson.annotations.SerializedName
 
+data class MemoCategoryDto(
+    @SerializedName("id")
+    val id: Int,
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("sentiment")
+    val sentiment: String,
+    @SerializedName("color")
+    val color: String,
+    @SerializedName("display_order")
+    val displayOrder: Int
+)
+
 data class MemoDto(
     @SerializedName("id")
     val id: Long,
@@ -11,6 +24,10 @@ data class MemoDto(
     val title: String,
     @SerializedName("content")
     val content: String,
+    @SerializedName("creation_mode")
+    val creationMode: String? = "list",
+    @SerializedName("categories")
+    val categories: List<MemoCategoryDto>? = null,
     @SerializedName("image_url")
     val imageUrl: String?,
     @SerializedName("rating")
