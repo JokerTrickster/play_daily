@@ -9,12 +9,14 @@ import (
 // Room 방 정보 테이블
 type Room struct {
 	gorm.Model
-	RoomCode    string `json:"room_code" gorm:"column:room_code;type:varchar(50);uniqueIndex;not null;comment:방 고유 코드 (UUID)"`
-	Name        string `json:"name" gorm:"column:name;type:varchar(100);not null;comment:방 이름"`
-	LikesCount  uint   `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
-	OwnerUserID uint   `json:"owner_user_id" gorm:"column:owner_user_id;not null;index;comment:방 소유자 ID"`
-	Owner       *User  `json:"owner,omitempty" gorm:"foreignKey:OwnerUserID"`
-	Memos       []Memo `json:"memos,omitempty" gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
+	RoomCode    string  `json:"room_code" gorm:"column:room_code;type:varchar(50);uniqueIndex;not null;comment:방 고유 코드 (UUID)"`
+	Name        string  `json:"name" gorm:"column:name;type:varchar(100);not null;comment:방 이름"`
+	LikesCount  uint    `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
+	OwnerUserID uint    `json:"owner_user_id" gorm:"column:owner_user_id;not null;index;comment:방 소유자 ID"`
+	IsPublic    bool    `json:"is_public" gorm:"column:is_public;not null;default:false;index;comment:방 공개 여부 (true=퍼블릭, false=프라이빗)"`
+	Password    *string `json:"password,omitempty" gorm:"column:password;type:varchar(4);comment:방 비밀번호 (4자리 숫자, 퍼블릭 방은 NULL)"`
+	Owner       *User   `json:"owner,omitempty" gorm:"foreignKey:OwnerUserID"`
+	Memos       []Memo  `json:"memos,omitempty" gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
 }
 
 // TableName Room 테이블명 지정
