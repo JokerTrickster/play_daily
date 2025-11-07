@@ -2,6 +2,7 @@ package _interface
 
 import (
 	"context"
+	"main/common/db/mysql"
 	"main/features/room/model/request"
 	"main/features/room/model/response"
 
@@ -17,9 +18,10 @@ type IJoinRoomUseCase interface {
 }
 
 type IJoinRoomRepository interface {
-	GetRoomByID(ctx context.Context, roomID uint) (*response.ResRoom, error)
-	VerifyRoomPassword(ctx context.Context, roomID uint, password string) (bool, error)
-	UpdateUserDefaultRoom(ctx context.Context, userID uint, roomID uint) error
+	GetRoomByRoomCode(ctx context.Context, roomCode string) (*mysql.Room, error)
+	FindExistingMember(ctx context.Context, roomID uint, userID uint) (*mysql.RoomMember, error)
+	CreateRoomMember(ctx context.Context, member *mysql.RoomMember) error
+	GetRoomMemberCount(ctx context.Context, roomID uint) (int64, error)
 }
 
 type IKickUserHandler interface {
@@ -46,4 +48,39 @@ type IGetRoomMembersUseCase interface {
 type IGetRoomMembersRepository interface {
 	GetRoomMembers(ctx context.Context, roomID uint) (*response.ResRoomMembers, error)
 	CheckRoomMember(ctx context.Context, roomID uint, userID uint) (bool, error)
+}
+
+type IUpdatePermissionHandler interface {
+	UpdatePermission(c echo.Context) error
+}
+
+type IUpdatePermissionUseCase interface {
+	Execute(ctx context.Context, requesterUserID int64, req *request.UpdatePermissionRequest) error
+}
+
+// New interfaces for privacy management
+type IUpdateRoomPrivacyHandler interface {
+	UpdateRoomPrivacy(c echo.Context) error
+}
+
+type IUpdateRoomPrivacyUseCase interface {
+	UpdateRoomPrivacy(ctx context.Context, roomID uint, userID uint, req *request.ReqUpdateRoomPrivacy) (*response.ResUpdateRoomPrivacy, error)
+}
+
+type IUpdateRoomPrivacyRepository interface {
+	GetRoomByID(ctx context.Context, roomID uint) (*mysql.Room, error)
+	UpdateRoom(ctx context.Context, room *mysql.Room) error
+}
+
+type IGetPublicRoomsHandler interface {
+	GetPublicRooms(c echo.Context) error
+}
+
+type IGetPublicRoomsUseCase interface {
+	GetPublicRooms(ctx context.Context, req *request.ReqGetPublicRooms) (*response.ResGetPublicRooms, error)
+}
+
+type IGetPublicRoomsRepository interface {
+	GetPublicRooms(ctx context.Context, offset, limit int) ([]mysql.Room, int64, error)
+	GetRoomMemberCount(ctx context.Context, roomID uint) (int64, error)
 }

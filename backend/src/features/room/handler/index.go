@@ -18,22 +18,32 @@ func NewRoomHandler(c *echo.Echo) {
 	kickUserRepo := repository.NewKickUserRepository(db)
 	getRoomMembersRepo := repository.NewGetRoomMembersRepository(db)
 	updatePermissionRepo := repository.NewUpdatePermissionRepository(db)
+	updateRoomPrivacyRepo := repository.NewUpdateRoomPrivacyRepository(db)
+	getPublicRoomsRepo := repository.NewGetPublicRoomsRepository(db)
 
 	// UseCase 초기화
 	joinRoomUseCase := usecase.NewJoinRoomUseCase(joinRoomRepo, 30*time.Second)
 	kickUserUseCase := usecase.NewKickUserUseCase(kickUserRepo, 30*time.Second)
 	getRoomMembersUseCase := usecase.NewGetRoomMembersUseCase(getRoomMembersRepo, 30*time.Second)
 	updatePermissionUseCase := usecase.NewUpdatePermissionUseCase(updatePermissionRepo, 30*time.Second)
+	updateRoomPrivacyUseCase := usecase.NewUpdateRoomPrivacyUseCase(updateRoomPrivacyRepo, 30*time.Second)
+	getPublicRoomsUseCase := usecase.NewGetPublicRoomsUseCase(getPublicRoomsRepo, 30*time.Second)
 
 	// Handler 초기화
 	joinRoomHandler := NewJoinRoomHandler(joinRoomUseCase)
 	kickUserHandler := NewKickUserHandler(kickUserUseCase)
 	getRoomMembersHandler := NewGetRoomMembersHandler(getRoomMembersUseCase)
 	updatePermissionHandler := NewUpdatePermissionHandler(updatePermissionUseCase)
+	updateRoomPrivacyHandler := NewUpdateRoomPrivacyHandler(updateRoomPrivacyUseCase)
+	getPublicRoomsHandler := NewGetPublicRoomsHandler(getPublicRoomsUseCase)
 
-	// 라우트 등록 (인증 필요)
-	c.POST("/v0.1/room/join", joinRoomHandler.JoinRoom, _middleware.TokenChecker)
+	// 기존 라우트 (인증 필요)
 	c.POST("/v0.1/room/kick", kickUserHandler.KickUser, _middleware.TokenChecker)
 	c.GET("/v0.1/room/members", getRoomMembersHandler.GetRoomMembers, _middleware.TokenChecker)
 	c.POST("/v0.1/room/permission", updatePermissionHandler.UpdatePermission, _middleware.TokenChecker)
+
+	// 새로운 라우트 (Privacy Management)
+	c.PUT("/v0.1/rooms/:room_id/privacy", updateRoomPrivacyHandler.UpdateRoomPrivacy, _middleware.TokenChecker)
+	c.GET("/v0.1/rooms/public", getPublicRoomsHandler.GetPublicRooms) // No auth required
+	c.POST("/v0.1/rooms/join", joinRoomHandler.JoinRoom, _middleware.TokenChecker)
 }
