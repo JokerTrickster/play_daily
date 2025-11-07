@@ -2,6 +2,7 @@ package handler
 
 import (
 	_interface "main/features/memolike/model/interface"
+	_middleware "main/middleware"
 	"net/http"
 	"strconv"
 
@@ -16,7 +17,7 @@ func NewToggleMemoLikeHandler(c *echo.Echo, useCase _interface.IToggleMemoLikeUs
 	handler := &ToggleMemoLikeHandler{
 		UseCase: useCase,
 	}
-	c.POST("/v0.1/memo/:memo_id/like", handler.ToggleLike)
+	c.POST("/v0.1/memo/:memo_id/like", handler.ToggleLike, _middleware.TokenChecker)
 	return handler
 }
 
@@ -34,8 +35,11 @@ func NewToggleMemoLikeHandler(c *echo.Echo, useCase _interface.IToggleMemoLikeUs
 func (h *ToggleMemoLikeHandler) ToggleLike(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// TODO: JWT에서 userID 추출
-	userID := uint(1)
+	// JWT에서 userID 추출
+	userID, ok := c.Get("uID").(uint)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user id"})
+	}
 
 	// Path parameter에서 memo_id 추출
 	memoIDStr := c.Param("memo_id")
