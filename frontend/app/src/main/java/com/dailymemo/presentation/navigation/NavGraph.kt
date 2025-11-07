@@ -15,6 +15,8 @@ import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 import com.dailymemo.presentation.profile.ProfileEditScreen
+import com.dailymemo.presentation.rooms.DiscoverRoomsScreen
+import com.dailymemo.presentation.rooms.JoinRoomScreen
 
 @Composable
 fun NavGraph(
@@ -120,6 +122,26 @@ fun NavGraph(
         // Collaboration screens
         composable(Screen.Collaboration.route) {
             CollaborationScreen()
+        }
+
+        // Room discovery and join screens
+        composable(Screen.Room.Discover.route) {
+            DiscoverRoomsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.Room.Join.route) {
+            JoinRoomScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToDiscover = {
+                    navController.navigate(Screen.Room.Discover.route)
+                }
+            )
         }
     }
 }

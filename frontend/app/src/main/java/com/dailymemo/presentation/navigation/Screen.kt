@@ -21,5 +21,10 @@ sealed class Screen(val route: String) {
         object Edit : Profile("profile/edit")
     }
 
+    sealed class Room(route: String) : Screen(route) {
+        object Discover : Room("rooms/discover")
+        object Join : Room("rooms/join")
+    }
+
     object Collaboration : Screen("collaboration")
 }
