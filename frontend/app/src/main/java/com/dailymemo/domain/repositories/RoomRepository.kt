@@ -1,5 +1,6 @@
 package com.dailymemo.domain.repositories
 
+import com.dailymemo.domain.models.PublicRoomsResult
 import com.dailymemo.domain.models.RoomMember
 import com.dailymemo.domain.models.RoomPermission
 
@@ -8,4 +9,6 @@ interface RoomRepository {
     suspend fun kickUser(roomId: Long, targetUserId: Long): Result<Unit>
     suspend fun getRoomMembers(roomId: Long): Result<List<RoomMember>>
     suspend fun updateMemberPermission(roomId: Long, userId: Long, permission: RoomPermission): Result<Unit>
+    suspend fun updateRoomPrivacy(roomId: Long, isPublic: Boolean): Result<Pair<Boolean, String?>>
+    suspend fun getPublicRooms(page: Int, limit: Int): Result<PublicRoomsResult>
 }

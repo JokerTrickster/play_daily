@@ -41,6 +41,7 @@ import com.kakao.vectormap.label.LabelStyles
 fun ProfileScreen(
     onLogout: () -> Unit,
     onNavigateToEdit: () -> Unit = {},
+    onNavigateToJoinRoom: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val userName by viewModel.userName.collectAsState()
@@ -54,7 +55,14 @@ fun ProfileScreen(
     val likedRooms by viewModel.likedRooms.collectAsState()
     val roomPassword by viewModel.roomPassword.collectAsState()
     val receivedLikesCount by viewModel.receivedLikesCount.collectAsState()
+    val isRoomPublic by viewModel.isRoomPublic.collectAsState()
+    val showPrivacyConfirmDialog by viewModel.showPrivacyConfirmDialog.collectAsState()
+    val pendingPrivacyState by viewModel.pendingPrivacyState.collectAsState()
+    val privacyChangeLoading by viewModel.privacyChangeLoading.collectAsState()
+    val showPasswordSuccessDialog by viewModel.showPasswordSuccessDialog.collectAsState()
+    val newGeneratedPassword by viewModel.newGeneratedPassword.collectAsState()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Reload room info when screen comes back to foreground
@@ -144,9 +152,26 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
+            // Privacy Settings Section
+            if (myRoomId != null && currentRoom != null && currentRoom.id == myRoomId.toString()) {
+                PrivacySettingsSection(
+                    isPublic = isRoomPublic,
+                    roomPassword = roomPassword,
+                    isLoading = privacyChangeLoading,
+                    onPrivacyChange = { newIsPublic ->
+                        viewModel.requestPrivacyChange(newIsPublic)
+                    },
+                    onCopyPassword = {
+                        viewModel.copyPasswordToClipboard(context)
+                    }
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
             // Menu Items
             MenuSection(
                 onProfileEditClick = onNavigateToEdit,
+                onJoinRoomClick = onNavigateToJoinRoom,
                 onLogoutClick = { showLogoutDialog = true }
             )
 
@@ -238,6 +263,230 @@ fun ProfileScreen(
                 }
             }
         )
+    }
+
+    // Privacy Confirmation Dialog
+    if (showPrivacyConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissPrivacyConfirm() },
+            title = { Text("방 공개 설정 변경") },
+            text = {
+                Text(
+                    if (pendingPrivacyState) {
+                        "방을 공개로 설정하시겠습니까?\n다른 사용자가 공개 방 목록에서 이 방을 찾을 수 있습니다."
+                    } else {
+                        "방을 비공개로 설정하시겠습니까?\n4자리 비밀번호가 생성되며, 비밀번호를 아는 사람만 참여할 수 있습니다."
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmPrivacyChange() }) {
+                    Text("확인")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissPrivacyConfirm() }) {
+                    Text("취소")
+                }
+            }
+        )
+    }
+
+    // Password Success Dialog
+    if (showPasswordSuccessDialog && newGeneratedPassword != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissPasswordSuccess() },
+            title = { Text("비공개 설정 완료") },
+            text = {
+                Column {
+                    Text("방이 비공개로 설정되었습니다.")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "새 비밀번호: $newGeneratedPassword",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "비밀번호를 반드시 저장해주세요!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.copyPasswordToClipboard(context)
+                        viewModel.dismissPasswordSuccess()
+                    }
+                ) {
+                    Text("복사하고 닫기")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissPasswordSuccess() }) {
+                    Text("닫기")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun PrivacySettingsSection(
+    isPublic: Boolean,
+    roomPassword: String,
+    isLoading: Boolean,
+    onPrivacyChange: (Boolean) -> Unit,
+    onCopyPassword: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(6.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isPublic) Icons.Outlined.Public else Icons.Outlined.Lock,
+                    contentDescription = "공개 설정",
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "방 공개 설정",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Radio buttons for Public/Private
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    // Public option
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = isPublic,
+                            onClick = { if (!isLoading) onPrivacyChange(true) },
+                            enabled = !isLoading
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "공개",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "다른 사용자가 찾을 수 있습니다",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
+
+                    // Private option
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = !isPublic,
+                            onClick = { if (!isLoading) onPrivacyChange(false) },
+                            enabled = !isLoading
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "비공개",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "비밀번호를 아는 사람만 참여",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Password field (only if private)
+            if (!isPublic && roomPassword.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = roomPassword,
+                    onValueChange = {},
+                    label = { Text("방 비밀번호") },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = onCopyPassword) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "비밀번호 복사"
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "참여를 원하는 사람에게 이 비밀번호를 공유하세요",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Loading indicator
+            if (isLoading) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+            }
+        }
     }
 }
 
@@ -418,6 +667,7 @@ fun StatItem(
 @Composable
 fun MenuSection(
     onProfileEditClick: () -> Unit,
+    onJoinRoomClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     Column(
@@ -445,6 +695,18 @@ fun MenuSection(
                     title = "프로필 수정",
                     subtitle = "이름, 비밀번호, 프로필 이미지 변경",
                     onClick = onProfileEditClick
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                MenuItemCard(
+                    icon = Icons.Outlined.MeetingRoom,
+                    title = "방 참여하기",
+                    subtitle = "방 코드로 참여 또는 공개 방 둘러보기",
+                    onClick = onJoinRoomClick
                 )
 
                 HorizontalDivider(

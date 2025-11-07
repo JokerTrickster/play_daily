@@ -3,7 +3,10 @@ package com.dailymemo.data.repositories
 import com.dailymemo.data.datasources.remote.api.RoomApiService
 import com.dailymemo.data.models.request.JoinRoomRequestDto
 import com.dailymemo.data.models.request.KickUserRequestDto
+import com.dailymemo.data.models.request.UpdateRoomPrivacyRequestDto
 import com.dailymemo.domain.error.DomainError
+import com.dailymemo.domain.models.PublicRoom
+import com.dailymemo.domain.models.PublicRoomsResult
 import com.dailymemo.domain.models.RoomMember
 import com.dailymemo.domain.models.RoomPermission
 import com.dailymemo.domain.repositories.RoomRepository
@@ -127,6 +130,73 @@ class RoomRepositoryImpl @Inject constructor(
                     403 -> DomainError.Forbidden
                     400 -> DomainError.BadRequest
                     404 -> DomainError.RoomNotFound
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
+
+    override suspend fun updateRoomPrivacy(roomId: Long, isPublic: Boolean): Result<Pair<Boolean, String?>> {
+        return try {
+            val request = UpdateRoomPrivacyRequestDto(isPublic = isPublic)
+            val response = roomApiService.updateRoomPrivacy(roomId, request)
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                Result.success(Pair(body.isPublic, body.roomPassword))
+            } else {
+                val error = when (response.code()) {
+                    403 -> DomainError.Forbidden
+                    404 -> DomainError.RoomNotFound
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
+
+    override suspend fun getPublicRooms(page: Int, limit: Int): Result<PublicRoomsResult> {
+        return try {
+            val response = roomApiService.getPublicRooms(page, limit)
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                val rooms = body.rooms.map { dto ->
+                    PublicRoom(
+                        roomId = dto.roomId,
+                        roomName = dto.roomName,
+                        roomCode = dto.roomCode,
+                        ownerName = dto.ownerName,
+                        likesCount = dto.likesCount,
+                        membersCount = dto.membersCount
+                    )
+                }
+                Result.success(
+                    PublicRoomsResult(
+                        rooms = rooms,
+                        total = body.total,
+                        page = body.page,
+                        limit = body.limit,
+                        hasMore = body.hasMore
+                    )
+                )
+            } else {
+                val error = when (response.code()) {
                     else -> DomainError.UnknownError
                 }
                 Result.failure(error)

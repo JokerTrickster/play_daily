@@ -33,7 +33,8 @@ class ProfileViewModel @Inject constructor(
     private val kickUserUseCase: com.dailymemo.domain.usecases.room.KickUserUseCase,
     private val getRoomMembersUseCase: com.dailymemo.domain.usecases.room.GetRoomMembersUseCase,
     private val updateMemberPermissionUseCase: com.dailymemo.domain.usecases.room.UpdateMemberPermissionUseCase,
-    private val memoRepository: com.dailymemo.domain.repositories.MemoRepository
+    private val memoRepository: com.dailymemo.domain.repositories.MemoRepository,
+    private val roomRepository: com.dailymemo.domain.repositories.RoomRepository
 ) : ViewModel() {
 
     // Profile Management States (New - Task #36)
@@ -388,6 +389,25 @@ class ProfileViewModel @Inject constructor(
     private val _joinRoomError = MutableStateFlow<String?>(null)
     val joinRoomError: StateFlow<String?> = _joinRoomError.asStateFlow()
 
+    // Privacy toggle states
+    private val _isRoomPublic = MutableStateFlow(false)
+    val isRoomPublic: StateFlow<Boolean> = _isRoomPublic.asStateFlow()
+
+    private val _showPrivacyConfirmDialog = MutableStateFlow(false)
+    val showPrivacyConfirmDialog: StateFlow<Boolean> = _showPrivacyConfirmDialog.asStateFlow()
+
+    private val _pendingPrivacyState = MutableStateFlow(false)
+    val pendingPrivacyState: StateFlow<Boolean> = _pendingPrivacyState.asStateFlow()
+
+    private val _privacyChangeLoading = MutableStateFlow(false)
+    val privacyChangeLoading: StateFlow<Boolean> = _privacyChangeLoading.asStateFlow()
+
+    private val _newGeneratedPassword = MutableStateFlow<String?>(null)
+    val newGeneratedPassword: StateFlow<String?> = _newGeneratedPassword.asStateFlow()
+
+    private val _showPasswordSuccessDialog = MutableStateFlow(false)
+    val showPasswordSuccessDialog: StateFlow<Boolean> = _showPasswordSuccessDialog.asStateFlow()
+
     init {
         loadProfile() // This will call loadUserInfo() after profile is loaded
         loadCurrentRoom()
@@ -640,6 +660,67 @@ class ProfileViewModel @Inject constructor(
                     // TODO: Show error message to user
                 }
             )
+        }
+    }
+
+    // Privacy toggle methods
+    fun requestPrivacyChange(newIsPublic: Boolean) {
+        if (_isRoomPublic.value != newIsPublic) {
+            _pendingPrivacyState.value = newIsPublic
+            _showPrivacyConfirmDialog.value = true
+        }
+    }
+
+    fun confirmPrivacyChange() {
+        _showPrivacyConfirmDialog.value = false
+        _privacyChangeLoading.value = true
+
+        viewModelScope.launch {
+            val roomId = _myRoomId.value
+            if (roomId == null) {
+                android.util.Log.e("ProfileViewModel", "Cannot change privacy: myRoomId is null")
+                _privacyChangeLoading.value = false
+                return@launch
+            }
+
+            roomRepository.updateRoomPrivacy(roomId.toLong(), _pendingPrivacyState.value).fold(
+                onSuccess = { (isPublic, password) ->
+                    _isRoomPublic.value = isPublic
+                    _privacyChangeLoading.value = false
+
+                    // If switched to private, show password dialog
+                    if (!isPublic && password != null) {
+                        _roomPassword.value = password
+                        _newGeneratedPassword.value = password
+                        _showPasswordSuccessDialog.value = true
+                    }
+                },
+                onFailure = { error ->
+                    android.util.Log.e("ProfileViewModel", "Failed to update privacy: ${error.message}")
+                    _privacyChangeLoading.value = false
+                    // TODO: Show error message to user
+                }
+            )
+        }
+    }
+
+    fun dismissPrivacyConfirm() {
+        _showPrivacyConfirmDialog.value = false
+    }
+
+    fun dismissPasswordSuccess() {
+        _showPasswordSuccessDialog.value = false
+        _newGeneratedPassword.value = null
+    }
+
+    fun copyPasswordToClipboard(context: android.content.Context) {
+        val password = _roomPassword.value
+        if (password.isNotEmpty()) {
+            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Room Password", password)
+            clipboard.setPrimaryClip(clip)
+            // Show toast
+            android.widget.Toast.makeText(context, "비밀번호가 복사되었습니다", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
