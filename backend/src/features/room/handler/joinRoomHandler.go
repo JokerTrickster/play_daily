@@ -19,9 +19,9 @@ func NewJoinRoomHandler(useCase _interface.IJoinRoomUseCase) _interface.IJoinRoo
 }
 
 // JoinRoom handles the room join request
-// @Router /v0.1/room/join [post]
-// @Summary Join a room with password
-// @Description Join an existing room by providing room ID and password
+// @Router /v0.1/rooms/join [post]
+// @Summary Join a room by room code
+// @Description Join an existing room by providing room code and optional password
 // @Accept json
 // @Produce json
 // @Param request body request.ReqJoinRoom true "Join room request"
@@ -44,15 +44,12 @@ func (h *JoinRoomHandler) JoinRoom(c echo.Context) error {
 	// Bind request
 	var req request.ReqJoinRoom
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
 	// Manual validation
-	if req.RoomID == 0 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "room_id is required"})
-	}
-	if len(req.RoomPassword) != 4 {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "room_password must be 4 characters"})
+	if req.RoomCode == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "room_code is required"})
 	}
 
 	// Execute use case
@@ -61,8 +58,8 @@ func (h *JoinRoomHandler) JoinRoom(c echo.Context) error {
 		if err.Error() == "room not found" {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "room not found"})
 		}
-		if err.Error() == "invalid room password" {
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid room password"})
+		if err.Error() == "invalid password" {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid password"})
 		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}

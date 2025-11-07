@@ -5,65 +5,63 @@ import (
 	"errors"
 	"main/common/db/mysql"
 	_interface "main/features/room/model/interface"
-	"main/features/room/model/response"
 
 	"gorm.io/gorm"
 )
 
 type JoinRoomRepository struct {
-	DB *gorm.DB
+	GormDB *gorm.DB
 }
 
 func NewJoinRoomRepository(db *gorm.DB) _interface.IJoinRoomRepository {
 	return &JoinRoomRepository{
-		DB: db,
+		GormDB: db,
 	}
 }
 
-// GetRoomByID retrieves room information by room ID
-func (r *JoinRoomRepository) GetRoomByID(ctx context.Context, roomID uint) (*response.ResRoom, error) {
+// GetRoomByRoomCode retrieves room information by room code
+func (r *JoinRoomRepository) GetRoomByRoomCode(ctx context.Context, roomCode string) (*mysql.Room, error) {
 	var room mysql.Room
-	if err := r.DB.WithContext(ctx).Where("id = ?", roomID).First(&room).Error; err != nil {
+	if err := r.GormDB.WithContext(ctx).
+		Where("room_code = ? AND deleted_at IS NULL", roomCode).
+		First(&room).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("room not found")
 		}
 		return nil, err
 	}
-
-	return &response.ResRoom{
-		ID:           room.ID,
-		OwnerID:      room.OwnerUserID,
-		RoomPassword: "", // Password should not be returned
-	}, nil
+	return &room, nil
 }
 
-// VerifyRoomPassword verifies the room password by checking the owner's room password
-func (r *JoinRoomRepository) VerifyRoomPassword(ctx context.Context, roomID uint, password string) (bool, error) {
-	var room mysql.Room
-	if err := r.DB.WithContext(ctx).Preload("Owner").Where("id = ?", roomID).First(&room).Error; err != nil {
+// FindExistingMember checks if a user is already a member of the room
+func (r *JoinRoomRepository) FindExistingMember(ctx context.Context, roomID uint, userID uint) (*mysql.RoomMember, error) {
+	var member mysql.RoomMember
+	if err := r.GormDB.WithContext(ctx).
+		Where("room_id = ? AND user_id = ? AND deleted_at IS NULL", roomID, userID).
+		First(&member).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, errors.New("room not found")
+			return nil, nil
 		}
-		return false, err
+		return nil, err
 	}
-
-	// Check if room has an owner
-	if room.Owner == nil {
-		return false, errors.New("room owner not found")
-	}
-
-	// Compare password with owner's room password
-	return room.Owner.RoomPassword == password, nil
+	return &member, nil
 }
 
-// UpdateUserDefaultRoom updates user's default room ID
-func (r *JoinRoomRepository) UpdateUserDefaultRoom(ctx context.Context, userID uint, roomID uint) error {
-	result := r.DB.WithContext(ctx).Model(&mysql.User{}).Where("id = ?", userID).Update("default_room_id", roomID)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("user not found")
+// CreateRoomMember adds a new member to the room
+func (r *JoinRoomRepository) CreateRoomMember(ctx context.Context, member *mysql.RoomMember) error {
+	if err := r.GormDB.WithContext(ctx).Create(member).Error; err != nil {
+		return err
 	}
 	return nil
+}
+
+// GetRoomMemberCount retrieves the member count for a specific room
+func (r *JoinRoomRepository) GetRoomMemberCount(ctx context.Context, roomID uint) (int64, error) {
+	var count int64
+	if err := r.GormDB.WithContext(ctx).Model(&mysql.RoomMember{}).
+		Where("room_id = ? AND deleted_at IS NULL", roomID).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
 }
