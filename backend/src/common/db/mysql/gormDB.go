@@ -65,7 +65,7 @@ type Memo struct {
 	User            *User           `json:"user,omitempty" gorm:"foreignKey:UserID"`
 	Room            *Room           `json:"room,omitempty" gorm:"foreignKey:RoomID"`
 	Comments        []Comment       `json:"comments,omitempty" gorm:"foreignKey:MemoID;constraint:OnDelete:CASCADE"`
-	Categories      []MemoCategory  `json:"categories,omitempty" gorm:"many2many:memo_category_selections;"` // NEW: Many-to-many 관계
+	Categories      []MemoCategory  `json:"categories,omitempty" gorm:"many2many:memo_category_selections;joinForeignKey:MemoID;joinReferences:CategoryID"` // NEW: Many-to-many 관계
 }
 
 // TableName Memo 테이블명 지정
