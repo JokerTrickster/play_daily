@@ -135,6 +135,9 @@ fun MainScreen(
                     },
                     onNavigateToEdit = {
                         mainNavController.navigate(Screen.Profile.Edit.route)
+                    },
+                    onNavigateToJoinRoom = {
+                        mainNavController.navigate(Screen.Room.Join.route)
                     }
                 )
             }
