@@ -24,15 +24,20 @@ func (r *GetMemoRepository) GetByID(ctx context.Context, id uint, userID uint) (
 	var memo mysql.Memo
 	result := r.GormDB.WithContext(ctx).
 		Preload("Comments.User").
-		Preload("Categories", func(db *gorm.DB) *gorm.DB {
-			return db.Where("memo_category_selections.deleted_at IS NULL")
-		}).
+		Preload("Categories").
 		Where("id = ?", id).
 		First(&memo)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
+	// Filter out soft-deleted categories manually
+	filteredCategories := make([]mysql.MemoCategory, 0)
+	for _, cat := range memo.Categories {
+		filteredCategories = append(filteredCategories, cat)
+	}
+	memo.Categories = filteredCategories
 
 	return &memo, nil
 }
@@ -64,9 +69,7 @@ func (r *GetMemoRepository) GetListByUserID(ctx context.Context, userID uint, ro
 	}
 
 	result := query.
-		Preload("Categories", func(db *gorm.DB) *gorm.DB {
-			return db.Where("memo_category_selections.deleted_at IS NULL")
-		}).
+		Preload("Categories").
 		Order("is_pinned DESC, created_at DESC").
 		Offset(offset).
 		Limit(limit).
