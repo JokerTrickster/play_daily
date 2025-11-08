@@ -863,116 +863,212 @@ fun ParticipantItem(
     onPermissionChange: (com.dailymemo.domain.models.RoomPermission) -> Unit = {}
 ) {
     var showPermissionMenu by remember { mutableStateOf(false) }
-    Row(
+    val isMe = participant.id == currentUserId
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isMe) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+            } else if (participant.isOwner) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (participant.isOwner) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = if (participant.isOwner) Icons.Outlined.Star else Icons.Outlined.Person,
-                    contentDescription = "참여자",
-                    modifier = Modifier.size(22.dp),
-                    tint = if (participant.isOwner) MaterialTheme.colorScheme.primary
-                          else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = participant.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (participant.isOwner) FontWeight.Bold else FontWeight.Medium
-                )
-                // Show permission badge
-                Text(
-                    text = when (participant.permission) {
-                        com.dailymemo.domain.models.RoomPermission.OWNER -> "방장"
-                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> "읽기/쓰기"
-                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> "읽기 전용"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = when (participant.permission) {
-                        com.dailymemo.domain.models.RoomPermission.OWNER -> MaterialTheme.colorScheme.primary
-                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.tertiary
-                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-            }
-        }
-
-        // Show controls only if: user is owner AND participant is not owner AND not self
-        if (isOwner && !participant.isOwner && participant.id != currentUserId) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
             ) {
-                // Permission change button
-                Box {
-                    IconButton(
-                        onClick = { showPermissionMenu = true },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "권한 변경",
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    androidx.compose.material3.DropdownMenu(
-                        expanded = showPermissionMenu,
-                        onDismissRequest = { showPermissionMenu = false }
-                    ) {
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text("읽기/쓰기") },
-                            onClick = {
-                                onPermissionChange(com.dailymemo.domain.models.RoomPermission.READ_WRITE)
-                                showPermissionMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Outlined.Edit, contentDescription = null)
+                // 프로필 아이콘
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (participant.isOwner) {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                                    )
+                                )
+                            } else {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                )
                             }
                         )
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text("읽기 전용") },
-                            onClick = {
-                                onPermissionChange(com.dailymemo.domain.models.RoomPermission.READ_ONLY)
-                                showPermissionMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Outlined.Visibility, contentDescription = null)
-                            }
-                        )
-                    }
-                }
-
-                // Kick button
-                IconButton(
-                    onClick = onKick,
-                    modifier = Modifier.size(36.dp)
+                        .border(
+                            width = if (isMe) 2.dp else 0.dp,
+                            color = if (isMe) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.RemoveCircle,
-                        contentDescription = "추방",
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.error
+                        imageVector = if (participant.isOwner) Icons.Filled.Star else Icons.Filled.Person,
+                        contentDescription = "참여자",
+                        modifier = Modifier.size(26.dp),
+                        tint = if (participant.isOwner) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
+                    // 이름 + "나" 표시
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = participant.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = if (participant.isOwner) FontWeight.Bold else FontWeight.Medium
+                        )
+
+                        if (isMe) {
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) {
+                                Text(
+                                    text = "나",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // 권한 Badge
+                    Badge(
+                        containerColor = when (participant.permission) {
+                            com.dailymemo.domain.models.RoomPermission.OWNER ->
+                                MaterialTheme.colorScheme.primaryContainer
+                            com.dailymemo.domain.models.RoomPermission.READ_WRITE ->
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            com.dailymemo.domain.models.RoomPermission.READ_ONLY ->
+                                MaterialTheme.colorScheme.surfaceVariant
+                        },
+                        contentColor = when (participant.permission) {
+                            com.dailymemo.domain.models.RoomPermission.OWNER ->
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            com.dailymemo.domain.models.RoomPermission.READ_WRITE ->
+                                MaterialTheme.colorScheme.onTertiaryContainer
+                            com.dailymemo.domain.models.RoomPermission.READ_ONLY ->
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = when (participant.permission) {
+                                    com.dailymemo.domain.models.RoomPermission.OWNER -> Icons.Filled.Star
+                                    com.dailymemo.domain.models.RoomPermission.READ_WRITE -> Icons.Filled.Edit
+                                    com.dailymemo.domain.models.RoomPermission.READ_ONLY -> Icons.Outlined.Visibility
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = when (participant.permission) {
+                                    com.dailymemo.domain.models.RoomPermission.OWNER -> "방장"
+                                    com.dailymemo.domain.models.RoomPermission.READ_WRITE -> "읽기/쓰기"
+                                    com.dailymemo.domain.models.RoomPermission.READ_ONLY -> "읽기 전용"
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 방장만 볼 수 있는 컨트롤 (본인 제외, 다른 방장 제외)
+            if (isOwner && !participant.isOwner && !isMe) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 권한 변경 버튼
+                    Box {
+                        IconButton(
+                            onClick = { showPermissionMenu = true },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = "권한 변경",
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = showPermissionMenu,
+                            onDismissRequest = { showPermissionMenu = false }
+                        ) {
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text("읽기/쓰기") },
+                                onClick = {
+                                    onPermissionChange(com.dailymemo.domain.models.RoomPermission.READ_WRITE)
+                                    showPermissionMenu = false
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Edit, contentDescription = null)
+                                }
+                            )
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text("읽기 전용") },
+                                onClick = {
+                                    onPermissionChange(com.dailymemo.domain.models.RoomPermission.READ_ONLY)
+                                    showPermissionMenu = false
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Visibility, contentDescription = null)
+                                }
+                            )
+                        }
+                    }
+
+                    // 추방 버튼
+                    IconButton(
+                        onClick = onKick,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.RemoveCircle,
+                            contentDescription = "추방",
+                            modifier = Modifier.size(26.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
