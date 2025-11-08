@@ -28,11 +28,20 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
 	defer cancel()
 
-	// 카테고리 검증 포함 전체 요청 검증 (DB 접근 필요)
+	// 1. 권한 체크: 사용자가 해당 방에 쓰기 권한이 있는지 확인
+	hasPermission, err := uc.Repository.CheckWritePermission(ctx, req.RoomID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check write permission: %w", err)
+	}
+	if !hasPermission {
+		return nil, fmt.Errorf("no write permission for this room")
+	}
+
+	// 2. 카테고리 검증 포함 전체 요청 검증 (DB 접근 필요)
 	// Note: 실제로는 gorm DB 인스턴스를 전달해야 하지만, 임시로 repository를 통해 검증
 	// 이후 handler에서 검증하도록 수정 가능
 
-	// 비즈니스 정보 필드 검증
+	// 3. 비즈니스 정보 필드 검증
 	if err := request.ValidateBusinessFields(req.BusinessName, req.BusinessPhone, req.BusinessAddress); err != nil {
 		return nil, err
 	}
@@ -72,7 +81,7 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 	}
 
 	// 카테고리와 함께 트랜잭션으로 생성
-	err := uc.Repository.CreateWithCategories(ctx, memo, req.CategoryIDs)
+	err = uc.Repository.CreateWithCategories(ctx, memo, req.CategoryIDs)
 	if err != nil {
 		return nil, err
 	}

@@ -46,3 +46,30 @@ func (r *CreateMemoRepository) CreateWithCategories(ctx context.Context, memo *m
 		return nil
 	})
 }
+
+// CheckWritePermission 사용자가 방에 쓰기 권한이 있는지 확인
+// 1. 방 소유자(OWNER)이거나
+// 2. READ_WRITE 권한을 가진 멤버인 경우 true 반환
+func (r *CreateMemoRepository) CheckWritePermission(ctx context.Context, roomID uint, userID uint) (bool, error) {
+	// 1. 방 소유자인지 확인
+	var room mysql.Room
+	if err := r.GormDB.WithContext(ctx).Where("id = ? AND owner_user_id = ?", roomID, userID).First(&room).Error; err == nil {
+		return true, nil // 소유자는 항상 쓰기 권한 있음
+	}
+
+	// 2. room_members에서 권한 확인
+	var member mysql.RoomMember
+	err := r.GormDB.WithContext(ctx).
+		Where("room_id = ? AND user_id = ? AND deleted_at IS NULL", roomID, userID).
+		First(&member).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, nil // 멤버가 아님
+		}
+		return false, err
+	}
+
+	// READ_WRITE 또는 OWNER 권한이면 쓰기 가능
+	return member.Permission == mysql.PermissionReadWrite || member.Permission == mysql.PermissionOwner, nil
+}

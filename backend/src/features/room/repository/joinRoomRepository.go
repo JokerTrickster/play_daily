@@ -67,3 +67,28 @@ func (r *JoinRoomRepository) UpdateUserDefaultRoom(ctx context.Context, userID u
 	}
 	return nil
 }
+
+// CheckRoomMemberExists checks if user is already a member of the room
+func (r *JoinRoomRepository) CheckRoomMemberExists(ctx context.Context, roomID uint, userID uint) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&mysql.RoomMember{}).
+		Where("room_id = ? AND user_id = ? AND deleted_at IS NULL", roomID, userID).
+		Count(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// AddRoomMember adds a user to room_members with READ_ONLY permission
+func (r *JoinRoomRepository) AddRoomMember(ctx context.Context, roomID uint, userID uint) error {
+	roomMember := mysql.RoomMember{
+		RoomID:     roomID,
+		UserID:     userID,
+		Permission: mysql.PermissionReadOnly, // Default: READ_ONLY
+	}
+
+	return r.DB.WithContext(ctx).Create(&roomMember).Error
+}

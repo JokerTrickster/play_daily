@@ -20,6 +20,8 @@ type IJoinRoomRepository interface {
 	GetRoomByID(ctx context.Context, roomID uint) (*response.ResRoom, error)
 	VerifyRoomPassword(ctx context.Context, roomID uint, password string) (bool, error)
 	UpdateUserDefaultRoom(ctx context.Context, userID uint, roomID uint) error
+	CheckRoomMemberExists(ctx context.Context, roomID uint, userID uint) (bool, error)
+	AddRoomMember(ctx context.Context, roomID uint, userID uint) error
 }
 
 type IKickUserHandler interface {

@@ -8,6 +8,7 @@ import (
 type ICreateMemoRepository interface {
 	Create(ctx context.Context, memo *mysql.Memo) error
 	CreateWithCategories(ctx context.Context, memo *mysql.Memo, categoryIDs []uint) error
+	CheckWritePermission(ctx context.Context, roomID uint, userID uint) (bool, error)
 }
 
 type IGetMemoRepository interface {
