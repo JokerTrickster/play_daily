@@ -16,7 +16,7 @@ interface KakaoLocalApiService {
         @Query("y") latitude: Double? = null,
         @Query("radius") radius: Int = 2000,
         @Query("page") page: Int = 1,
-        @Query("size") size: Int = 15
+        @Query("size") size: Int = 45  // 부분 문자열 검색 개선을 위해 더 많은 결과 가져오기
     ): Response<KakaoPlaceSearchResponse>
 
     @GET("v2/local/search/category.json")

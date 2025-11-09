@@ -228,22 +228,37 @@ class MapViewModel @Inject constructor(
                 onSuccess = { places ->
                     android.util.Log.d("MapViewModel", "Search success: found ${places.size} places")
 
-                    // 현재 위치 기준으로 거리순 정렬 (백그라운드 스레드에서 실행)
-                    val sortedPlaces = if (location != null) {
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                            places.map { place ->
-                                place to calculateDistance(
+                    // 검색어 포함 여부와 거리를 기준으로 정렬
+                    val sortedPlaces = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                        places.map { place ->
+                            // 검색어가 장소명에 포함되어 있는지 확인 (대소문자 무시)
+                            val containsQuery = place.name.contains(query, ignoreCase = true)
+
+                            // 거리 계산
+                            val distance = if (location != null) {
+                                calculateDistance(
                                     location.latitude, location.longitude,
                                     place.latitude, place.longitude
                                 )
-                            }.sortedBy { it.second }
-                             .map { it.first }
+                            } else {
+                                Double.MAX_VALUE
+                            }
+
+                            // 우선순위 점수: 검색어 포함 시 -1000000 (음수로 우선순위 높임)
+                            val priority = if (containsQuery) -1000000.0 else 0.0
+
+                            Triple(place, priority + distance, containsQuery)
                         }
-                    } else {
-                        places
+                        .sortedBy { it.second }  // 우선순위 + 거리로 정렬
+                        .also { sorted ->
+                            android.util.Log.d("MapViewModel",
+                                "Sorted: ${sorted.filter { it.third }.size} matches with query, " +
+                                "${sorted.size - sorted.filter { it.third }.size} others")
+                        }
+                        .map { it.first }
                     }
 
-                    android.util.Log.d("MapViewModel", "Sorted ${sortedPlaces.size} places by distance")
+                    android.util.Log.d("MapViewModel", "Sorted ${sortedPlaces.size} places (query matches first, then by distance)")
                     _searchResults.value = sortedPlaces
                     _showSearchResults.value = true
                     _isSearching.value = false
