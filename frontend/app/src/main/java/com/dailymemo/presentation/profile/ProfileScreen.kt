@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import coil.compose.AsyncImage
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +55,7 @@ fun ProfileScreen(
     val likedRooms by viewModel.likedRooms.collectAsState()
     val roomPassword by viewModel.roomPassword.collectAsState()
     val receivedLikesCount by viewModel.receivedLikesCount.collectAsState()
+    val profileImageUrl by viewModel.profileImageUrl.collectAsState()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -102,7 +104,8 @@ fun ProfileScreen(
                 roomId = myRoomId?.toString() ?: "로딩 중...",
                 roomPassword = roomPassword,
                 memoCount = memoCount,
-                receivedLikesCount = receivedLikesCount
+                receivedLikesCount = receivedLikesCount,
+                profileImageUrl = profileImageUrl
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -246,7 +249,8 @@ fun ProfileHeader(
     roomId: String,
     roomPassword: String,
     memoCount: Int,
-    receivedLikesCount: Int
+    receivedLikesCount: Int,
+    profileImageUrl: String?
 ) {
     Card(
         modifier = Modifier
@@ -263,7 +267,7 @@ fun ProfileHeader(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Room Icon
+            // Profile Image
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -278,12 +282,23 @@ fun ProfileHeader(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "방",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
+                if (!profileImageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = profileImageUrl,
+                        contentDescription = "프로필 이미지",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "기본 프로필",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))
