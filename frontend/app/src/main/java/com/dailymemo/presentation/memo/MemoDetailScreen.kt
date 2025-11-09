@@ -39,6 +39,7 @@ import android.net.Uri
 fun MemoDetailScreen(
     onNavigateBack: () -> Unit,
     onMemoDeleted: () -> Unit,
+    onNavigateToEdit: (Long) -> Unit = {},
     viewModel: MemoDetailViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -151,7 +152,10 @@ fun MemoDetailScreen(
 
                     // Edit button
                     FloatingActionButton(
-                        onClick = { viewModel.toggleEditMode() },
+                        onClick = {
+                            val currentMemoId = viewModel.memoIdFlow.value
+                            onNavigateToEdit(currentMemoId)
+                        },
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         modifier = Modifier.size(56.dp)
                     ) {

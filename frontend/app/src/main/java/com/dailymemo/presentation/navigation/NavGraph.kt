@@ -104,8 +104,18 @@ fun NavGraph(
                 },
                 onMemoDeleted = {
                     navController.popBackStack("main", inclusive = false)
+                },
+                onNavigateToEdit = { memoId ->
+                    navController.navigate("${Screen.Memory.Edit.route}/$memoId")
                 }
             )
+        }
+
+        composable("${Screen.Memory.Edit.route}/{memoId}") { backStackEntry ->
+            val memoId = backStackEntry.arguments?.getString("memoId")?.toLongOrNull() ?: 0L
+            // TODO: CreateMemoScreen을 편집 모드로 사용하도록 수정 필요
+            // 현재는 CreateMemoScreen에 memoId 파라미터가 없어서 임시로 빈 화면 표시
+            Text("메모 편집 화면 (구현 예정)")
         }
 
         // Profile screens

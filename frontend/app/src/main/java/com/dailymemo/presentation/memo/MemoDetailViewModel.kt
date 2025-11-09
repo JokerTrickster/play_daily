@@ -34,6 +34,9 @@ class MemoDetailViewModel @Inject constructor(
 
     private val memoId: Long = savedStateHandle.get<String>("memoId")?.toLongOrNull() ?: 0L
 
+    private val _memoId = MutableStateFlow(memoId)
+    val memoIdFlow: StateFlow<Long> = _memoId.asStateFlow()
+
     private val _uiState = MutableStateFlow<MemoDetailUiState>(MemoDetailUiState.Loading)
     val uiState: StateFlow<MemoDetailUiState> = _uiState.asStateFlow()
 

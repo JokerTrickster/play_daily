@@ -15,6 +15,7 @@ sealed class Screen(val route: String) {
     sealed class Memory(route: String) : Screen(route) {
         object Create : Memory("memory/create")
         object Detail : Memory("memory/detail")
+        object Edit : Memory("memory/edit")
     }
 
     sealed class Profile(route: String) : Screen(route) {
