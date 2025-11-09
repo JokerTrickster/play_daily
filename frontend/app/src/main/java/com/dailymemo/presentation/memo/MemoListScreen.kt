@@ -223,17 +223,22 @@ fun MemoListScreen(
                 }
             }
 
-            // 필터 섹션
+            // 필터 섹션 - 컴팩트 디자인
             if (showFilters) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape = RoundedCornerShape(16.dp)
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(12.dp)
                     ) {
+                        // 헤더
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -241,24 +246,23 @@ fun MemoListScreen(
                         ) {
                             Text(
                                 text = "필터",
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
-                            TextButton(onClick = { viewModel.clearFilters() }) {
-                                Text("초기화")
+                            TextButton(
+                                onClick = { viewModel.clearFilters() },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    "초기화",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // 카테고리 필터
-                        Text(
-                            text = "카테고리",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        // 카테고리 필터
                         val categories = listOf(
                             com.dailymemo.domain.models.PlaceCategory.RESTAURANT,
                             com.dailymemo.domain.models.PlaceCategory.CAFE,
@@ -270,32 +274,53 @@ fun MemoListScreen(
 
                         androidx.compose.foundation.layout.FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             categories.forEach { cat ->
                                 FilterChip(
                                     selected = selectedCategory == cat,
                                     onClick = { viewModel.onCategoryFilterChange(cat) },
-                                    label = { Text("${cat.icon} ${cat.displayName}") }
+                                    label = {
+                                        Text(
+                                            "${cat.icon} ${cat.displayName}",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    },
+                                    modifier = Modifier.height(28.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // 평점 필터
-                        Text(
-                            text = "최소 평점: ${minRating.toInt()}⭐",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Slider(
-                            value = minRating,
-                            onValueChange = { viewModel.onRatingFilterChange(it) },
-                            valueRange = 0f..5f,
-                            steps = 4
-                        )
+                        // 평점 필터 - 한 줄로 컴팩트하게
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "평점",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.width(40.dp)
+                            )
+                            Slider(
+                                value = minRating,
+                                onValueChange = { viewModel.onRatingFilterChange(it) },
+                                valueRange = 0f..5f,
+                                steps = 4,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${minRating.toInt()}⭐",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.width(36.dp)
+                            )
+                        }
                     }
                 }
             }
