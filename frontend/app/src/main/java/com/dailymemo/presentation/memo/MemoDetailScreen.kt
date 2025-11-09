@@ -217,29 +217,16 @@ fun MemoDetailScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(300.dp)
+                                    .wrapContentHeight()
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
                             ) {
                                 AsyncImage(
                                     model = imageUrl,
                                     contentDescription = "메모 이미지",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-
-                                // Gradient overlay for better text readability
-                                Box(
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color.Black.copy(alpha = 0.7f)
-                                                ),
-                                                startY = 0f,
-                                                endY = 900f
-                                            )
-                                        )
+                                        .fillMaxWidth()
+                                        .heightIn(max = 400.dp),
+                                    contentScale = ContentScale.Fit
                                 )
 
                                 // Back button overlay on image

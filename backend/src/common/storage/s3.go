@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"path/filepath"
@@ -15,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
+	"golang.org/x/image/draw"
 )
 
 type S3Client struct {
@@ -107,16 +111,30 @@ func (s *S3Client) UploadFile(ctx context.Context, file multipart.File, fileHead
 		return "", fmt.Errorf("failed to read file: %w", err)
 	}
 
+	// 이미지 파일인 경우 리사이징 처리
+	var processedBytes []byte
+	if strings.HasPrefix(contentType, "image/") && contentType != "image/svg+xml" {
+		processedBytes, err = resizeImage(fileBytes, ext, 1200, 1200)
+		if err != nil {
+			fmt.Printf("⚠️  이미지 리사이징 실패, 원본 사용: %v\n", err)
+			processedBytes = fileBytes
+		} else {
+			fmt.Printf("✨ 이미지 리사이징 완료: %d bytes -> %d bytes\n", len(fileBytes), len(processedBytes))
+		}
+	} else {
+		processedBytes = fileBytes
+	}
+
 	fmt.Printf("📤 S3 업로드 시작: bucket=%s, key=%s, size=%d bytes, contentType=%s\n",
-		s.bucketName, key, len(fileBytes), contentType)
+		s.bucketName, key, len(processedBytes), contentType)
 
 	// S3에 업로드 (바이너리 데이터를 올바르게 처리)
 	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(s.bucketName),
 		Key:           aws.String(key),
-		Body:          bytes.NewReader(fileBytes),
+		Body:          bytes.NewReader(processedBytes),
 		ContentType:   aws.String(contentType),
-		ContentLength: aws.Int64(int64(len(fileBytes))),
+		ContentLength: aws.Int64(int64(len(processedBytes))),
 	})
 
 	if err != nil {
@@ -178,4 +196,68 @@ func getContentType(ext string) string {
 	}
 
 	return "application/octet-stream"
+}
+
+// resizeImage 이미지를 최대 크기로 리사이징 (비율 유지)
+func resizeImage(data []byte, ext string, maxWidth, maxHeight int) ([]byte, error) {
+	// 이미지 디코딩
+	img, format, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// 원본 크기
+	bounds := img.Bounds()
+	origWidth := bounds.Dx()
+	origHeight := bounds.Dy()
+
+	// 리사이징이 필요한지 확인
+	if origWidth <= maxWidth && origHeight <= maxHeight {
+		// 리사이징 불필요, 원본 반환
+		return data, nil
+	}
+
+	// 새로운 크기 계산 (비율 유지)
+	var newWidth, newHeight int
+	ratio := float64(origWidth) / float64(origHeight)
+
+	if origWidth > origHeight {
+		// 가로가 더 긴 경우
+		newWidth = maxWidth
+		newHeight = int(float64(maxWidth) / ratio)
+		if newHeight > maxHeight {
+			newHeight = maxHeight
+			newWidth = int(float64(maxHeight) * ratio)
+		}
+	} else {
+		// 세로가 더 긴 경우
+		newHeight = maxHeight
+		newWidth = int(float64(maxHeight) * ratio)
+		if newWidth > maxWidth {
+			newWidth = maxWidth
+			newHeight = int(float64(maxWidth) / ratio)
+		}
+	}
+
+	// 리사이징된 이미지 생성
+	dst := image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+	draw.BiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Over, nil)
+
+	// 버퍼에 인코딩
+	var buf bytes.Buffer
+	switch strings.ToLower(format) {
+	case "jpeg", "jpg":
+		err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 85})
+	case "png":
+		err = png.Encode(&buf, dst)
+	default:
+		// 기본적으로 JPEG로 인코딩
+		err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 85})
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode resized image: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }
