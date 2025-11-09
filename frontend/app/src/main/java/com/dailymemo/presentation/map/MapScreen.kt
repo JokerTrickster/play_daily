@@ -9,6 +9,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +29,9 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.ImeAction
+import coil.compose.AsyncImage
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -474,6 +480,37 @@ fun MapScreen(
                 }
             }
 
+            // Memo List at Bottom (지도를 가리지 않도록 compact하게)
+            if (memos.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp, start = 16.dp, end = 88.dp) // FAB 공간 확보
+                ) {
+                    MemoListBar(
+                        memos = memos,
+                        selectedMemoId = selectedMemoId,
+                        onMemoClick = { memo ->
+                            // 선택된 메모 표시
+                            viewModel.showMemoPopup(memo.id)
+
+                            // 해당 위치로 카메라 이동
+                            memo.latitude?.let { lat ->
+                                memo.longitude?.let { lon ->
+                                    kakaoMap?.moveCamera(
+                                        com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                            LatLng.from(lat, lon),
+                                            15 // zoom level
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+
             // Floating Action Buttons
             Column(
                 modifier = Modifier
@@ -890,6 +927,197 @@ fun PlaceSelectionDialog(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun MemoListBar(
+    memos: List<com.dailymemo.domain.models.Memo>,
+    selectedMemoId: Long?,
+    onMemoClick: (com.dailymemo.domain.models.Memo) -> Unit
+) {
+    val listState = rememberLazyListState()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "📍 메모 목록",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Text(
+                        text = "${memos.size}",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Horizontal scrollable list
+            LazyRow(
+                state = listState,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
+                items(memos) { memo ->
+                    MemoCardCompact(
+                        memo = memo,
+                        isSelected = memo.id == selectedMemoId,
+                        onClick = { onMemoClick(memo) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MemoCardCompact(
+    memo: com.dailymemo.domain.models.Memo,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val borderColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        Color.Transparent
+    }
+
+    Card(
+        modifier = Modifier
+            .width(200.dp)
+            .height(100.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (isSelected) 2.dp else 0.dp,
+            color = borderColor
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 1.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Left side: Text content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Category icon + Title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = memo.category.icon,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = memo.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                }
+
+                // Location (if exists)
+                memo.locationName?.let { location ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Place,
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = location,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                // Rating (if > 0)
+                if (memo.rating > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = "평점",
+                            modifier = Modifier.size(14.dp),
+                            tint = Color(0xFFFFB800)
+                        )
+                        Text(
+                            text = String.format("%.1f", memo.rating),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFFB800)
+                        )
+                    }
+                }
+            }
+
+            // Right side: Thumbnail image (if exists)
+            if (!memo.imageUrl.isNullOrBlank()) {
+                Spacer(modifier = Modifier.width(8.dp))
+                AsyncImage(
+                    model = memo.imageUrl,
+                    contentDescription = "메모 이미지",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
             }
         }
     }
