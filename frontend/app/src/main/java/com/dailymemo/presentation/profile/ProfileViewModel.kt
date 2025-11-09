@@ -216,6 +216,12 @@ class ProfileViewModel @Inject constructor(
                     _nickname.value = profile.nickname
                     _profileImageUrl.value = profile.profileImageUrl
 
+                    // Switch back to my room after profile update
+                    _myRoomId.value?.let { myRoomId ->
+                        authLocalDataSource.setCurrentRoomId(myRoomId)
+                        android.util.Log.d("ProfileViewModel", "saveProfile - Switched to myRoom: $myRoomId")
+                    }
+
                     // Determine success message based on what was changed
                     _successMessage.value = if (_newPassword.value.isNotBlank()) {
                         "프로필이 업데이트되었습니다 ✅\n새 비밀번호로 로그인할 수 있습니다."
