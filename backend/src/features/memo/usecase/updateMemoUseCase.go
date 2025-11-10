@@ -74,6 +74,17 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 		return nil, err
 	}
 
+	// 카테고리 업데이트
+	if len(req.CategoryIds) > 0 {
+		categoryIDs := make([]uint, len(req.CategoryIds))
+		for i, id := range req.CategoryIds {
+			categoryIDs[i] = uint(id)
+		}
+		if err := uc.Repository.UpdateCategories(ctx, memoID, categoryIDs); err != nil {
+			return nil, fmt.Errorf("failed to update categories: %w", err)
+		}
+	}
+
 	// 업데이트된 메모 조회
 	updatedMemo, err := uc.Repository.GetByID(ctx, memoID, userID)
 	if err != nil {

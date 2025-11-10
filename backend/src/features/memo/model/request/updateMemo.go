@@ -17,4 +17,5 @@ type ReqUpdateMemo struct {
 	BusinessName    *string               `json:"business_name"`
 	BusinessPhone   *string               `json:"business_phone"`
 	BusinessAddress *string               `json:"business_address"`
+	CategoryIds     []int                 `json:"category_ids"`
 }

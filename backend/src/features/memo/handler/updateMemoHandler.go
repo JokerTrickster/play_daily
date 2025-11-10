@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"main/common"
 	_interface "main/features/memo/model/interface"
@@ -99,6 +100,14 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 	// LocationName 파싱 (optional)
 	if locName := c.FormValue("location_name"); locName != "" {
 		req.LocationName = &locName
+	}
+
+	// CategoryIds 파싱 (optional)
+	if categoryIdsStr := c.FormValue("category_ids"); categoryIdsStr != "" {
+		var categoryIds []int
+		if err := json.Unmarshal([]byte(categoryIdsStr), &categoryIds); err == nil {
+			req.CategoryIds = categoryIds
+		}
 	}
 
 	// 이미지 파일 검증 및 처리

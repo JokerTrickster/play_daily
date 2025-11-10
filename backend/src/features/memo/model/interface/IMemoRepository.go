@@ -24,6 +24,7 @@ type IUpdateMemoRepository interface {
 	Update(ctx context.Context, id uint, userID uint, memo *mysql.Memo) error
 	GetByID(ctx context.Context, id uint, userID uint) (*mysql.Memo, error)
 	CheckUserLikedMemo(ctx context.Context, memoID uint, userID uint) (bool, error)
+	UpdateCategories(ctx context.Context, memoID uint, categoryIDs []uint) error
 }
 
 type IDeleteMemoRepository interface {
