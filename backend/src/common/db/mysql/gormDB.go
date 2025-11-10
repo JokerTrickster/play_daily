@@ -9,12 +9,14 @@ import (
 // Room 방 정보 테이블
 type Room struct {
 	gorm.Model
-	RoomCode    string `json:"room_code" gorm:"column:room_code;type:varchar(50);uniqueIndex;not null;comment:방 고유 코드 (UUID)"`
-	Name        string `json:"name" gorm:"column:name;type:varchar(100);not null;comment:방 이름"`
-	LikesCount  uint   `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
-	OwnerUserID uint   `json:"owner_user_id" gorm:"column:owner_user_id;not null;index;comment:방 소유자 ID"`
-	Owner       *User  `json:"owner,omitempty" gorm:"foreignKey:OwnerUserID"`
-	Memos       []Memo `json:"memos,omitempty" gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
+	RoomCode     string `json:"room_code" gorm:"column:room_code;type:varchar(50);uniqueIndex;not null;comment:방 고유 코드 (UUID)"`
+	Name         string `json:"name" gorm:"column:name;type:varchar(100);not null;comment:방 이름"`
+	RoomPassword string `json:"room_password" gorm:"column:room_password;type:varchar(4);not null;default:'0000';index;comment:방 입장 비밀번호 (4자리)"`
+	IsPublic     bool   `json:"is_public" gorm:"column:is_public;type:tinyint(1);not null;default:0;index;comment:공개 방 여부 (1=공개, 0=비공개)"`
+	LikesCount   uint   `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
+	OwnerUserID  uint   `json:"owner_user_id" gorm:"column:owner_user_id;not null;index;comment:방 소유자 ID"`
+	Owner        *User  `json:"owner,omitempty" gorm:"foreignKey:OwnerUserID"`
+	Memos        []Memo `json:"memos,omitempty" gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
 }
 
 // TableName Room 테이블명 지정
@@ -134,7 +136,7 @@ type RoomMember struct {
 	RoomID     uint           `json:"room_id" gorm:"column:room_id;not null;index;comment:방 ID"`
 	UserID     uint           `json:"user_id" gorm:"column:user_id;not null;index;comment:사용자 ID"`
 	Permission RoomPermission `json:"permission" gorm:"column:permission;type:enum('READ_ONLY','READ_WRITE','OWNER');default:'READ_ONLY';index;comment:권한 레벨"`
-	JoinedAt   int64          `json:"joined_at" gorm:"column:joined_at;autoCreateTime;comment:참여 시간"`
+	JoinedAt   time.Time      `json:"joined_at" gorm:"column:joined_at;autoCreateTime;comment:참여 시간"`
 	Room       *Room          `json:"room,omitempty" gorm:"foreignKey:RoomID"`
 	User       *User          `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }

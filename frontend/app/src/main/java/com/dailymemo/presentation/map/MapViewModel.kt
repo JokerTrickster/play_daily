@@ -61,6 +61,17 @@ class MapViewModel @Inject constructor(
     private val _wishlistFilter = MutableStateFlow<WishlistFilter>(WishlistFilter.ALL)
     val wishlistFilter: StateFlow<WishlistFilter> = _wishlistFilter.asStateFlow()
 
+    // Sort and distance filter states
+    private val _sortByDistance = MutableStateFlow(false)
+    val sortByDistance: StateFlow<Boolean> = _sortByDistance.asStateFlow()
+
+    private val _distanceFilter = MutableStateFlow<DistanceFilter>(DistanceFilter.ALL)
+    val distanceFilter: StateFlow<DistanceFilter> = _distanceFilter.asStateFlow()
+
+    // Computed memos with distance sorting and filtering
+    private val _filteredMemos = MutableStateFlow<List<MemoWithDistance>>(emptyList())
+    val filteredMemos: StateFlow<List<MemoWithDistance>> = _filteredMemos.asStateFlow()
+
     // Popup card states (Task 005)
     private val _selectedMemoId = MutableStateFlow<Long?>(null)
     val selectedMemoId: StateFlow<Long?> = _selectedMemoId.asStateFlow()
@@ -87,6 +98,19 @@ class MapViewModel @Inject constructor(
         loadMemos()
         startLocationUpdates()
         loadCurrentRoomPermission()
+
+        // Observe memos, location, and filters to update filtered memos
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(
+                _memos,
+                _currentLocation,
+                _sortByDistance,
+                _distanceFilter
+            ) { memos, location, sortByDistance, distanceFilter ->
+                updateFilteredMemos(memos, location, sortByDistance, distanceFilter)
+                Unit // Return Unit since updateFilteredMemos returns nothing
+            }.collect { /* nothing to do */ }
+        }
     }
 
     private fun loadCurrentRoomPermission() {
@@ -450,7 +474,78 @@ class MapViewModel @Inject constructor(
         _wishlistFilter.value = filter
         loadMemos()
     }
+
+    // Distance sort and filter functions
+    fun toggleSortByDistance() {
+        _sortByDistance.value = !_sortByDistance.value
+    }
+
+    fun setDistanceFilter(filter: DistanceFilter) {
+        _distanceFilter.value = filter
+    }
+
+    private fun updateFilteredMemos(
+        memos: List<Memo>,
+        location: Location?,
+        sortByDistance: Boolean,
+        distanceFilter: DistanceFilter
+    ) {
+        if (location == null) {
+            // No location available, just map to MemoWithDistance with null distance
+            _filteredMemos.value = memos.map { MemoWithDistance(it, null) }
+            return
+        }
+
+        // Calculate distance for each memo
+        val memosWithDistance = memos.mapNotNull { memo ->
+            val memoLat = memo.latitude
+            val memoLon = memo.longitude
+
+            if (memoLat != null && memoLon != null) {
+                val distance = calculateDistance(
+                    location.latitude, location.longitude,
+                    memoLat, memoLon
+                )
+                MemoWithDistance(memo, distance)
+            } else {
+                // Memo without location
+                MemoWithDistance(memo, null)
+            }
+        }
+
+        // Apply distance filter
+        val filtered = when (distanceFilter) {
+            DistanceFilter.ALL -> memosWithDistance
+            DistanceFilter.WITHIN_5KM -> memosWithDistance.filter { it.distance?.let { d -> d <= 5000 } ?: false }
+            DistanceFilter.WITHIN_10KM -> memosWithDistance.filter { it.distance?.let { d -> d <= 10000 } ?: false }
+            DistanceFilter.WITHIN_20KM -> memosWithDistance.filter { it.distance?.let { d -> d <= 20000 } ?: false }
+        }
+
+        // Apply sorting
+        val sorted = if (sortByDistance) {
+            filtered.sortedBy { it.distance ?: Double.MAX_VALUE }
+        } else {
+            filtered // Keep original order (by creation date)
+        }
+
+        _filteredMemos.value = sorted
+    }
+
+    fun formatDistance(distance: Double?): String {
+        if (distance == null) return ""
+
+        return when {
+            distance < 1000 -> "${distance.toInt()}m"
+            else -> "%.1fkm".format(distance / 1000)
+        }
+    }
 }
+
+// Data class to hold memo with its distance
+data class MemoWithDistance(
+    val memo: Memo,
+    val distance: Double? // in meters, null if location not available
+)
 
 sealed class MapUiState {
     data object Loading : MapUiState()
@@ -469,4 +564,11 @@ enum class WishlistFilter {
     ALL,           // 전체 (wishlist + visited)
     WISHLIST_ONLY, // 가고싶은 곳만
     VISITED_ONLY   // 방문한 곳만
+}
+
+enum class DistanceFilter {
+    ALL,           // 모든 거리
+    WITHIN_5KM,    // 5km 이내
+    WITHIN_10KM,   // 10km 이내
+    WITHIN_20KM    // 20km 이내
 }

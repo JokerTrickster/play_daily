@@ -43,7 +43,7 @@ func (r *GetRoomMembersRepository) GetRoomMembers(ctx context.Context, roomID ui
 				UserName:   member.User.Nickname,
 				Email:      member.User.AccountID,
 				Permission: string(member.Permission),
-				JoinedAt:   member.JoinedAt,
+				JoinedAt:   member.JoinedAt.Unix(),
 			})
 		}
 	}

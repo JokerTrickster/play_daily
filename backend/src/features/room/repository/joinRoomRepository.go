@@ -37,23 +37,18 @@ func (r *JoinRoomRepository) GetRoomByID(ctx context.Context, roomID uint) (*res
 	}, nil
 }
 
-// VerifyRoomPassword verifies the room password by checking the owner's room password
+// VerifyRoomPassword verifies the room password by checking the room's password
 func (r *JoinRoomRepository) VerifyRoomPassword(ctx context.Context, roomID uint, password string) (bool, error) {
 	var room mysql.Room
-	if err := r.DB.WithContext(ctx).Preload("Owner").Where("id = ?", roomID).First(&room).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Where("id = ?", roomID).First(&room).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, errors.New("room not found")
 		}
 		return false, err
 	}
 
-	// Check if room has an owner
-	if room.Owner == nil {
-		return false, errors.New("room owner not found")
-	}
-
-	// Compare password with owner's room password
-	return room.Owner.RoomPassword == password, nil
+	// Compare password with room's password
+	return room.RoomPassword == password, nil
 }
 
 // UpdateUserDefaultRoom updates user's default room ID

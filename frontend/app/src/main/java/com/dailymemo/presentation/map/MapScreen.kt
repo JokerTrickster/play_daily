@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.ImeAction
 import coil.compose.AsyncImage
@@ -42,6 +44,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +79,9 @@ fun MapScreen(
     val focusManager = LocalFocusManager.current
     val currentLocation by viewModel.currentLocation.collectAsState()
     val memos by viewModel.memos.collectAsState()
+    val filteredMemos by viewModel.filteredMemos.collectAsState()
+    val sortByDistance by viewModel.sortByDistance.collectAsState()
+    val distanceFilter by viewModel.distanceFilter.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedMemoId by viewModel.selectedMemoId.collectAsState()
@@ -92,6 +98,7 @@ fun MapScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var showMemoList by remember { mutableStateOf(true) } // 메모 목록 표시 상태
+    var showFilterOptions by remember { mutableStateOf(false) } // 필터 옵션 표시 상태
 
     var kakaoMap: KakaoMap? by remember { mutableStateOf(null) }
 
@@ -482,17 +489,86 @@ fun MapScreen(
                 }
             }
 
-            // Memo List at Bottom (지도를 가리지 않도록 compact하게)
-            if (memos.isNotEmpty() && showMemoList) {
-                Box(
+            // Memo List at Bottom with Filter Controls
+            if (filteredMemos.isNotEmpty() && showMemoList) {
+                Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .fillMaxWidth()
                         .padding(bottom = 16.dp, start = 16.dp, end = 88.dp) // FAB 공간 확보
                 ) {
-                    MemoListBar(
-                        memos = memos,
+                    // Filter Controls (토글 가능)
+                    if (showFilterOptions) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 3.dp
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Sort toggle
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "가까운 순 정렬",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Switch(
+                                        checked = sortByDistance,
+                                        onCheckedChange = { viewModel.toggleSortByDistance() }
+                                    )
+                                }
+
+                                // Distance filter
+                                Text(
+                                    "거리 필터",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    DistanceFilterChip(
+                                        label = "전체",
+                                        selected = distanceFilter == DistanceFilter.ALL,
+                                        onClick = { viewModel.setDistanceFilter(DistanceFilter.ALL) }
+                                    )
+                                    DistanceFilterChip(
+                                        label = "5km",
+                                        selected = distanceFilter == DistanceFilter.WITHIN_5KM,
+                                        onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_5KM) }
+                                    )
+                                    DistanceFilterChip(
+                                        label = "10km",
+                                        selected = distanceFilter == DistanceFilter.WITHIN_10KM,
+                                        onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_10KM) }
+                                    )
+                                    DistanceFilterChip(
+                                        label = "20km",
+                                        selected = distanceFilter == DistanceFilter.WITHIN_20KM,
+                                        onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_20KM) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Memo List
+                    MemoListBarWithDistance(
+                        memosWithDistance = filteredMemos,
                         selectedMemoId = selectedMemoId,
+                        showFilterOptions = showFilterOptions,
+                        onToggleFilterOptions = { showFilterOptions = !showFilterOptions },
+                        formatDistance = viewModel::formatDistance,
                         onMemoClick = { memo ->
                             // 선택된 메모 표시
                             viewModel.showMemoPopup(memo.id)
@@ -1112,6 +1188,185 @@ fun MemoCardCompact(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFFFB800)
+                        )
+                    }
+                }
+            }
+
+            // Right side: Thumbnail image (if exists)
+            if (!memo.imageUrl.isNullOrBlank()) {
+                Spacer(modifier = Modifier.width(8.dp))
+                AsyncImage(
+                    model = memo.imageUrl,
+                    contentDescription = "메모 이미지",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DistanceFilterChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    )
+}
+
+@Composable
+fun MemoListBarWithDistance(
+    memosWithDistance: List<MemoWithDistance>,
+    selectedMemoId: Long?,
+    showFilterOptions: Boolean,
+    onToggleFilterOptions: () -> Unit,
+    formatDistance: (Double?) -> String,
+    onMemoClick: (com.dailymemo.domain.models.Memo) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp
+    ) {
+        Column {
+            // Header with filter toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "메모 목록 (${memosWithDistance.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onToggleFilterOptions) {
+                    Icon(
+                        if (showFilterOptions) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        contentDescription = if (showFilterOptions) "필터 숨기기" else "필터 보기"
+                    )
+                }
+            }
+
+            // Horizontal scrollable list
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(
+                    items = memosWithDistance,
+                    key = { it.memo.id }
+                ) { memoWithDistance ->
+                    MemoCardWithDistance(
+                        memo = memoWithDistance.memo,
+                        distance = memoWithDistance.distance,
+                        formatDistance = formatDistance,
+                        isSelected = memoWithDistance.memo.id == selectedMemoId,
+                        onClick = { onMemoClick(memoWithDistance.memo) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MemoCardWithDistance(
+    memo: com.dailymemo.domain.models.Memo,
+    distance: Double?,
+    formatDistance: (Double?) -> String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .height(100.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 6.dp else 2.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp)
+        ) {
+            // Left side: Content
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    // Title
+                    Text(
+                        text = memo.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Distance
+                    if (distance != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = formatDistance(distance),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                // Rating
+                if (memo.rating > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB800),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = memo.rating.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
