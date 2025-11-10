@@ -417,11 +417,11 @@ fun MapScreen(
                     )
                 }
 
-                // Floating Action Buttons - Below Filter Chips
+                // Floating Action Buttons - Below Filter Chips (Vertical)
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier.wrapContentWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Toggle Memo List Button
                     FloatingActionButton(
