@@ -51,9 +51,11 @@ func (r *SignUpAuthRepository) CreateUser(ctx context.Context, userDTO *mysql.Us
 		roomName := fmt.Sprintf("%s의 방", userDTO.Nickname)
 
 		room := &mysql.Room{
-			RoomCode:    roomCode,
-			Name:        roomName,
-			OwnerUserID: userDTO.ID,
+			RoomCode:     roomCode,
+			Name:         roomName,
+			RoomPassword: userDTO.RoomPassword, // 사용자의 room_password를 방의 비밀번호로 설정
+			IsPublic:     false,                 // 기본값: 비공개 방
+			OwnerUserID:  userDTO.ID,
 		}
 
 		if err := tx.Create(room).Error; err != nil {
