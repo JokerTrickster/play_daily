@@ -570,7 +570,7 @@ fun MapScreen(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp, start = 16.dp, end = 88.dp) // FAB 공간 확보
+                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
                 ) {
                     // Filter Controls (토글 가능)
                     if (showFilterOptions) {
