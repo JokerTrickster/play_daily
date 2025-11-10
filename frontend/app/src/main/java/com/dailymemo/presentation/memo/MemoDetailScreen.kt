@@ -141,26 +141,26 @@ fun MemoDetailScreen(
                             val currentMemoId = viewModel.memoIdFlow.value
                             onNavigateToEdit(currentMemoId)
                         },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(48.dp)
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(56.dp)
                     ) {
                         Icon(
                             Icons.Filled.Edit,
                             contentDescription = "수정",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
 
                     // Delete button
                     FloatingActionButton(
                         onClick = { showDeleteDialog = true },
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        modifier = Modifier.size(48.dp)
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(56.dp)
                     ) {
                         Icon(
                             Icons.Filled.Delete,
                             contentDescription = "삭제",
-                            tint = MaterialTheme.colorScheme.onErrorContainer
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
 
