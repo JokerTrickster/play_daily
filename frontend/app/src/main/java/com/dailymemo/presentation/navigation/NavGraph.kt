@@ -13,6 +13,7 @@ import com.dailymemo.presentation.auth.SignupScreen
 import com.dailymemo.presentation.collaboration.CollaborationScreen
 import com.dailymemo.presentation.map.MapScreen
 import com.dailymemo.presentation.memo.CreateMemoScreen
+import com.dailymemo.presentation.memo.EditMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 import com.dailymemo.presentation.profile.ProfileEditScreen
 
@@ -113,9 +114,14 @@ fun NavGraph(
 
         composable("${Screen.Memory.Edit.route}/{memoId}") { backStackEntry ->
             val memoId = backStackEntry.arguments?.getString("memoId")?.toLongOrNull() ?: 0L
-            // TODO: CreateMemoScreen을 편집 모드로 사용하도록 수정 필요
-            // 현재는 CreateMemoScreen에 memoId 파라미터가 없어서 임시로 빈 화면 표시
-            Text("메모 편집 화면 (구현 예정)")
+            EditMemoScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSaveSuccess = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         // Profile screens
