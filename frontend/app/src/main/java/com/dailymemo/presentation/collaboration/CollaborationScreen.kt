@@ -172,83 +172,78 @@ fun MembersList(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "전체 참여자",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = "${members.size}명",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    PermissionSummary(
-                        icon = Icons.Filled.Star,
-                        count = members.count { it.permission == RoomPermission.OWNER },
-                        label = "방장",
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    PermissionSummary(
-                        icon = Icons.Filled.Edit,
-                        count = members.count { it.permission == RoomPermission.READ_WRITE },
-                        label = "편집",
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                    PermissionSummary(
-                        icon = Icons.Filled.Visibility,
-                        count = members.count { it.permission == RoomPermission.READ_ONLY },
-                        label = "읽기",
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (isOwner) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                ),
-                shape = RoundedCornerShape(12.dp)
+                    .padding(16.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Filled.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "참여자를 클릭하여 권한을 변경하거나 추방할 수 있습니다",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
+                    Column {
+                        Text(
+                            text = "참여자",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "${members.size}명",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PermissionCount(
+                            icon = Icons.Filled.Star,
+                            count = members.count { it.permission == RoomPermission.OWNER },
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        PermissionCount(
+                            icon = Icons.Filled.Edit,
+                            count = members.count { it.permission == RoomPermission.READ_WRITE },
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        PermissionCount(
+                            icon = Icons.Filled.Visibility,
+                            count = members.count { it.permission == RoomPermission.READ_ONLY },
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                }
+
+                if (isOwner) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "참여자를 클릭하여 권한 관리",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Members List
         LazyColumn(
@@ -269,40 +264,34 @@ fun MembersList(
 }
 
 @Composable
-fun PermissionSummary(
+fun PermissionCount(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     count: Int,
-    label: String,
     color: androidx.compose.ui.graphics.Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(24.dp)
                 .clip(CircleShape)
                 .background(color.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
-                contentDescription = label,
-                modifier = Modifier.size(20.dp),
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
                 tint = color
             )
         }
         Text(
             text = "$count",
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
         )
     }
 }
@@ -317,7 +306,7 @@ fun MemberCard(
     onPermissionClick: () -> Unit,
     onKickClick: () -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()) }
     val joinedDate = remember(member.joinedAt) {
         dateFormat.format(Date(member.joinedAt * 1000))
     }
@@ -333,13 +322,13 @@ fun MemberCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentUser) {
-                MaterialTheme.colorScheme.secondaryContainer
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.surface
             }
         ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isCurrentUser) 4.dp else 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -353,37 +342,37 @@ fun MemberCard(
                 // Avatar
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(
                             when (member.permission) {
-                                RoomPermission.OWNER -> MaterialTheme.colorScheme.primary
-                                RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.secondary
-                                RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.tertiary
+                                RoomPermission.OWNER -> MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                                RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f)
+                                RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.85f)
                             }
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = member.userName.firstOrNull()?.toString() ?: "?",
-                        style = MaterialTheme.typography.headlineSmall,
+                        text = member.userName.firstOrNull()?.uppercase() ?: "?",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 // User Info
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             text = member.userName,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -404,58 +393,56 @@ fun MemberCard(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         PermissionBadge(permission = member.permission)
 
                         Text(
-                            text = "•",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Text(
-                            text = joinedDate,
-                            style = MaterialTheme.typography.bodySmall,
+                            text = "참여: $joinedDate",
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
+                // Only show options for room owner
                 if (canManage) {
                     IconButton(onClick = { showOptions = !showOptions }) {
                         Icon(
-                            Icons.Filled.MoreVert,
-                            contentDescription = "옵션",
+                            if (showOptions) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                            contentDescription = if (showOptions) "접기" else "더보기",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
 
-            // Options Menu
+            // Options Menu - Only visible for room owner managing other members
             if (showOptions && canManage) {
+                Spacer(modifier = Modifier.height(12.dp))
+
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(
+                    FilledTonalButton(
                         onClick = {
                             showOptions = false
                             onPermissionClick()
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
                         )
                     ) {
                         Icon(
@@ -463,18 +450,19 @@ fun MemberCard(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("권한 변경")
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("권한")
                     }
 
-                    OutlinedButton(
+                    FilledTonalButton(
                         onClick = {
                             showOptions = false
                             onKickClick()
                         },
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
                         )
                     ) {
                         Icon(
@@ -482,7 +470,7 @@ fun MemberCard(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text("추방")
                     }
                 }
@@ -501,36 +489,36 @@ fun PermissionBadge(permission: RoomPermission) {
         )
         RoomPermission.READ_WRITE -> Triple(
             Icons.Filled.Edit,
-            "편집 가능",
+            "편집",
             MaterialTheme.colorScheme.secondary
         )
         RoomPermission.READ_ONLY -> Triple(
             Icons.Filled.Visibility,
-            "읽기 전용",
+            "읽기",
             MaterialTheme.colorScheme.tertiary
         )
     }
 
     Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = color.copy(alpha = 0.15f)
+        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = 0.12f)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Icon(
                 icon,
                 contentDescription = null,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(12.dp),
                 tint = color
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
                 color = color,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.SemiBold
             )
         }
     }
