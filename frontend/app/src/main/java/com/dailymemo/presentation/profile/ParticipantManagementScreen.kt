@@ -168,24 +168,24 @@ fun ParticipantCard(
             }
 
             // Edit icon on the left (only for owner viewing non-owner participants)
-            if (isOwner && !isParticipantOwner) {
+            if (isOwner && !isParticipantOwner && !isCurrentUser) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .offset(x = (-8).dp)
-                        .size(28.dp)
+                        .offset(x = (-6).dp)
+                        .size(24.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(
                         onClick = { showPermissionDialog = true },
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
                             contentDescription = "권한 편집",
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -193,24 +193,24 @@ fun ParticipantCard(
             }
 
             // Kick icon on top-right (only for owner viewing non-owner participants)
-            if (isOwner && !isParticipantOwner) {
+            if (isOwner && !isParticipantOwner && !isCurrentUser) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(x = 8.dp, y = (-8).dp)
-                        .size(28.dp)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .size(24.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.errorContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(
                         onClick = { showKickDialog = true },
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
                             contentDescription = "추방",
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }

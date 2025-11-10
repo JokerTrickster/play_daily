@@ -61,6 +61,7 @@ fun MemoDetailScreen(
     val businessPhone by viewModel.businessPhone.collectAsState()
     val businessAddress by viewModel.businessAddress.collectAsState()
     val naverPlaceUrl by viewModel.naverPlaceUrl.collectAsState()
+    val canEditMemo by viewModel.canEditMemo.collectAsState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showShareSheet by remember { mutableStateOf(false) }
@@ -135,33 +136,37 @@ fun MemoDetailScreen(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Edit button
-                    FloatingActionButton(
-                        onClick = {
-                            val currentMemoId = viewModel.memoIdFlow.value
-                            onNavigateToEdit(currentMemoId)
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "수정",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                    // Edit button - only show if user has edit permission
+                    if (canEditMemo) {
+                        FloatingActionButton(
+                            onClick = {
+                                val currentMemoId = viewModel.memoIdFlow.value
+                                onNavigateToEdit(currentMemoId)
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Edit,
+                                contentDescription = "수정",
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
                     }
 
-                    // Delete button
-                    FloatingActionButton(
-                        onClick = { showDeleteDialog = true },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Delete,
-                            contentDescription = "삭제",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                    // Delete button - only show if user has edit permission
+                    if (canEditMemo) {
+                        FloatingActionButton(
+                            onClick = { showDeleteDialog = true },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "삭제",
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
                     }
 
                     // Like button with animation

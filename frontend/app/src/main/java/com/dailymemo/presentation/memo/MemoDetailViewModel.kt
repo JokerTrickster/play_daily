@@ -26,6 +26,8 @@ class MemoDetailViewModel @Inject constructor(
     private val deleteCommentUseCase: com.dailymemo.domain.usecases.DeleteCommentUseCase,
     private val memoRepository: com.dailymemo.domain.repositories.MemoRepository,
     private val toggleMemoLikeUseCase: com.dailymemo.domain.usecases.ToggleMemoLikeUseCase,
+    private val roomRepository: com.dailymemo.domain.repositories.RoomRepository,
+    private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -104,6 +106,9 @@ class MemoDetailViewModel @Inject constructor(
 
     private val _categories = MutableStateFlow<List<com.dailymemo.domain.models.MemoCategory>>(emptyList())
     val categories: StateFlow<List<com.dailymemo.domain.models.MemoCategory>> = _categories.asStateFlow()
+
+    private val _canEditMemo = MutableStateFlow(true)  // 기본적으로 편집 가능 (본인 메모)
+    val canEditMemo: StateFlow<Boolean> = _canEditMemo.asStateFlow()
 
     init {
         loadMemo()
@@ -187,6 +192,9 @@ class MemoDetailViewModel @Inject constructor(
                     // 좋아요 상태 설정 (API 응답에서 직접 설정)
                     _isLiked.value = memo.isLiked
                     _likesCount.value = memo.likesCount
+
+                    // 권한 체크
+                    checkEditPermission(memo.userId)
 
                     _uiState.value = MemoDetailUiState.Loaded
                 },
@@ -345,6 +353,34 @@ class MemoDetailViewModel @Inject constructor(
                 .onFailure {
                     // 에러 처리는 조용히 실패 (네트워크 오류 등)
                 }
+        }
+    }
+
+    private fun checkEditPermission(memoOwnerId: Long) {
+        viewModelScope.launch {
+            val currentUserId = authLocalDataSource.getUserId()?.toLongOrNull() ?: 1L
+
+            // 본인 메모인 경우 항상 편집 가능
+            if (currentUserId == memoOwnerId) {
+                _canEditMemo.value = true
+                return@launch
+            }
+
+            // 다른 사람의 메모인 경우 해당 Room의 권한 체크
+            roomRepository.getRoomMembers(memoOwnerId).fold(
+                onSuccess = { members ->
+                    val currentMember = members.find { it.userId == currentUserId }
+                    _canEditMemo.value = when (currentMember?.permission) {
+                        com.dailymemo.domain.models.RoomPermission.OWNER,
+                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> true
+                        else -> false
+                    }
+                },
+                onFailure = {
+                    // 권한 조회 실패 시 편집 불가
+                    _canEditMemo.value = false
+                }
+            )
         }
     }
 }
