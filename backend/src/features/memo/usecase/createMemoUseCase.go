@@ -37,34 +37,18 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		return nil, fmt.Errorf("no write permission for this room")
 	}
 
-	// 2. 카테고리 검증 포함 전체 요청 검증 (DB 접근 필요)
-	// Note: 실제로는 gorm DB 인스턴스를 전달해야 하지만, 임시로 repository를 통해 검증
-	// 이후 handler에서 검증하도록 수정 가능
+	// 2. 요청 검증은 이미 handler에서 ValidateCreateMemo로 수행됨
+	// 중복 검증 제거
 
-	// 3. 비즈니스 정보 필드 검증
-	if err := request.ValidateBusinessFields(req.BusinessName, req.BusinessPhone, req.BusinessAddress); err != nil {
-		return nil, err
-	}
-
-	// 이미지 파일이 있으면 S3에 업로드
+	// 이미지 URL 초기화 (파일 업로드는 트랜잭션 성공 후 처리)
 	imageURL := req.ImageURL
-	if req.ImageFile != nil && req.ImageHeader != nil {
-		if storage.S3 == nil {
-			return nil, fmt.Errorf("S3 storage is not configured")
-		}
 
-		uploadedURL, err := storage.S3.UploadFile(ctx, req.ImageFile, req.ImageHeader, "image/daily")
-		if err != nil {
-			return nil, fmt.Errorf("failed to upload image to S3: %w", err)
-		}
-		imageURL = uploadedURL
-	}
-
+	// 메모 객체 생성 (이미지 URL은 임시 값)
 	memo := &mysql.Memo{
-		UserID:          userID,
-		RoomID:          req.RoomID,
-		Title:           req.Title,
-		// Content field removed - using categories instead
+		UserID:       userID,
+		RoomID:       req.RoomID,
+		Title:        req.Title,
+		// Content and Category fields removed - using categories instead
 		CreationMode:    req.CreationMode, // NEW
 		ImageURL:        imageURL,
 		Rating:          req.Rating,
@@ -72,7 +56,6 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 		Latitude:        req.Latitude,
 		Longitude:       req.Longitude,
 		LocationName:    req.LocationName,
-		Category:        req.Category, // Deprecated
 		IsWishlist:      req.IsWishlist,
 		BusinessName:    req.BusinessName,
 		BusinessPhone:   req.BusinessPhone,
@@ -84,6 +67,28 @@ func (uc *CreateMemoUseCase) CreateMemo(ctx context.Context, userID uint, req re
 	err = uc.Repository.CreateWithCategories(ctx, memo, req.CategoryIDs)
 	if err != nil {
 		return nil, err
+	}
+
+	// 트랜잭션 성공 후 이미지 파일이 있으면 S3에 업로드하고 메모 업데이트
+	if req.ImageFile != nil && req.ImageHeader != nil {
+		if storage.S3 == nil {
+			return nil, fmt.Errorf("S3 storage is not configured")
+		}
+
+		uploadedURL, err := storage.S3.UploadFile(ctx, req.ImageFile, req.ImageHeader, "image/daily")
+		if err != nil {
+			// S3 업로드 실패 시 로그만 남기고 메모는 이미지 없이 유지
+			// 또는 생성된 메모를 롤백하려면 삭제 처리
+			// 여기서는 로그만 남기고 진행
+			fmt.Printf("Warning: failed to upload image to S3 for memo %d: %v\n", memo.ID, err)
+		} else {
+			// S3 업로드 성공 시 메모의 이미지 URL 업데이트
+			memo.ImageURL = uploadedURL
+			// 이미지 URL만 업데이트
+			if updateErr := uc.Repository.UpdateImageURL(ctx, memo.ID, uploadedURL); updateErr != nil {
+				fmt.Printf("Warning: failed to update image URL for memo %d: %v\n", memo.ID, updateErr)
+			}
+		}
 	}
 
 	// 생성 시점에는 좋아요가 없으므로 false

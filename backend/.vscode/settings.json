@@ -1,0 +1,15 @@
+{
+  "go.toolsEnvVars": {
+    "GOPROXY": "https://proxy.golang.org,direct",
+    "GO111MODULE": "on"
+  },
+  "go.useLanguageServer": true,
+  "go.lintOnSave": "package",
+  "go.formatTool": "goimports",
+  "gopls": {
+    "ui.diagnostic.analyses": {
+      "unusedparams": false
+    },
+    "ui.semanticTokens": true
+  }
+}

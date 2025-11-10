@@ -50,18 +50,36 @@ func NewCreateMemoHandler(c *echo.Echo, useCase _interface.ICreateMemoUseCase) _
 func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// TODO: JWT에서 userID 추출
-	userID := uint(1)
+	// JWT에서 userID 추출
+	userID, ok := c.Get("uID").(uint)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"error": "user authentication required",
+		})
+	}
 
-	// TODO: JWT 또는 사용자 설정에서 기본 RoomID 가져오기
-	// 현재는 기본값 1 사용
-	roomID := uint(1)
+	// 요청에서 room_id를 받거나 기본값 사용
+	roomIDStr := c.FormValue("room_id")
+	var roomID uint
+	if roomIDStr != "" {
+		if parsed, err := strconv.ParseUint(roomIDStr, 10, 32); err == nil {
+			roomID = uint(parsed)
+		} else {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "invalid room_id format",
+			})
+		}
+	} else {
+		// room_id가 제공되지 않으면 사용자의 기본 room 사용
+		// 이를 위해서는 사용자 정보를 조회해야 함
+		roomID = uint(1) // 임시로 1을 사용, 추후 사용자 정보에서 가져오도록 개선 필요
+	}
 
 	// Form 데이터 파싱
 	req := request.ReqCreateMemo{
-		RoomID:  roomID,
-		Title:   c.FormValue("title"),
-		Content: c.FormValue("content"),
+		RoomID: roomID,
+		Title:  c.FormValue("title"),
+		// Content field removed - deprecated, using categories instead
 	}
 
 	// Rating 파싱 (Float로 받아서 uint8로 변환)
@@ -98,10 +116,7 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 		req.LocationName = &locName
 	}
 
-	// Category 파싱
-	if category := c.FormValue("category"); category != "" {
-		req.Category = &category
-	}
+	// Category field removed - deprecated, using category_ids instead
 
 	// IsWishlist 파싱
 	if wishlistStr := c.FormValue("is_wishlist"); wishlistStr != "" {
@@ -148,7 +163,17 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 		req.CategoryIDs = categoryIDs
 	}
 
-	// 이미지 파일 검증 및 처리
+	// 제목 필수 검증 (빠른 실패를 위해 먼저 체크)
+	if req.Title == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "title is required"})
+	}
+
+	// 요청 전체 검증 (카테고리 검증 포함) - 파일 처리 전에 수행
+	if err := req.ValidateCreateMemo(mysql.GormMysqlDB); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	// 이미지 파일 검증 및 처리 (validation 통과 후에만 파일 처리)
 	fileHeader, err := c.FormFile("image")
 	if err == nil && fileHeader != nil {
 		// 파일 크기 검증
@@ -165,21 +190,11 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 				"error": "failed to open image file",
 			})
 		}
-		defer file.Close()
+		defer file.Close() // defer를 Open() 직후에 위치시켜 모든 경로에서 파일이 닫히도록 함
 
 		// Request에 파일 정보 담기 (UseCase에서 S3 업로드 처리)
 		req.ImageFile = file
 		req.ImageHeader = fileHeader
-	}
-
-	// 제목 필수 검증
-	if req.Title == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "title is required"})
-	}
-
-	// 요청 전체 검증 (카테고리 검증 포함)
-	if err := req.ValidateCreateMemo(mysql.GormMysqlDB); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
 	memo, err := h.UseCase.CreateMemo(ctx, userID, req)

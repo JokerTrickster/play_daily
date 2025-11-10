@@ -73,3 +73,8 @@ func (r *CreateMemoRepository) CheckWritePermission(ctx context.Context, roomID 
 	// READ_WRITE 또는 OWNER 권한이면 쓰기 가능
 	return member.Permission == mysql.PermissionReadWrite || member.Permission == mysql.PermissionOwner, nil
 }
+
+// UpdateImageURL 메모의 이미지 URL만 업데이트
+func (r *CreateMemoRepository) UpdateImageURL(ctx context.Context, memoID uint, imageURL string) error {
+	return r.GormDB.WithContext(ctx).Model(&mysql.Memo{}).Where("id = ?", memoID).Update("image_url", imageURL).Error
+}
