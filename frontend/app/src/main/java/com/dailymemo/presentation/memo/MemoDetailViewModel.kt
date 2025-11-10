@@ -25,9 +25,6 @@ class MemoDetailViewModel @Inject constructor(
     private val createCommentUseCase: com.dailymemo.domain.usecases.CreateCommentUseCase,
     private val deleteCommentUseCase: com.dailymemo.domain.usecases.DeleteCommentUseCase,
     private val memoRepository: com.dailymemo.domain.repositories.MemoRepository,
-    private val likeRoomUseCase: com.dailymemo.domain.usecases.roomlike.LikeRoomUseCase,
-    private val unlikeRoomUseCase: com.dailymemo.domain.usecases.roomlike.UnlikeRoomUseCase,
-    private val getRoomLikeStatusUseCase: com.dailymemo.domain.usecases.roomlike.GetRoomLikeStatusUseCase,
     private val toggleMemoLikeUseCase: com.dailymemo.domain.usecases.ToggleMemoLikeUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -187,8 +184,9 @@ class MemoDetailViewModel @Inject constructor(
                     // roomId 저장 (userId를 roomId로 사용)
                     _roomId.value = memo.userId
 
-                    // 좋아요 상태 로드
-                    loadRoomLikeStatus(memo.userId)
+                    // 좋아요 상태 설정 (API 응답에서 직접 설정)
+                    _isLiked.value = memo.isLiked
+                    _likesCount.value = memo.likesCount
 
                     _uiState.value = MemoDetailUiState.Loaded
                 },
@@ -328,22 +326,6 @@ class MemoDetailViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.deleteError(error))
-                }
-            )
-        }
-    }
-
-    private fun loadRoomLikeStatus(roomId: Long) {
-        viewModelScope.launch {
-            getRoomLikeStatusUseCase(roomId).fold(
-                onSuccess = { status ->
-                    _isLiked.value = status.isLiked
-                    _likesCount.value = status.likesCount
-                },
-                onFailure = {
-                    // 좋아요 상태 로드 실패는 조용히 무시 (선택적 기능)
-                    _isLiked.value = false
-                    _likesCount.value = 0
                 }
             )
         }
