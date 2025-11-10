@@ -31,4 +31,9 @@ interface RoomApiService {
     suspend fun updateMemberPermission(
         @Body request: Map<String, Any>
     ): Response<Map<String, String>>
+
+    @POST("/v0.1/room/update")
+    suspend fun updateRoomSettings(
+        @Body request: Map<String, Any>
+    ): Response<Map<String, String>>
 }

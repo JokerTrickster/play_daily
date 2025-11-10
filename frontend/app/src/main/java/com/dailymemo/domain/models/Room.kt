@@ -8,6 +8,8 @@ data class Room(
     val ownerId: Long,
     val ownerName: String,
     val participants: List<Participant> = emptyList(),
+    val isPublic: Boolean = false,
+    val roomPassword: String = "0000",
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime
 )

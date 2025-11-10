@@ -134,6 +134,9 @@ fun ProfileScreen(
                     onKickParticipant = { viewModel.kickParticipant(it) },
                     onPermissionChange = { userId, permission ->
                         viewModel.updateMemberPermission(userId, permission)
+                    },
+                    onRoomPublicChange = { isPublic ->
+                        viewModel.updateRoomPublic(isPublic)
                     }
                 )
                 Spacer(modifier = Modifier.height(24.dp))
@@ -591,7 +594,8 @@ fun RoomInfoSection(
     onJoinRoomClick: () -> Unit,
     onLeaveRoomClick: () -> Unit,
     onKickParticipant: (Long) -> Unit,
-    onPermissionChange: (Long, com.dailymemo.domain.models.RoomPermission) -> Unit = { _, _ -> }
+    onPermissionChange: (Long, com.dailymemo.domain.models.RoomPermission) -> Unit = { _, _ -> },
+    onRoomPublicChange: (Boolean) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -697,6 +701,38 @@ fun RoomInfoSection(
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    // Room Public/Private Toggle (Only for Owner)
+                    if (isOwner) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (room.isPublic) Icons.Outlined.Public else Icons.Outlined.Lock,
+                                    contentDescription = "방 공개 설정",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = if (room.isPublic) "공개 방" else "비공개 방",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = room.isPublic,
+                                onCheckedChange = onRoomPublicChange
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
                     // Participants count
                     Row(

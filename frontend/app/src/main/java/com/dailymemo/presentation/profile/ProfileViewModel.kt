@@ -33,6 +33,7 @@ class ProfileViewModel @Inject constructor(
     private val kickUserUseCase: com.dailymemo.domain.usecases.room.KickUserUseCase,
     private val getRoomMembersUseCase: com.dailymemo.domain.usecases.room.GetRoomMembersUseCase,
     private val updateMemberPermissionUseCase: com.dailymemo.domain.usecases.room.UpdateMemberPermissionUseCase,
+    private val updateRoomSettingsUseCase: com.dailymemo.domain.usecases.room.UpdateRoomSettingsUseCase,
     private val memoRepository: com.dailymemo.domain.repositories.MemoRepository
 ) : ViewModel() {
 
@@ -643,6 +644,25 @@ class ProfileViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     android.util.Log.e("ProfileViewModel", "Failed to update permission: ${error.message}")
+                    // TODO: Show error message to user
+                }
+            )
+        }
+    }
+
+    fun updateRoomPublic(isPublic: Boolean) {
+        viewModelScope.launch {
+            val currentRoom = _currentRoom.value ?: return@launch
+            val roomId = currentRoom.id.toLongOrNull() ?: return@launch
+
+            updateRoomSettingsUseCase(roomId, isPublic = isPublic).fold(
+                onSuccess = {
+                    android.util.Log.d("ProfileViewModel", "Room public setting updated to $isPublic")
+                    // Reload room info to get fresh data from backend
+                    loadCurrentRoom()
+                },
+                onFailure = { error ->
+                    android.util.Log.e("ProfileViewModel", "Failed to update room settings: ${error.message}")
                     // TODO: Show error message to user
                 }
             )

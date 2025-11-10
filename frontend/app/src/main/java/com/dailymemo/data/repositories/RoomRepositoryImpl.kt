@@ -141,4 +141,37 @@ class RoomRepositoryImpl @Inject constructor(
             Result.failure(error)
         }
     }
+
+    override suspend fun updateRoomSettings(
+        roomId: Long,
+        isPublic: Boolean?,
+        roomPassword: String?
+    ): Result<Unit> {
+        return try {
+            val request = mutableMapOf<String, Any>("room_id" to roomId)
+            isPublic?.let { request["is_public"] = it }
+            roomPassword?.let { request["room_password"] = it }
+
+            val response = roomApiService.updateRoomSettings(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val error = when (response.code()) {
+                    403 -> DomainError.Forbidden
+                    400 -> DomainError.BadRequest
+                    404 -> DomainError.RoomNotFound
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
 }
