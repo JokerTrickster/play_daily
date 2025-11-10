@@ -106,13 +106,17 @@ fun ParticipantCard(
     var showKickDialog by remember { mutableStateOf(false) }
     val isParticipantOwner = participant.permission == com.dailymemo.domain.models.RoomPermission.OWNER
 
+    // Determine profile size based on role
+    val profileSize = if (isParticipantOwner) 80.dp else 64.dp
+    val initialsSize = if (isParticipantOwner) 28.sp else 24.sp
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile circle with image or initial
         Box(
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(profileSize),
             contentAlignment = Alignment.Center
         ) {
             if (!participant.profileImageUrl.isNullOrBlank()) {
@@ -121,7 +125,7 @@ fun ParticipantCard(
                     model = participant.profileImageUrl,
                     contentDescription = "${participant.name} 프로필",
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(profileSize)
                         .clip(CircleShape),
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop
                 )
@@ -129,7 +133,7 @@ fun ParticipantCard(
                 // Show gradient circle with initials
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(profileSize)
                         .clip(CircleShape)
                         .background(Brush.linearGradient(colors = getGradientForName(participant.name))),
                     contentAlignment = Alignment.Center
@@ -139,7 +143,7 @@ fun ParticipantCard(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        fontSize = 24.sp
+                        fontSize = initialsSize
                     )
                 }
             }
@@ -149,7 +153,7 @@ fun ParticipantCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .size(20.dp)
+                        .size(24.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFFFD700)),
                     contentAlignment = Alignment.Center
@@ -158,8 +162,58 @@ fun ParticipantCard(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "방장",
                         tint = Color.White,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(14.dp)
                     )
+                }
+            }
+
+            // Edit icon on the left (only for owner viewing non-owner participants)
+            if (isOwner && !isParticipantOwner) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .offset(x = (-8).dp)
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(
+                        onClick = { showPermissionDialog = true },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "권한 편집",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            // Kick icon on top-right (only for owner viewing non-owner participants)
+            if (isOwner && !isParticipantOwner) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 8.dp, y = (-8).dp)
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.errorContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(
+                        onClick = { showKickDialog = true },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Remove,
+                            contentDescription = "추방",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
@@ -174,38 +228,6 @@ fun ParticipantCard(
             textAlign = TextAlign.Center,
             maxLines = 1
         )
-
-        // Action buttons for non-owner participants when viewer is owner
-        if (isOwner && !isParticipantOwner) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                IconButton(
-                    onClick = { showPermissionDialog = true },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "권한 변경",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                IconButton(
-                    onClick = { showKickDialog = true },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.PersonRemove,
-                        contentDescription = "내보내기",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        }
     }
 
     // Permission change dialog
