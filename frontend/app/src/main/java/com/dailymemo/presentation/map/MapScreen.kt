@@ -420,7 +420,7 @@ fun MapScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Left side: Action buttons in vertical stack
                     Column(
@@ -495,42 +495,41 @@ fun MapScreen(
                         }
                     }
 
-                    // Right side: Distance filter chips (only show when memo list is visible)
-                    if (showMemoList) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                    // Right side: Distance filter chips (always visible next to List icon)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            "반경",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text(
-                                "반경",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            DistanceFilterChip(
+                                label = "전체",
+                                selected = distanceFilter == DistanceFilter.ALL,
+                                onClick = { viewModel.setDistanceFilter(DistanceFilter.ALL) }
                             )
-                            Row(
-                                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                DistanceFilterChip(
-                                    label = "전체",
-                                    selected = distanceFilter == DistanceFilter.ALL,
-                                    onClick = { viewModel.setDistanceFilter(DistanceFilter.ALL) }
-                                )
-                                DistanceFilterChip(
-                                    label = "5km",
-                                    selected = distanceFilter == DistanceFilter.WITHIN_5KM,
-                                    onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_5KM) }
-                                )
-                                DistanceFilterChip(
-                                    label = "10km",
-                                    selected = distanceFilter == DistanceFilter.WITHIN_10KM,
-                                    onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_10KM) }
-                                )
-                                DistanceFilterChip(
-                                    label = "20km",
-                                    selected = distanceFilter == DistanceFilter.WITHIN_20KM,
-                                    onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_20KM) }
-                                )
-                            }
+                            DistanceFilterChip(
+                                label = "5km",
+                                selected = distanceFilter == DistanceFilter.WITHIN_5KM,
+                                onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_5KM) }
+                            )
+                            DistanceFilterChip(
+                                label = "10km",
+                                selected = distanceFilter == DistanceFilter.WITHIN_10KM,
+                                onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_10KM) }
+                            )
+                            DistanceFilterChip(
+                                label = "20km",
+                                selected = distanceFilter == DistanceFilter.WITHIN_20KM,
+                                onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_20KM) }
+                            )
                         }
                     }
                 }
