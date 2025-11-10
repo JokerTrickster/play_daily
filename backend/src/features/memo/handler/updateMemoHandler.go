@@ -48,8 +48,13 @@ func NewUpdateMemoHandler(c *echo.Echo, useCase _interface.IUpdateMemoUseCase) _
 func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// TODO: JWT에서 userID 추출
-	userID := uint(1)
+	// JWT에서 userID 추출
+	userID, ok := c.Get("uID").(uint)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"error": "user authentication required",
+		})
+	}
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
