@@ -1,68 +1,50 @@
 package com.dailymemo.presentation.memo
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dailymemo.domain.models.Comment
+import com.dailymemo.domain.models.MemoCategory
+import com.dailymemo.domain.models.PlaceCategory
+import com.dailymemo.domain.usecases.CreateCommentUseCase
+import com.dailymemo.domain.usecases.DeleteCommentUseCase
 import com.dailymemo.domain.usecases.DeleteMemoUseCase
 import com.dailymemo.domain.usecases.GetMemoByIdUseCase
-import com.dailymemo.domain.usecases.UpdateMemoUseCase
+import com.dailymemo.domain.usecases.ToggleMemoLikeUseCase
+import com.dailymemo.domain.repositories.RoomRepository
+import com.dailymemo.data.datasources.local.AuthLocalDataSource
+import com.dailymemo.domain.models.RoomPermission
 import com.dailymemo.utils.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class MemoDetailViewModel @Inject constructor(
     private val getMemoByIdUseCase: GetMemoByIdUseCase,
-    private val updateMemoUseCase: UpdateMemoUseCase,
     private val deleteMemoUseCase: DeleteMemoUseCase,
-    private val createCommentUseCase: com.dailymemo.domain.usecases.CreateCommentUseCase,
-    private val deleteCommentUseCase: com.dailymemo.domain.usecases.DeleteCommentUseCase,
-    private val memoRepository: com.dailymemo.domain.repositories.MemoRepository,
-    private val toggleMemoLikeUseCase: com.dailymemo.domain.usecases.ToggleMemoLikeUseCase,
-    private val roomRepository: com.dailymemo.domain.repositories.RoomRepository,
-    private val authLocalDataSource: com.dailymemo.data.datasources.local.AuthLocalDataSource,
+    private val createCommentUseCase: CreateCommentUseCase,
+    private val deleteCommentUseCase: DeleteCommentUseCase,
+    private val toggleMemoLikeUseCase: ToggleMemoLikeUseCase,
+    private val roomRepository: RoomRepository,
+    private val authLocalDataSource: AuthLocalDataSource,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val memoId: Long = savedStateHandle.get<String>("memoId")?.toLongOrNull() ?: 0L
 
-    private val _memoId = MutableStateFlow(memoId)
-    val memoIdFlow: StateFlow<Long> = _memoId.asStateFlow()
-
+    // UI State
     private val _uiState = MutableStateFlow<MemoDetailUiState>(MemoDetailUiState.Loading)
     val uiState: StateFlow<MemoDetailUiState> = _uiState.asStateFlow()
 
-    private val _title = MutableStateFlow("")
-    val title: StateFlow<String> = _title.asStateFlow()
+    // Memo Data - Read-only display state
+    private val _memoData = MutableStateFlow<MemoDisplayData?>(null)
+    val memoData: StateFlow<MemoDisplayData?> = _memoData.asStateFlow()
 
-    private val _content = MutableStateFlow("")
-    val content: StateFlow<String> = _content.asStateFlow()
-
-    private val _imageUrl = MutableStateFlow("")
-    val imageUrl: StateFlow<String> = _imageUrl.asStateFlow()
-
-    private val _imageUris = MutableStateFlow<List<Uri>>(emptyList())
-    val imageUris: StateFlow<List<Uri>> = _imageUris.asStateFlow()
-
-    private val _existingImageUrls = MutableStateFlow<List<String>>(emptyList())
-    val existingImageUrls: StateFlow<List<String>> = _existingImageUrls.asStateFlow()
-
-    private val _rating = MutableStateFlow(0f)
-    val rating: StateFlow<Float> = _rating.asStateFlow()
-
-    private val _isPinned = MutableStateFlow(false)
-    val isPinned: StateFlow<Boolean> = _isPinned.asStateFlow()
-
-    private val _isEditing = MutableStateFlow(false)
-    val isEditing: StateFlow<Boolean> = _isEditing.asStateFlow()
-
+    // Comments
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
 
@@ -72,48 +54,68 @@ class MemoDetailViewModel @Inject constructor(
     private val _commentRating = MutableStateFlow(0)
     val commentRating: StateFlow<Int> = _commentRating.asStateFlow()
 
-    private val _naverPlaceUrl = MutableStateFlow<String?>(null)
-    val naverPlaceUrl: StateFlow<String?> = _naverPlaceUrl.asStateFlow()
-
-    private val _businessName = MutableStateFlow<String?>(null)
-    val businessName: StateFlow<String?> = _businessName.asStateFlow()
-
-    private val _businessPhone = MutableStateFlow<String?>(null)
-    val businessPhone: StateFlow<String?> = _businessPhone.asStateFlow()
-
-    private val _businessAddress = MutableStateFlow<String?>(null)
-    val businessAddress: StateFlow<String?> = _businessAddress.asStateFlow()
-
-    private val _locationName = MutableStateFlow<String?>(null)
-    val locationName: StateFlow<String?> = _locationName.asStateFlow()
-
-    private val _category = MutableStateFlow<com.dailymemo.domain.models.PlaceCategory?>(null)
-    val category: StateFlow<com.dailymemo.domain.models.PlaceCategory?> = _category.asStateFlow()
-
-    private val _isWishlist = MutableStateFlow(false)
-    val isWishlist: StateFlow<Boolean> = _isWishlist.asStateFlow()
-
+    // Like state
     private val _isLiked = MutableStateFlow(false)
     val isLiked: StateFlow<Boolean> = _isLiked.asStateFlow()
 
     private val _likesCount = MutableStateFlow(0)
     val likesCount: StateFlow<Int> = _likesCount.asStateFlow()
 
-    private val _roomId = MutableStateFlow<Long?>(null)
-
-    private val _latitude = MutableStateFlow<Double?>(null)
-    private val _longitude = MutableStateFlow<Double?>(null)
-
-    private val _categories = MutableStateFlow<List<com.dailymemo.domain.models.MemoCategory>>(emptyList())
-    val categories: StateFlow<List<com.dailymemo.domain.models.MemoCategory>> = _categories.asStateFlow()
-
-    private val _canEditMemo = MutableStateFlow(true)  // 기본적으로 편집 가능 (본인 메모)
+    // Permissions
+    private val _canEditMemo = MutableStateFlow(true)
     val canEditMemo: StateFlow<Boolean> = _canEditMemo.asStateFlow()
 
     init {
         loadMemo()
     }
 
+    fun refresh() {
+        loadMemo()
+    }
+
+    private fun loadMemo() {
+        viewModelScope.launch {
+            _uiState.value = MemoDetailUiState.Loading
+
+            getMemoByIdUseCase(memoId).fold(
+                onSuccess = { memo ->
+                    // Update memo display data
+                    _memoData.value = MemoDisplayData(
+                        memoId = memo.id,
+                        title = memo.title,
+                        content = memo.content,
+                        imageUrls = listOfNotNull(memo.imageUrl).filter { it.isNotBlank() },
+                        rating = memo.rating,
+                        isPinned = memo.isPinned,
+                        naverPlaceUrl = memo.naverPlaceUrl,
+                        businessName = memo.businessName,
+                        businessPhone = memo.businessPhone,
+                        businessAddress = memo.businessAddress,
+                        locationName = memo.locationName,
+                        category = memo.category,
+                        categories = memo.categories
+                    )
+
+                    // Update comments
+                    _comments.value = memo.comments
+
+                    // Update like state
+                    _isLiked.value = memo.isLiked
+                    _likesCount.value = memo.likesCount
+
+                    // Check edit permissions
+                    checkEditPermission(memo.userId)
+
+                    _uiState.value = MemoDetailUiState.Loaded
+                },
+                onFailure = { error ->
+                    _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.loadError(error))
+                }
+            )
+        }
+    }
+
+    // Comment operations
     fun onCommentInputChange(newInput: String) {
         _commentInput.value = newInput
     }
@@ -152,178 +154,25 @@ class MemoDetailViewModel @Inject constructor(
         }
     }
 
-    private fun loadMemo() {
+    // Like operation
+    fun toggleLike() {
         viewModelScope.launch {
-            _uiState.value = MemoDetailUiState.Loading
-
-            getMemoByIdUseCase(memoId).fold(
-                onSuccess = { memo ->
-                    _title.value = memo.title
-                    _content.value = memo.content
-                    _imageUrl.value = memo.imageUrl ?: ""
-                    // Initialize existing images
-                    _existingImageUrls.value = if (!memo.imageUrl.isNullOrBlank()) {
-                        listOf(memo.imageUrl)
+            toggleMemoLikeUseCase(memoId)
+                .onSuccess { isLiked ->
+                    _isLiked.value = isLiked
+                    _likesCount.value = if (isLiked) {
+                        _likesCount.value + 1
                     } else {
-                        emptyList()
+                        (_likesCount.value - 1).coerceAtLeast(0)
                     }
-                    _rating.value = memo.rating
-                    _isPinned.value = memo.isPinned
-                    _naverPlaceUrl.value = memo.naverPlaceUrl
-                    _businessName.value = memo.businessName
-                    _businessPhone.value = memo.businessPhone
-                    _businessAddress.value = memo.businessAddress
-                    _locationName.value = memo.locationName
-                    _category.value = memo.category
-                    _isWishlist.value = memo.isWishlist
-                    _latitude.value = memo.latitude
-                    _longitude.value = memo.longitude
-                    _categories.value = memo.categories
-
-                    // 댓글 로드 (API에서 함께 반환됨)
-                    _comments.value = memo.comments
-
-                    // 새로 추가한 이미지 URIs 초기화
-                    _imageUris.value = emptyList()
-
-                    // roomId 저장 (userId를 roomId로 사용)
-                    _roomId.value = memo.userId
-
-                    // 좋아요 상태 설정 (API 응답에서 직접 설정)
-                    _isLiked.value = memo.isLiked
-                    _likesCount.value = memo.likesCount
-
-                    // 권한 체크
-                    checkEditPermission(memo.userId)
-
-                    _uiState.value = MemoDetailUiState.Loaded
-                },
-                onFailure = { error ->
-                    _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.loadError(error))
                 }
-            )
-        }
-    }
-
-    fun toggleEditMode() {
-        _isEditing.value = !_isEditing.value
-    }
-
-    fun onTitleChange(newTitle: String) {
-        _title.value = newTitle
-    }
-
-    fun onContentChange(newContent: String) {
-        _content.value = newContent
-    }
-
-    fun onImageUrlChange(newUrl: String) {
-        _imageUrl.value = newUrl
-    }
-
-    fun addImageUri(uri: Uri?) {
-        uri?.let { newUri ->
-            val currentCount = _existingImageUrls.value.size + _imageUris.value.size
-            if (currentCount < 2) {
-                _imageUris.value = _imageUris.value + newUri
-            }
-        }
-    }
-
-    fun removeImageUri(uri: Uri) {
-        _imageUris.value = _imageUris.value.filter { it != uri }
-    }
-
-    fun removeExistingImage(url: String) {
-        _existingImageUrls.value = _existingImageUrls.value.filter { it != url }
-    }
-
-    fun canAddMoreImages(): Boolean {
-        return (_existingImageUrls.value.size + _imageUris.value.size) < 2
-    }
-
-    fun onRatingChange(newRating: Float) {
-        _rating.value = newRating.coerceIn(0f, 5f)
-    }
-
-    fun togglePin() {
-        _isPinned.value = !_isPinned.value
-    }
-
-    fun onLocationNameChange(newLocationName: String?) {
-        _locationName.value = newLocationName
-    }
-
-    fun onBusinessNameChange(newBusinessName: String?) {
-        _businessName.value = newBusinessName
-    }
-
-    fun onBusinessPhoneChange(newBusinessPhone: String?) {
-        _businessPhone.value = newBusinessPhone
-    }
-
-    fun onBusinessAddressChange(newBusinessAddress: String?) {
-        _businessAddress.value = newBusinessAddress
-    }
-
-    fun onCategoryChange(newCategory: com.dailymemo.domain.models.PlaceCategory?) {
-        _category.value = newCategory
-    }
-
-    fun updateMemo() {
-        if (_title.value.isBlank() || _content.value.isBlank()) {
-            _uiState.value = MemoDetailUiState.Error("제목과 내용을 입력해주세요")
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = MemoDetailUiState.Updating
-
-            // Upload new images and get URLs
-            val newImageUrls = mutableListOf<String>()
-            for (uri in _imageUris.value) {
-                memoRepository.uploadImage(uri).fold(
-                    onSuccess = { url -> newImageUrls.add(url) },
-                    onFailure = { error ->
-                        _uiState.value = MemoDetailUiState.Error("이미지 업로드 실패: ${error.message}")
-                        return@launch
-                    }
-                )
-            }
-
-            // Combine existing and new image URLs
-            val allImageUrls = _existingImageUrls.value + newImageUrls
-            val firstImageUrl = allImageUrls.firstOrNull()
-
-            updateMemoUseCase(
-                id = memoId,
-                title = _title.value.trim(),
-                content = _content.value.trim(),
-                imageUrl = firstImageUrl,
-                imageUrls = allImageUrls,
-                rating = _rating.value,
-                isPinned = _isPinned.value,
-                latitude = _latitude.value,
-                longitude = _longitude.value,
-                locationName = _locationName.value?.trim(),
-                category = _category.value,
-                isWishlist = _isWishlist.value,
-                businessName = _businessName.value?.trim(),
-                businessPhone = _businessPhone.value?.trim(),
-                businessAddress = _businessAddress.value?.trim()
-            ).fold(
-                onSuccess = {
-                    _isEditing.value = false
-                    // 업데이트 후 메모를 다시 로드하여 최신 상태 반영
-                    loadMemo()
-                },
-                onFailure = { error ->
-                    _uiState.value = MemoDetailUiState.Error(ErrorHandler.Memo.updateError(error))
+                .onFailure {
+                    // Silent failure for like/unlike (network issues)
                 }
-            )
         }
     }
 
+    // Delete operation
     fun deleteMemo() {
         viewModelScope.launch {
             _uiState.value = MemoDetailUiState.Deleting
@@ -339,45 +188,28 @@ class MemoDetailViewModel @Inject constructor(
         }
     }
 
-    fun toggleLike() {
-        viewModelScope.launch {
-            toggleMemoLikeUseCase(memoId)
-                .onSuccess { isLiked ->
-                    _isLiked.value = isLiked
-                    _likesCount.value = if (isLiked) {
-                        _likesCount.value + 1
-                    } else {
-                        (_likesCount.value - 1).coerceAtLeast(0)
-                    }
-                }
-                .onFailure {
-                    // 에러 처리는 조용히 실패 (네트워크 오류 등)
-                }
-        }
-    }
-
+    // Permission check
     private fun checkEditPermission(memoOwnerId: Long) {
         viewModelScope.launch {
             val currentUserId = authLocalDataSource.getUserId()?.toLongOrNull() ?: 1L
 
-            // 본인 메모인 경우 항상 편집 가능
+            // Owner can always edit
             if (currentUserId == memoOwnerId) {
                 _canEditMemo.value = true
                 return@launch
             }
 
-            // 다른 사람의 메모인 경우 해당 Room의 권한 체크
+            // Check room permissions for shared rooms
             roomRepository.getRoomMembers(memoOwnerId).fold(
                 onSuccess = { members ->
                     val currentMember = members.find { it.userId == currentUserId }
                     _canEditMemo.value = when (currentMember?.permission) {
-                        com.dailymemo.domain.models.RoomPermission.OWNER,
-                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> true
+                        RoomPermission.OWNER,
+                        RoomPermission.READ_WRITE -> true
                         else -> false
                     }
                 },
                 onFailure = {
-                    // 권한 조회 실패 시 편집 불가
                     _canEditMemo.value = false
                 }
             )
@@ -385,11 +217,26 @@ class MemoDetailViewModel @Inject constructor(
     }
 }
 
+// Simplified display data model
+data class MemoDisplayData(
+    val memoId: Long,
+    val title: String,
+    val content: String,
+    val imageUrls: List<String>,
+    val rating: Float,
+    val isPinned: Boolean,
+    val naverPlaceUrl: String?,
+    val businessName: String?,
+    val businessPhone: String?,
+    val businessAddress: String?,
+    val locationName: String?,
+    val category: PlaceCategory?,
+    val categories: List<MemoCategory>
+)
+
 sealed class MemoDetailUiState {
     object Loading : MemoDetailUiState()
     object Loaded : MemoDetailUiState()
-    object Updating : MemoDetailUiState()
-    object Updated : MemoDetailUiState()
     object Deleting : MemoDetailUiState()
     object Deleted : MemoDetailUiState()
     data class Error(val message: String) : MemoDetailUiState()
