@@ -16,6 +16,8 @@ data class RoomMemberDto(
     val userName: String,
     @SerializedName("email")
     val email: String,
+    @SerializedName("profile_image_url")
+    val profileImageUrl: String?,
     @SerializedName("permission")
     val permission: String, // READ_ONLY, READ_WRITE, OWNER
     @SerializedName("joined_at")

@@ -17,6 +17,7 @@ data class Room(
 data class Participant(
     val id: Long,
     val name: String,
+    val profileImageUrl: String? = null,
     val isOwner: Boolean = false,
     val permission: RoomPermission = RoomPermission.READ_ONLY,
     val joinedAt: LocalDateTime

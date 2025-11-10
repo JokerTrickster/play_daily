@@ -38,12 +38,17 @@ func (r *GetRoomMembersRepository) GetRoomMembers(ctx context.Context, roomID ui
 	resMembers := make([]response.ResRoomMember, 0, len(members))
 	for _, member := range members {
 		if member.User != nil {
+			profileImageURL := ""
+			if member.User.ProfileImageURL != nil {
+				profileImageURL = *member.User.ProfileImageURL
+			}
 			resMembers = append(resMembers, response.ResRoomMember{
-				UserID:     member.UserID,
-				UserName:   member.User.Nickname,
-				Email:      member.User.AccountID,
-				Permission: string(member.Permission),
-				JoinedAt:   member.JoinedAt.Unix(),
+				UserID:          member.UserID,
+				UserName:        member.User.Nickname,
+				Email:           member.User.AccountID,
+				ProfileImageURL: profileImageURL,
+				Permission:      string(member.Permission),
+				JoinedAt:        member.JoinedAt.Unix(),
 			})
 		}
 	}

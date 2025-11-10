@@ -4,6 +4,7 @@ data class RoomMember(
     val userId: Long,
     val userName: String,
     val email: String,
+    val profileImageUrl: String?,
     val permission: RoomPermission,
     val joinedAt: Long
 )

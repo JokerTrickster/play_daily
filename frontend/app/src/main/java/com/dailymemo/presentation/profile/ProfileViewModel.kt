@@ -468,6 +468,7 @@ class ProfileViewModel @Inject constructor(
                         Participant(
                             id = member.userId,
                             name = member.userName,
+                            profileImageUrl = member.profileImageUrl,
                             isOwner = member.permission == com.dailymemo.domain.models.RoomPermission.OWNER,
                             permission = member.permission,
                             joinedAt = java.time.Instant.ofEpochMilli(member.joinedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()

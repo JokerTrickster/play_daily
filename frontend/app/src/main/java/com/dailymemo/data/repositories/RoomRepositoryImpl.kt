@@ -79,6 +79,7 @@ class RoomRepositoryImpl @Inject constructor(
                         userId = dto.userId,
                         userName = dto.userName,
                         email = dto.email,
+                        profileImageUrl = dto.profileImageUrl,
                         permission = RoomPermission.fromString(dto.permission),
                         joinedAt = dto.joinedAt
                     )
