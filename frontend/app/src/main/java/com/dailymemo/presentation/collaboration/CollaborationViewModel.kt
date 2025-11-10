@@ -1,133 +1,168 @@
 package com.dailymemo.presentation.collaboration
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dailymemo.domain.models.Participant
-import com.dailymemo.domain.models.Room
+import com.dailymemo.data.datasources.local.AuthLocalDataSource
+import com.dailymemo.domain.models.RoomMember
+import com.dailymemo.domain.models.RoomPermission
+import com.dailymemo.domain.usecases.room.GetRoomMembersUseCase
+import com.dailymemo.domain.usecases.room.KickUserUseCase
+import com.dailymemo.domain.usecases.room.UpdateMemberPermissionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class CollaborationViewModel @Inject constructor(
-    // TODO: RoomRepository 추가 시 주입
+    private val getRoomMembersUseCase: GetRoomMembersUseCase,
+    private val updateMemberPermissionUseCase: UpdateMemberPermissionUseCase,
+    private val kickUserUseCase: KickUserUseCase,
+    private val authLocalDataSource: AuthLocalDataSource
 ) : ViewModel() {
 
-    private val _currentRoom = MutableStateFlow<Room?>(null)
-    val currentRoom: StateFlow<Room?> = _currentRoom.asStateFlow()
+    private val _members = MutableStateFlow<List<RoomMember>>(emptyList())
+    val members: StateFlow<List<RoomMember>> = _members.asStateFlow()
 
-    private val _currentUserId = MutableStateFlow(1L) // TODO: 실제 사용자 ID로 변경
+    private val _currentUserId = MutableStateFlow(0L)
     val currentUserId: StateFlow<Long> = _currentUserId.asStateFlow()
 
-    private val _roomIdInput = MutableStateFlow("")
-    val roomIdInput: StateFlow<String> = _roomIdInput.asStateFlow()
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _showJoinDialog = MutableStateFlow(false)
-    val showJoinDialog: StateFlow<Boolean> = _showJoinDialog.asStateFlow()
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _showPermissionDialog = MutableStateFlow(false)
+    val showPermissionDialog: StateFlow<Boolean> = _showPermissionDialog.asStateFlow()
+
+    private val _selectedMember = MutableStateFlow<RoomMember?>(null)
+    val selectedMember: StateFlow<RoomMember?> = _selectedMember.asStateFlow()
+
+    private val _showKickDialog = MutableStateFlow(false)
+    val showKickDialog: StateFlow<Boolean> = _showKickDialog.asStateFlow()
+
+    private val _kickTargetMember = MutableStateFlow<RoomMember?>(null)
+    val kickTargetMember: StateFlow<RoomMember?> = _kickTargetMember.asStateFlow()
 
     init {
-        loadCurrentRoom()
+        loadCurrentUser()
+        loadMembers()
     }
 
-    private fun loadCurrentRoom() {
+    private fun loadCurrentUser() {
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 데이터 로드
-            // 현재는 내 방을 기본으로 설정
-            _currentRoom.value = Room(
-                id = "room_1",
-                name = "내 일상 메모",
-                ownerId = 1L,
-                ownerName = "나",
-                participants = listOf(
-                    Participant(
-                        id = 1L,
-                        name = "나",
-                        isOwner = true,
-                        joinedAt = LocalDateTime.now()
-                    )
-                ),
-                createdAt = LocalDateTime.now(),
-                updatedAt = LocalDateTime.now()
+            val userId = authLocalDataSource.getUserId()?.toLongOrNull() ?: 0L
+            _currentUserId.value = userId
+        }
+    }
+
+    fun loadMembers() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
+            // Get current room ID
+            val roomId = authLocalDataSource.getCurrentRoomId()
+            if (roomId == null) {
+                _error.value = "현재 방 정보를 찾을 수 없습니다"
+                _isLoading.value = false
+                return@launch
+            }
+
+            getRoomMembersUseCase(roomId.toLong()).fold(
+                onSuccess = { membersList ->
+                    _members.value = membersList
+                    _isLoading.value = false
+                    Log.d("CollaborationViewModel", "Loaded ${membersList.size} members for room $roomId")
+                },
+                onFailure = { error ->
+                    _error.value = error.message ?: "참여자 목록을 불러올 수 없습니다"
+                    _isLoading.value = false
+                    Log.e("CollaborationViewModel", "Failed to load members", error)
+                }
             )
         }
     }
 
-    fun isOwner(): Boolean {
-        return _currentRoom.value?.ownerId == _currentUserId.value
+    fun showPermissionDialog(member: RoomMember) {
+        _selectedMember.value = member
+        _showPermissionDialog.value = true
     }
 
-    fun onRoomIdInputChange(input: String) {
-        _roomIdInput.value = input
+    fun hidePermissionDialog() {
+        _showPermissionDialog.value = false
+        _selectedMember.value = null
     }
 
-    fun showJoinDialog() {
-        _showJoinDialog.value = true
+    fun showKickDialog(member: RoomMember) {
+        _kickTargetMember.value = member
+        _showKickDialog.value = true
     }
 
-    fun hideJoinDialog() {
-        _showJoinDialog.value = false
-        _roomIdInput.value = ""
+    fun hideKickDialog() {
+        _showKickDialog.value = false
+        _kickTargetMember.value = null
     }
 
-    fun joinRoom(roomId: String) {
-        if (roomId.isBlank()) return
-
+    fun updateMemberPermission(userId: Long, newPermission: RoomPermission) {
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 방 참여 API 호출
-            _currentRoom.value = Room(
-                id = roomId,
-                name = "친구의 일상 메모",
-                ownerId = 2L,
-                ownerName = "친구",
-                participants = listOf(
-                    Participant(
-                        id = 2L,
-                        name = "친구",
-                        isOwner = true,
-                        joinedAt = LocalDateTime.now().minusDays(1)
-                    ),
-                    Participant(
-                        id = 1L,
-                        name = "나",
-                        isOwner = false,
-                        joinedAt = LocalDateTime.now()
-                    )
-                ),
-                createdAt = LocalDateTime.now().minusDays(5),
-                updatedAt = LocalDateTime.now()
+            _isLoading.value = true
+
+            val roomId = authLocalDataSource.getCurrentRoomId()
+            if (roomId == null) {
+                _error.value = "현재 방 정보를 찾을 수 없습니다"
+                _isLoading.value = false
+                return@launch
+            }
+
+            updateMemberPermissionUseCase(
+                roomId = roomId.toLong(),
+                userId = userId,
+                permission = newPermission
+            ).fold(
+                onSuccess = {
+                    // Reload members to reflect changes
+                    loadMembers()
+                    Log.d("CollaborationViewModel", "Updated permission for user $userId to $newPermission")
+                },
+                onFailure = { error ->
+                    _error.value = "권한 변경에 실패했습니다: ${error.message}"
+                    _isLoading.value = false
+                    Log.e("CollaborationViewModel", "Failed to update permission", error)
+                }
             )
-            hideJoinDialog()
         }
     }
 
-    fun leaveRoom() {
-        if (isOwner()) {
-            // 방장은 나갈 수 없음
-            return
-        }
-
+    fun kickMember(userId: Long) {
         viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 방 나가기 API 호출
-            // 내 방으로 돌아가기
-            loadCurrentRoom()
-        }
-    }
+            _isLoading.value = true
 
-    fun kickParticipant(participantId: Long) {
-        if (!isOwner()) {
-            // 방장만 추방 가능
-            return
-        }
+            val roomId = authLocalDataSource.getCurrentRoomId()
+            if (roomId == null) {
+                _error.value = "현재 방 정보를 찾을 수 없습니다"
+                _isLoading.value = false
+                return@launch
+            }
 
-        viewModelScope.launch {
-            // TODO: 백엔드 연동 시 실제 추방 API 호출
-            val currentRoom = _currentRoom.value ?: return@launch
-            _currentRoom.value = currentRoom.copy(
-                participants = currentRoom.participants.filter { it.id != participantId }
+            kickUserUseCase(
+                roomId = roomId.toLong(),
+                targetUserId = userId
+            ).fold(
+                onSuccess = {
+                    // Reload members to reflect changes
+                    loadMembers()
+                    Log.d("CollaborationViewModel", "Kicked user $userId from room $roomId")
+                },
+                onFailure = { error ->
+                    _error.value = "추방에 실패했습니다: ${error.message}"
+                    _isLoading.value = false
+                    Log.e("CollaborationViewModel", "Failed to kick member", error)
+                }
             )
         }
     }
