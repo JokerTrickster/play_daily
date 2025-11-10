@@ -198,12 +198,19 @@ class ProfileViewModel @Inject constructor(
             _errorMessage.value = null
             _successMessage.value = null
 
-            // TODO: Upload image to S3 if selected
-            // For now, we'll pass null for profileImageUrl
-            // In future implementation:
-            // val uploadedImageUrl = _selectedImageUri.value?.let { uploadImageToS3(it) }
-
-            val uploadedImageUrl: String? = null // Placeholder for S3 upload
+            // Upload image to S3 if selected
+            val uploadedImageUrl: String? = if (_selectedImageUri.value != null) {
+                memoRepository.uploadImage(_selectedImageUri.value!!).fold(
+                    onSuccess = { url -> url },
+                    onFailure = { error ->
+                        _errorMessage.value = error.message ?: "이미지 업로드에 실패했습니다"
+                        _isLoading.value = false
+                        return@launch
+                    }
+                )
+            } else {
+                null
+            }
 
             updateProfileUseCase(
                 currentPassword = _currentPassword.value,

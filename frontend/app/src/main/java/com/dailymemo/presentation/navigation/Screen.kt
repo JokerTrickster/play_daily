@@ -20,6 +20,7 @@ sealed class Screen(val route: String) {
 
     sealed class Profile(route: String) : Screen(route) {
         object Edit : Profile("profile/edit")
+        object Participants : Profile("profile/participants")
     }
 
     object Collaboration : Screen("collaboration")

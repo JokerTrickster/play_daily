@@ -21,6 +21,7 @@ import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 import com.dailymemo.presentation.memo.MemoListScreen
 import com.dailymemo.presentation.profile.ProfileScreen
+import com.dailymemo.presentation.profile.ParticipantManagementScreen
 
 @Composable
 fun MainScreen(
@@ -135,6 +136,17 @@ fun MainScreen(
                     },
                     onNavigateToEdit = {
                         mainNavController.navigate(Screen.Profile.Edit.route)
+                    },
+                    onNavigateToParticipants = {
+                        mainNavController.navigate(Screen.Profile.Participants.route)
+                    }
+                )
+            }
+
+            composable(Screen.Profile.Participants.route) {
+                ParticipantManagementScreen(
+                    onNavigateBack = {
+                        mainNavController.popBackStack()
                     }
                 )
             }

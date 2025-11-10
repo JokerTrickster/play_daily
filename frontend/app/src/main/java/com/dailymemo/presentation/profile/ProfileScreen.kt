@@ -43,6 +43,7 @@ import com.kakao.vectormap.label.LabelStyles
 fun ProfileScreen(
     onLogout: () -> Unit,
     onNavigateToEdit: () -> Unit = {},
+    onNavigateToParticipants: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val userName by viewModel.userName.collectAsState()
@@ -138,7 +139,8 @@ fun ProfileScreen(
                     },
                     onRoomPublicChange = { isPublic ->
                         viewModel.updateRoomPublic(isPublic)
-                    }
+                    },
+                    onNavigateToParticipants = onNavigateToParticipants
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -596,7 +598,8 @@ fun RoomInfoSection(
     onLeaveRoomClick: () -> Unit,
     onKickParticipant: (Long) -> Unit,
     onPermissionChange: (Long, com.dailymemo.domain.models.RoomPermission) -> Unit = { _, _ -> },
-    onRoomPublicChange: (Boolean) -> Unit = {}
+    onRoomPublicChange: (Boolean) -> Unit = {},
+    onNavigateToParticipants: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -735,36 +738,44 @@ fun RoomInfoSection(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Participants count
+                    // Participants count with manage button
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.People,
-                            contentDescription = "참여자",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "${room.participants.size}명 참여중",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.People,
+                                contentDescription = "참여자",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "${room.participants.size}명 참여중",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Manage participants button
+                        TextButton(
+                            onClick = onNavigateToParticipants
+                        ) {
+                            Text("관리")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronRight,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Participants List
-            ParticipantsList(
-                participants = room.participants,
-                currentUserId = currentUserId,
-                isOwner = isOwner,
-                onKickParticipant = onKickParticipant,
-                onPermissionChange = onPermissionChange
-            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

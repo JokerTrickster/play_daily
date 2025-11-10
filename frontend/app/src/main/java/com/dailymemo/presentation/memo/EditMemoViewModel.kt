@@ -14,6 +14,7 @@ import com.dailymemo.domain.usecases.location.GetCurrentLocationUseCase
 import com.dailymemo.domain.usecases.place.SearchPlacesUseCase
 import com.dailymemo.domain.usecases.room.GetRoomMembersUseCase
 import com.dailymemo.domain.repositories.CategoryRepository
+import com.dailymemo.domain.repositories.MemoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class EditMemoViewModel @Inject constructor(
     private val getMemoUseCase: GetMemoUseCase,
     private val updateMemoUseCase: UpdateMemoUseCase,
+    private val memoRepository: MemoRepository,
     private val getCurrentLocationUseCase: GetCurrentLocationUseCase,
     private val searchPlacesUseCase: SearchPlacesUseCase,
     private val categoryRepository: CategoryRepository,
@@ -272,8 +274,20 @@ class EditMemoViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = EditMemoUiState.Saving
 
-            // TODO: Handle image upload if new image is selected
-            val imageUrl = _existingImageUrl.value
+            // Handle image upload if new image is selected
+            val imageUrl = if (_imageUri.value != null) {
+                // Upload new image and get URL
+                memoRepository.uploadImage(_imageUri.value!!).fold(
+                    onSuccess = { url -> url },
+                    onFailure = { error ->
+                        _uiState.value = EditMemoUiState.Error(error.message ?: "이미지 업로드에 실패했습니다")
+                        return@launch
+                    }
+                )
+            } else {
+                // Use existing image URL if no new image selected
+                _existingImageUrl.value
+            }
 
             val location = _currentLocation.value
             updateMemoUseCase(
@@ -281,6 +295,7 @@ class EditMemoViewModel @Inject constructor(
                 title = _title.value,
                 content = _content.value,
                 imageUrl = imageUrl,
+                imageUrls = if (imageUrl != null) listOf(imageUrl) else emptyList(),
                 rating = _rating.value,
                 isPinned = _isPinned.value,
                 latitude = location?.latitude,
