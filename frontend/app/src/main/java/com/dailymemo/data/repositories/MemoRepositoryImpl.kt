@@ -27,7 +27,8 @@ import javax.inject.Singleton
 @Singleton
 class MemoRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val memoApiService: MemoApiService
+    private val memoApiService: MemoApiService,
+    private val profileApiService: com.dailymemo.data.datasources.remote.api.ProfileApiService
 ) : MemoRepository {
 
     override suspend fun getMemos(
@@ -220,8 +221,36 @@ class MemoRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadImage(imageUri: android.net.Uri): Result<String> {
-        // TODO: 백엔드 연동 시 실제 이미지 업로드 구현
-        return Result.success("https://example.com/image/${System.currentTimeMillis()}.jpg")
+        return try {
+            // 이미지를 MultipartBody.Part로 변환
+            val imagePart = prepareFilePart(imageUri)
+
+            // 프로필 이미지 업로드 API 호출
+            val response = profileApiService.uploadProfileImage(imagePart)
+
+            if (response.isSuccessful && response.body() != null) {
+                val imageUrl = response.body()!!["image_url"]
+                if (imageUrl != null) {
+                    android.util.Log.d("MemoRepository", "이미지 업로드 성공: $imageUrl")
+                    Result.success(imageUrl)
+                } else {
+                    android.util.Log.e("MemoRepository", "이미지 URL이 응답에 없음")
+                    Result.failure(DomainError.ImageUploadFailed)
+                }
+            } else {
+                val errorBody = response.errorBody()?.string()
+                android.util.Log.e("MemoRepository", "이미지 업로드 실패 (${response.code()}): ${errorBody ?: response.message()}")
+                Result.failure(DomainError.ImageUploadFailed)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MemoRepository", "이미지 업로드 예외", e)
+            val error = if (e.message?.contains("Failed to read image") == true) {
+                DomainError.ImageReadFailed
+            } else {
+                handleException(e)
+            }
+            Result.failure(error)
+        }
     }
 
     override suspend fun toggleMemoLike(memoId: Long): Result<Boolean> {

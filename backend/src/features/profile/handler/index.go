@@ -21,4 +21,7 @@ func NewProfileHandlers(e *echo.Echo) {
 	updateProfileRepo := repository.NewUpdateProfileRepository(mysql.GormMysqlDB)
 	updateProfileUseCase := usecase.NewUpdateProfileUseCase(updateProfileRepo, timeout)
 	NewUpdateProfileHandler(e, updateProfileUseCase)
+
+	// UploadProfileImage
+	NewUploadProfileImageHandler(e)
 }
