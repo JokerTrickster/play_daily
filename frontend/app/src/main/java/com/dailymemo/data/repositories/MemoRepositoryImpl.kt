@@ -174,7 +174,8 @@ class MemoRepositoryImpl @Inject constructor(
         isWishlist: Boolean,
         businessName: String?,
         businessPhone: String?,
-        businessAddress: String?
+        businessAddress: String?,
+        categoryIds: List<Int>
     ): Result<Memo> {
         return try {
             val request = UpdateMemoRequestDto(
@@ -189,7 +190,8 @@ class MemoRepositoryImpl @Inject constructor(
                 isWishlist = isWishlist,
                 businessName = businessName,
                 businessPhone = businessPhone,
-                businessAddress = businessAddress
+                businessAddress = businessAddress,
+                categoryIds = categoryIds
             )
             val response = memoApiService.updateMemo(id, request)
             if (response.isSuccessful && response.body() != null) {

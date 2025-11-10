@@ -289,7 +289,8 @@ class EditMemoViewModel @Inject constructor(
                 isWishlist = _isWishlist.value,
                 businessName = _businessName.value.ifEmpty { null },
                 businessPhone = _businessPhone.value.ifEmpty { null },
-                businessAddress = _businessAddress.value.ifEmpty { null }
+                businessAddress = _businessAddress.value.ifEmpty { null },
+                categoryIds = _selectedCategoryIds.value.toList()
             ).fold(
                 onSuccess = {
                     _uiState.value = EditMemoUiState.Success

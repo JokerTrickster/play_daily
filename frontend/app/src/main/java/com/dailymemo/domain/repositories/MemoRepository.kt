@@ -47,7 +47,8 @@ interface MemoRepository {
         isWishlist: Boolean = false,
         businessName: String? = null,
         businessPhone: String? = null,
-        businessAddress: String? = null
+        businessAddress: String? = null,
+        categoryIds: List<Int> = emptyList()
     ): Result<Memo>
     suspend fun deleteMemo(id: Long): Result<Unit>
     suspend fun uploadImage(imageUri: android.net.Uri): Result<String> // 이미지 업로드 후 URL 반환

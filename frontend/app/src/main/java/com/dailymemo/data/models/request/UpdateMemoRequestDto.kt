@@ -26,5 +26,7 @@ data class UpdateMemoRequestDto(
     @SerializedName("business_phone")
     val businessPhone: String? = null,
     @SerializedName("business_address")
-    val businessAddress: String? = null
+    val businessAddress: String? = null,
+    @SerializedName("category_ids")
+    val categoryIds: List<Int> = emptyList()
 )

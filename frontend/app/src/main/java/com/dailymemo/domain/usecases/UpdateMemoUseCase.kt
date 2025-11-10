@@ -23,7 +23,8 @@ class UpdateMemoUseCase @Inject constructor(
         isWishlist: Boolean = false,
         businessName: String? = null,
         businessPhone: String? = null,
-        businessAddress: String? = null
+        businessAddress: String? = null,
+        categoryIds: List<Int> = emptyList()
     ): Result<Memo> {
         return repository.updateMemo(
             id = id,
@@ -39,7 +40,8 @@ class UpdateMemoUseCase @Inject constructor(
             isWishlist = isWishlist,
             businessName = businessName,
             businessPhone = businessPhone,
-            businessAddress = businessAddress
+            businessAddress = businessAddress,
+            categoryIds = categoryIds
         )
     }
 }
