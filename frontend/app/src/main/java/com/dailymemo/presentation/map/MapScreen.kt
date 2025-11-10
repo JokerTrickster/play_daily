@@ -417,6 +417,81 @@ fun MapScreen(
                     )
                 }
 
+                // Floating Action Buttons - Below Filter Chips
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Toggle Memo List Button
+                    FloatingActionButton(
+                        onClick = {
+                            showMemoList = !showMemoList
+                        },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.List,
+                            contentDescription = "메모 목록",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // My Location Button
+                    FloatingActionButton(
+                        onClick = {
+                            currentLocation?.let { location ->
+                                kakaoMap?.moveCamera(
+                                    com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
+                                        LatLng.from(location.latitude, location.longitude),
+                                        15 // zoom level
+                                    )
+                                )
+                                Log.d("MapScreen", "Move to current location button clicked")
+                            } ?: run {
+                                // If no location yet, request it
+                                viewModel.getCurrentLocation()
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.MyLocation,
+                            contentDescription = "내 위치",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // Create Memo Button
+                    FloatingActionButton(
+                        onClick = {
+                            if (canCreateMemo) {
+                                onNavigateToCreateMemo()
+                            } else {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "읽기 전용 권한으로 메모를 작성할 수 없습니다",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        },
+                        containerColor = if (canCreateMemo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                        contentColor = if (canCreateMemo) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = "메모 추가",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
                 // Search Results List (below search bar) - only show if showSearchResults is true
                 if (searchResults.isNotEmpty() && showSearchResults) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -589,89 +664,6 @@ fun MapScreen(
                 }
             }
 
-            // Floating Action Buttons
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Toggle Memo List Button
-                FloatingActionButton(
-                    onClick = {
-                        showMemoList = !showMemoList
-                    },
-                    containerColor = if (showMemoList) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    },
-                    contentColor = if (showMemoList) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.secondary
-                    },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.List,
-                        contentDescription = "메모 목록",
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                // My Location Button
-                FloatingActionButton(
-                    onClick = {
-                        currentLocation?.let { location ->
-                            kakaoMap?.moveCamera(
-                                com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(
-                                    LatLng.from(location.latitude, location.longitude),
-                                    15 // zoom level
-                                )
-                            )
-                            Log.d("MapScreen", "Move to current location button clicked")
-                        } ?: run {
-                            // If no location yet, request it
-                            viewModel.getCurrentLocation()
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.MyLocation,
-                        contentDescription = "내 위치",
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                // Create Memo Button
-                FloatingActionButton(
-                    onClick = {
-                        if (canCreateMemo) {
-                            onNavigateToCreateMemo()
-                        } else {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "읽기 전용 권한으로 메모를 작성할 수 없습니다",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    containerColor = if (canCreateMemo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.Add,
-                        contentDescription = "메모 추가",
-                        tint = if (canCreateMemo) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
         } else {
             // Permission Not Granted
             Box(
