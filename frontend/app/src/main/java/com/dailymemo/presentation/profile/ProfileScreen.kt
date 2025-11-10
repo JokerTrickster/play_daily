@@ -708,6 +708,9 @@ fun RoomInfoSection(
 
                     // Room Public/Private Toggle (Only for Owner)
                     if (isOwner) {
+                        // Local state for immediate UI feedback
+                        var localIsPublic by remember(room.isPublic) { mutableStateOf(room.isPublic) }
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -717,21 +720,24 @@ fun RoomInfoSection(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = if (room.isPublic) Icons.Outlined.Public else Icons.Outlined.Lock,
+                                    imageVector = if (localIsPublic) Icons.Outlined.Public else Icons.Outlined.Lock,
                                     contentDescription = "방 공개 설정",
                                     modifier = Modifier.size(20.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = if (room.isPublic) "공개 방" else "비공개 방",
+                                    text = if (localIsPublic) "공개 방" else "비공개 방",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             Switch(
-                                checked = room.isPublic,
-                                onCheckedChange = onRoomPublicChange
+                                checked = localIsPublic,
+                                onCheckedChange = { newValue ->
+                                    localIsPublic = newValue
+                                    onRoomPublicChange(newValue)
+                                }
                             )
                         }
 

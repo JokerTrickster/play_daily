@@ -138,18 +138,18 @@ fun MainScreen(
                         mainNavController.navigate(Screen.Profile.Edit.route)
                     },
                     onNavigateToParticipants = {
-                        mainNavController.navigate(Screen.Profile.Participants.route)
+                        bottomNavController.navigate(Screen.Profile.Participants.route)
                     }
                 )
             }
 
             composable(Screen.Profile.Participants.route) { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
-                    mainNavController.getBackStackEntry("main")
+                    bottomNavController.getBackStackEntry(Screen.Main.Timeline.route)
                 }
                 ParticipantManagementScreen(
                     onNavigateBack = {
-                        mainNavController.popBackStack()
+                        bottomNavController.popBackStack()
                     },
                     viewModel = androidx.hilt.navigation.compose.hiltViewModel(parentEntry)
                 )

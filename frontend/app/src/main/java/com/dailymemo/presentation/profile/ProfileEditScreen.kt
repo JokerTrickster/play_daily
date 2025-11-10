@@ -391,17 +391,17 @@ fun ProfileImagePicker(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .then(
-                        if (selectedUri != null || imageUrl != null) {
-                            Modifier
-                        } else {
-                            Modifier.background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.tertiary
-                                    )
+                    .background(
+                        if (selectedUri == null && imageUrl == null) {
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary
                                 )
+                            )
+                        } else {
+                            Brush.linearGradient(
+                                colors = listOf(Color.Transparent, Color.Transparent)
                             )
                         }
                     )
@@ -415,20 +415,24 @@ fun ProfileImagePicker(
             ) {
                 when {
                     selectedUri != null -> {
-                        // Show selected image
+                        // Show selected image - priority over existing image
                         AsyncImage(
                             model = selectedUri,
                             contentDescription = "선택된 프로필 이미지",
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     }
-                    imageUrl != null -> {
-                        // Show existing profile image
+                    !imageUrl.isNullOrBlank() -> {
+                        // Show existing profile image from URL
                         AsyncImage(
                             model = imageUrl,
                             contentDescription = "프로필 이미지",
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     }
