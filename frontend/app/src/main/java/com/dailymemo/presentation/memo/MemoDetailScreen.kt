@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -134,7 +135,28 @@ fun MemoDetailScreen(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Like button
+                    // Like button with animation
+                    val scale = remember { Animatable(1f) }
+                    var likeAnimationTrigger by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(isLiked) {
+                        if (isLiked) {
+                            likeAnimationTrigger = true
+                            // Scale up and down animation
+                            scale.animateTo(
+                                targetValue = 1.3f,
+                                animationSpec = tween(durationMillis = 100)
+                            )
+                            scale.animateTo(
+                                targetValue = 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                )
+                            )
+                        }
+                    }
+
                     FloatingActionButton(
                         onClick = { viewModel.toggleLike() },
                         containerColor = if (isLiked)
@@ -143,11 +165,56 @@ fun MemoDetailScreen(
                             MaterialTheme.colorScheme.secondaryContainer,
                         modifier = Modifier.size(56.dp)
                     ) {
-                        Icon(
-                            imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = if (isLiked) "좋아요 취소" else "좋아요",
-                            tint = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            // Heart animation particles
+                            if (likeAnimationTrigger && isLiked) {
+                                repeat(6) { index ->
+                                    val particleScale = remember { Animatable(0f) }
+                                    val particleAlpha = remember { Animatable(1f) }
+                                    val angle = (360f / 6) * index
+
+                                    LaunchedEffect(isLiked) {
+                                        particleScale.animateTo(
+                                            targetValue = 2f,
+                                            animationSpec = tween(durationMillis = 400)
+                                        )
+                                    }
+
+                                    LaunchedEffect(isLiked) {
+                                        particleAlpha.animateTo(
+                                            targetValue = 0f,
+                                            animationSpec = tween(durationMillis = 400)
+                                        )
+                                    }
+
+                                    Icon(
+                                        imageVector = Icons.Filled.FavoriteBorder,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error.copy(alpha = particleAlpha.value),
+                                        modifier = Modifier
+                                            .size((8 * particleScale.value).dp)
+                                            .offset(
+                                                x = (20 * particleScale.value * kotlin.math.cos(Math.toRadians(angle.toDouble()))).dp,
+                                                y = (20 * particleScale.value * kotlin.math.sin(Math.toRadians(angle.toDouble()))).dp
+                                            )
+                                    )
+                                }
+                            }
+
+                            // Main heart icon
+                            Icon(
+                                imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = if (isLiked) "좋아요 취소" else "좋아요",
+                                tint = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.graphicsLayer {
+                                    scaleX = scale.value
+                                    scaleY = scale.value
+                                }
+                            )
+                        }
                     }
 
                     // Edit button
