@@ -611,11 +611,12 @@ fun MapScreen(
                     } else {
                         MaterialTheme.colorScheme.secondary
                     },
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         Icons.Filled.List,
-                        contentDescription = "메모 목록"
+                        contentDescription = "메모 목록",
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
@@ -637,11 +638,12 @@ fun MapScreen(
                     },
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         Icons.Filled.MyLocation,
-                        contentDescription = "내 위치"
+                        contentDescription = "내 위치",
+                        modifier = Modifier.size(22.dp)
                     )
                 }
 
@@ -660,13 +662,13 @@ fun MapScreen(
                         }
                     },
                     containerColor = if (canCreateMemo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier.size(56.dp)
                 ) {
                     Icon(
                         Icons.Filled.Add,
                         contentDescription = "메모 추가",
                         tint = if (canCreateMemo) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }

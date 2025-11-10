@@ -1,23 +1,39 @@
 package com.dailymemo.presentation.memo
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dailymemo.presentation.components.CategorySelectionGrid
 import com.dailymemo.presentation.memo.components.HalfStarRating
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +45,7 @@ fun EditMemoScreen(
     val uiState by viewModel.uiState.collectAsState()
     val title by viewModel.title.collectAsState()
     val content by viewModel.content.collectAsState()
+    val imageUri by viewModel.imageUri.collectAsState()
     val existingImageUrl by viewModel.existingImageUrl.collectAsState()
     val rating by viewModel.rating.collectAsState()
     val isPinned by viewModel.isPinned.collectAsState()
@@ -40,7 +57,47 @@ fun EditMemoScreen(
     val selectedCategoryIds by viewModel.selectedCategoryIds.collectAsState()
     val hasEditPermission by viewModel.hasEditPermission.collectAsState()
 
+    val context = LocalContext.current
     var showCancelDialog by remember { mutableStateOf(false) }
+    var showImagePickerDialog by remember { mutableStateOf(false) }
+
+    // Create temp file for camera
+    val tempImageFile = remember {
+        File(context.cacheDir, "temp_photo_${System.currentTimeMillis()}.jpg")
+    }
+
+    val tempImageUri = remember {
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            tempImageFile
+        )
+    }
+
+    // Gallery picker
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        viewModel.onImageSelected(uri)
+    }
+
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            viewModel.onImageSelected(tempImageUri)
+        }
+    }
+
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(tempImageUri)
+        }
+    }
 
     // Handle save success
     LaunchedEffect(uiState) {
@@ -197,6 +254,84 @@ fun EditMemoScreen(
                             maxLines = 5
                         )
 
+                        // Image Section
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "이미지",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    if (hasEditPermission) {
+                                        Button(
+                                            onClick = { showImagePickerDialog = true },
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.AddPhotoAlternate,
+                                                contentDescription = "이미지 선택",
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("변경")
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Show new image if selected, otherwise show existing image
+                                val displayImageUri = imageUri ?: existingImageUrl?.let { Uri.parse(it) }
+
+                                if (displayImageUri != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                    ) {
+                                        AsyncImage(
+                                            model = displayImageUri,
+                                            contentDescription = "메모 이미지",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+
+                                        // Remove image button
+                                        if (hasEditPermission && imageUri != null) {
+                                            IconButton(
+                                                onClick = { viewModel.onImageSelected(null) },
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(8.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = "이미지 제거",
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Text(
+                                        text = "선택된 이미지 없음",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
                         // Rating
                         Card(
                             modifier = Modifier.fillMaxWidth()
@@ -334,5 +469,120 @@ fun EditMemoScreen(
                 }
             }
         }
+
+        // Image Picker Dialog
+        if (showImagePickerDialog) {
+            ImagePickerDialog(
+                onDismiss = { showImagePickerDialog = false },
+                onGalleryClick = {
+                    showImagePickerDialog = false
+                    imagePickerLauncher.launch("image/*")
+                },
+                onCameraClick = {
+                    showImagePickerDialog = false
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) -> {
+                            cameraLauncher.launch(tempImageUri)
+                        }
+                        else -> {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun ImagePickerDialog(
+    onDismiss: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onCameraClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "이미지 선택",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Gallery Option
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onGalleryClick() },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = "갤러리",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "갤러리에서 선택",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Camera Option
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onCameraClick() },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "카메라",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            text = "카메라로 촬영",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
 }
