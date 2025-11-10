@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.ImeAction
 import coil.compose.AsyncImage
@@ -90,6 +91,7 @@ fun MapScreen(
     var selectedPlace by remember { mutableStateOf<com.dailymemo.domain.models.Place?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    var showMemoList by remember { mutableStateOf(true) } // 메모 목록 표시 상태
 
     var kakaoMap: KakaoMap? by remember { mutableStateOf(null) }
 
@@ -481,7 +483,7 @@ fun MapScreen(
             }
 
             // Memo List at Bottom (지도를 가리지 않도록 compact하게)
-            if (memos.isNotEmpty()) {
+            if (memos.isNotEmpty() && showMemoList) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -518,18 +520,26 @@ fun MapScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Join Room Button
+                // Toggle Memo List Button
                 FloatingActionButton(
                     onClick = {
-                        viewModel.showJoinRoomDialog()
+                        showMemoList = !showMemoList
                     },
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.secondary,
+                    containerColor = if (showMemoList) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                    contentColor = if (showMemoList) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.secondary
+                    },
                     modifier = Modifier.size(56.dp)
                 ) {
                     Icon(
-                        Icons.Filled.Home,
-                        contentDescription = "방 입장"
+                        Icons.Filled.List,
+                        contentDescription = "메모 목록"
                     )
                 }
 
