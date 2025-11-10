@@ -216,22 +216,6 @@ fun MemoDetailScreen(
                             )
                         }
                     }
-
-                    // Edit button
-                    FloatingActionButton(
-                        onClick = {
-                            val currentMemoId = viewModel.memoIdFlow.value
-                            onNavigateToEdit(currentMemoId)
-                        },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "수정",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
                 }
             }
         }
@@ -317,11 +301,29 @@ fun MemoDetailScreen(
                                             )
                                         }
 
-                                        // Delete button
+                                        // Edit and Delete buttons
                                         Row(
                                             modifier = Modifier.align(Alignment.TopEnd),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
+                                            // Edit button
+                                            IconButton(
+                                                onClick = {
+                                                    val currentMemoId = viewModel.memoIdFlow.value
+                                                    onNavigateToEdit(currentMemoId)
+                                                },
+                                                modifier = Modifier
+                                                    .clip(CircleShape)
+                                                    .background(Color.Black.copy(alpha = 0.3f))
+                                            ) {
+                                                Icon(
+                                                    Icons.Filled.Edit,
+                                                    contentDescription = "수정",
+                                                    tint = Color.White
+                                                )
+                                            }
+
+                                            // Delete button
                                             IconButton(
                                                 onClick = { showDeleteDialog = true },
                                                 modifier = Modifier
