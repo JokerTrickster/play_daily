@@ -88,3 +88,42 @@ func (r *UpdateMemoRepository) UpdateCategories(ctx context.Context, memoID uint
 		return nil
 	})
 }
+
+// UpdateMemoWithCategories 메모와 카테고리를 단일 트랜잭션으로 업데이트 (원자적 연산)
+func (r *UpdateMemoRepository) UpdateMemoWithCategories(ctx context.Context, memoID uint, userID uint, memo *mysql.Memo, categoryIDs []uint) error {
+	return r.GormDB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 1. 메모 업데이트
+		result := tx.Model(&mysql.Memo{}).
+			Where("id = ? AND user_id = ?", memoID, userID).
+			Updates(memo)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		// 2. 카테고리 업데이트 (same transaction)
+		if len(categoryIDs) > 0 {
+			// 2-1. 기존 카테고리 연결 삭제
+			if err := tx.Where("memo_id = ?", memoID).Delete(&mysql.MemoCategorySelection{}).Error; err != nil {
+				return err
+			}
+
+			// 2-2. 새로운 카테고리 연결 생성
+			for _, categoryID := range categoryIDs {
+				selection := &mysql.MemoCategorySelection{
+					MemoID:     memoID,
+					CategoryID: categoryID,
+				}
+				if err := tx.Create(selection).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}

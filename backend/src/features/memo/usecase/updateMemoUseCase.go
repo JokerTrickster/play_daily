@@ -69,20 +69,16 @@ func (uc *UpdateMemoUseCase) UpdateMemo(ctx context.Context, memoID uint, userID
 		BusinessAddress: req.BusinessAddress,
 	}
 
-	err := uc.Repository.Update(ctx, memoID, userID, updateMemo)
-	if err != nil {
-		return nil, err
+	// 카테고리 ID 변환
+	categoryIDs := make([]uint, len(req.CategoryIds))
+	for i, id := range req.CategoryIds {
+		categoryIDs[i] = uint(id)
 	}
 
-	// 카테고리 업데이트
-	if len(req.CategoryIds) > 0 {
-		categoryIDs := make([]uint, len(req.CategoryIds))
-		for i, id := range req.CategoryIds {
-			categoryIDs[i] = uint(id)
-		}
-		if err := uc.Repository.UpdateCategories(ctx, memoID, categoryIDs); err != nil {
-			return nil, fmt.Errorf("failed to update categories: %w", err)
-		}
+	// 메모와 카테고리를 단일 트랜잭션으로 업데이트 (원자적 연산)
+	err := uc.Repository.UpdateMemoWithCategories(ctx, memoID, userID, updateMemo, categoryIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	// 업데이트된 메모 조회
