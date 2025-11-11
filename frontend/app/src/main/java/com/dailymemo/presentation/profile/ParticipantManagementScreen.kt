@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -52,66 +54,121 @@ fun ParticipantManagementScreen(
 
             // Use Box with center alignment for small groups, Column for larger groups
             if (participantCount <= 4) {
-                // Small groups: vertically centered
+                // Small groups: vertically centered with cute heart container
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
+                    // Cute decorative background hearts
+                    Icon(
+                        imageVector = Icons.Filled.Favorite,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(300.dp)
+                            .offset(x = (-40).dp, y = (-40).dp)
+                            .graphicsLayer(alpha = 0.03f),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Favorite,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(200.dp)
+                            .offset(x = 60.dp, y = 50.dp)
+                            .graphicsLayer(alpha = 0.05f),
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+
+                    // Main content with cute card
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "참여자 ${room.participants.size}명",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            .padding(horizontal = 24.dp),
+                        shape = RoundedCornerShape(32.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 8.dp
                         )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp, horizontal = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Cute header with emoji
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Favorite,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "우리 팀 ${room.participants.size}명",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    imageVector = Icons.Filled.Favorite,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
 
-                        when {
-                            // 1-2 participants: Single column centered
-                            participantCount <= 2 -> {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(32.dp)
-                                ) {
-                                    room.participants.forEach { participant ->
-                                        ParticipantCard(
-                                            participant = participant,
-                                            isCurrentUser = participant.id == currentUserId,
-                                            isOwner = isOwner,
-                                            onKick = { viewModel.kickParticipant(participant.id) },
-                                            onPermissionChange = { permission ->
-                                                viewModel.updateMemberPermission(participant.id, permission)
-                                            }
-                                        )
+                            when {
+                                // 1-2 participants: Single column centered
+                                participantCount <= 2 -> {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(32.dp)
+                                    ) {
+                                        room.participants.forEach { participant ->
+                                            ParticipantCard(
+                                                participant = participant,
+                                                isCurrentUser = participant.id == currentUserId,
+                                                isOwner = isOwner,
+                                                onKick = { viewModel.kickParticipant(participant.id) },
+                                                onPermissionChange = { permission ->
+                                                    viewModel.updateMemberPermission(participant.id, permission)
+                                                }
+                                            )
+                                        }
                                     }
                                 }
-                            }
-                            // 3-4 participants: 2 columns centered
-                            else -> {
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-                                    verticalArrangement = Arrangement.spacedBy(32.dp),
-                                    maxItemsInEachRow = 2
-                                ) {
-                                    room.participants.forEach { participant ->
-                                        ParticipantCard(
-                                            participant = participant,
-                                            isCurrentUser = participant.id == currentUserId,
-                                            isOwner = isOwner,
-                                            onKick = { viewModel.kickParticipant(participant.id) },
-                                            onPermissionChange = { permission ->
-                                                viewModel.updateMemberPermission(participant.id, permission)
-                                            }
-                                        )
+                                // 3-4 participants: 2 columns centered
+                                else -> {
+                                    FlowRow(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                                        verticalArrangement = Arrangement.spacedBy(32.dp),
+                                        maxItemsInEachRow = 2
+                                    ) {
+                                        room.participants.forEach { participant ->
+                                            ParticipantCard(
+                                                participant = participant,
+                                                isCurrentUser = participant.id == currentUserId,
+                                                isOwner = isOwner,
+                                                onKick = { viewModel.kickParticipant(participant.id) },
+                                                onPermissionChange = { permission ->
+                                                    viewModel.updateMemberPermission(participant.id, permission)
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -119,7 +176,7 @@ fun ParticipantManagementScreen(
                     }
                 }
             } else {
-                // Large groups: scrollable grid from top
+                // Large groups: scrollable grid with cute decorations
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -128,17 +185,43 @@ fun ParticipantManagementScreen(
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "참여자 ${room.participants.size}명",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    // Cute header card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Groups,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "함께하는 ${room.participants.size}명",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(32.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
                         items(room.participants) { participant ->
