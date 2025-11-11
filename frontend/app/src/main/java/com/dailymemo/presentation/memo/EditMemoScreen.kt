@@ -221,22 +221,6 @@ fun EditMemoScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Existing Image
-                        if (existingImageUrl != null) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                            ) {
-                                AsyncImage(
-                                    model = existingImageUrl,
-                                    contentDescription = "메모 이미지",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        }
-
                         // Title
                         OutlinedTextField(
                             value = title,
@@ -259,50 +243,76 @@ fun EditMemoScreen(
                             maxLines = 5
                         )
 
-                        // Image Section
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
+                        // Image Section - Only show when image exists or can be added
+                        val displayImageUri = imageUri ?: existingImageUrl?.let { Uri.parse(it) }
+
+                        if (displayImageUri != null) {
+                            // Show image with controls when image exists
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
                                 ) {
-                                    Text(
-                                        text = "이미지",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    if (hasEditPermission) {
-                                        Button(
-                                            onClick = { showImagePickerDialog = true },
-                                            shape = RoundedCornerShape(8.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.AddPhotoAlternate,
-                                                contentDescription = "이미지 선택",
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text("변경")
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "이미지",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        if (hasEditPermission) {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                // Remove button
+                                                FilledTonalButton(
+                                                    onClick = {
+                                                        viewModel.onImageSelected(null)
+                                                        viewModel.clearExistingImage()
+                                                    },
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                    )
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Close,
+                                                        contentDescription = "이미지 제거",
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("제거", style = MaterialTheme.typography.labelMedium)
+                                                }
+
+                                                // Change button
+                                                Button(
+                                                    onClick = { showImagePickerDialog = true },
+                                                    shape = RoundedCornerShape(8.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.AddPhotoAlternate,
+                                                        contentDescription = "이미지 변경",
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("변경", style = MaterialTheme.typography.labelMedium)
+                                                }
+                                            }
                                         }
                                     }
-                                }
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
 
-                                // Show new image if selected, otherwise show existing image
-                                val displayImageUri = imageUri ?: existingImageUrl?.let { Uri.parse(it) }
-
-                                if (displayImageUri != null) {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(200.dp)
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .height(240.dp)
+                                            .clip(RoundedCornerShape(12.dp))
                                     ) {
                                         AsyncImage(
                                             model = displayImageUri,
@@ -310,29 +320,44 @@ fun EditMemoScreen(
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
                                         )
-
-                                        // Remove image button
-                                        if (hasEditPermission && imageUri != null) {
-                                            IconButton(
-                                                onClick = { viewModel.onImageSelected(null) },
-                                                modifier = Modifier
-                                                    .align(Alignment.TopEnd)
-                                                    .padding(8.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Close,
-                                                    contentDescription = "이미지 제거",
-                                                    tint = MaterialTheme.colorScheme.error
-                                                )
-                                            }
-                                        }
                                     }
-                                } else {
-                                    Text(
-                                        text = "선택된 이미지 없음",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            }
+                        } else if (hasEditPermission) {
+                            // Show compact add button when no image
+                            OutlinedCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showImagePickerDialog = true },
+                                colors = CardDefaults.outlinedCardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddPhotoAlternate,
+                                        contentDescription = "이미지 추가",
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
+                                    Column {
+                                        Text(
+                                            text = "이미지 추가",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "탭하여 이미지를 선택하거나 촬영하세요",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }

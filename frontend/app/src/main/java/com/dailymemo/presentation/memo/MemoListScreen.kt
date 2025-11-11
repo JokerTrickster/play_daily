@@ -462,6 +462,8 @@ fun MemoListItem(
     onItemClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Card(
         onClick = onItemClick,
         modifier = Modifier.fillMaxWidth(),
@@ -562,7 +564,7 @@ fun MemoListItem(
 
                     // 삭제 버튼
                     IconButton(
-                        onClick = onDeleteClick,
+                        onClick = { showDeleteDialog = true },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
@@ -592,5 +594,32 @@ fun MemoListItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("메모 삭제") },
+            text = { Text("이 메모를 삭제하시겠습니까?\n삭제된 메모는 복구할 수 없습니다.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteClick()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("삭제")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("취소")
+                }
+            }
+        )
     }
 }

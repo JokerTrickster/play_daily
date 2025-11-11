@@ -201,6 +201,10 @@ class EditMemoViewModel @Inject constructor(
         _imageUri.value = uri
     }
 
+    fun clearExistingImage() {
+        _existingImageUrl.value = null
+    }
+
     fun onRatingChange(newRating: Float) {
         _rating.value = newRating
     }

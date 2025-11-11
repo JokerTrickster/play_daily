@@ -1,11 +1,14 @@
 package com.dailymemo.presentation.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -251,6 +254,7 @@ fun ParticipantManagementScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParticipantCard(
     participant: com.dailymemo.domain.models.Participant,
@@ -261,6 +265,7 @@ fun ParticipantCard(
 ) {
     var showPermissionDialog by remember { mutableStateOf(false) }
     var showKickDialog by remember { mutableStateOf(false) }
+    var showProfileModal by remember { mutableStateOf(false) }
     val isParticipantOwner = participant.permission == com.dailymemo.domain.models.RoomPermission.OWNER
 
     // Determine profile size based on role
@@ -268,7 +273,9 @@ fun ParticipantCard(
     val initialsSize = if (isParticipantOwner) 28.sp else 24.sp
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showProfileModal = true },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Profile circle with image or initial
@@ -310,7 +317,7 @@ fun ParticipantCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .size(24.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFFFD700)),
                     contentAlignment = Alignment.Center
@@ -319,7 +326,7 @@ fun ParticipantCard(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "방장",
                         tint = Color.White,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             }
@@ -330,19 +337,19 @@ fun ParticipantCard(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .offset(x = (-6).dp, y = (-6).dp)
-                        .size(24.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(
                         onClick = { showPermissionDialog = true },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
                             contentDescription = "권한 편집",
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(10.dp),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -355,19 +362,19 @@ fun ParticipantCard(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .offset(x = 6.dp, y = (-6).dp)
-                        .size(24.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.errorContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(
                         onClick = { showKickDialog = true },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
                             contentDescription = "추방",
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(10.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -424,6 +431,14 @@ fun ParticipantCard(
                     Text("취소")
                 }
             }
+        )
+    }
+
+    // Profile modal bottom sheet
+    if (showProfileModal) {
+        UserProfileModal(
+            participant = participant,
+            onDismiss = { showProfileModal = false }
         )
     }
 }
@@ -530,4 +545,194 @@ fun PermissionChangeDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserProfileModal(
+    participant: com.dailymemo.domain.models.Participant,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scrollState = rememberScrollState()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Large profile image
+            Box(
+                modifier = Modifier
+                    .size(140.dp)
+                    .padding(bottom = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!participant.profileImageUrl.isNullOrBlank()) {
+                    coil.compose.AsyncImage(
+                        model = participant.profileImageUrl,
+                        contentDescription = "${participant.name} 프로필",
+                        modifier = Modifier
+                            .size(140.dp)
+                            .clip(CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(140.dp)
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(colors = getGradientForName(participant.name))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = getInitials(participant.name),
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            fontSize = 48.sp
+                        )
+                    }
+                }
+
+                // Owner badge if applicable
+                if (participant.permission == com.dailymemo.domain.models.RoomPermission.OWNER) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFD700)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = "방장",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // User name
+            Text(
+                text = participant.name,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Permission badge
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = when (participant.permission) {
+                    com.dailymemo.domain.models.RoomPermission.OWNER -> Color(0xFFFFD700).copy(alpha = 0.2f)
+                    com.dailymemo.domain.models.RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.primaryContainer
+                    com.dailymemo.domain.models.RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.secondaryContainer
+                }
+            ) {
+                Text(
+                    text = when (participant.permission) {
+                        com.dailymemo.domain.models.RoomPermission.OWNER -> "방장"
+                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> "편집 가능"
+                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> "읽기 전용"
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = when (participant.permission) {
+                        com.dailymemo.domain.models.RoomPermission.OWNER -> Color(0xFF855A00)
+                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.onPrimaryContainer
+                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.onSecondaryContainer
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Bio section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AccountCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "소개",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // TODO: Replace with actual bio field when available from backend
+                    Text(
+                        text = "아직 자기소개가 없습니다.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        lineHeight = 22.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Join room button (disabled for now - will be enabled when room info is available)
+            Button(
+                onClick = { /* TODO: Navigate to participant's room when available */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = false, // TODO: Enable when participant has their own room
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MeetingRoom,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "방 참여하기",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
 }

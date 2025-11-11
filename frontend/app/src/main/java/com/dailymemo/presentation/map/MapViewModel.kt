@@ -8,7 +8,7 @@ import com.dailymemo.domain.models.Memo
 import com.dailymemo.domain.models.Place
 import com.dailymemo.domain.models.PlaceCategory
 import com.dailymemo.domain.usecases.GetMemosUseCase
-import com.dailymemo.domain.usecases.SearchPlacesUseCase
+import com.dailymemo.domain.usecases.place.SearchPlacesUseCase
 import com.dailymemo.domain.usecases.SearchPlacesByCategoryUseCase
 import com.dailymemo.domain.usecases.location.GetCurrentLocationUseCase
 import com.dailymemo.domain.usecases.location.GetLocationUpdatesUseCase
