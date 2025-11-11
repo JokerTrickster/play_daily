@@ -24,7 +24,7 @@ func (uc *UpdateProfileUseCase) UpdateProfile(ctx context.Context, userID uint, 
 	ctx, cancel := context.WithTimeout(ctx, uc.ContextTimeout)
 	defer cancel()
 
-	user, err := uc.Repository.UpdateProfile(ctx, userID, req.CurrentPassword, req.Nickname, req.NewPassword, req.ProfileImageURL)
+	user, err := uc.Repository.UpdateProfile(ctx, userID, req.CurrentPassword, req.Nickname, req.NewPassword, req.ProfileImageURL, req.Bio)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +34,7 @@ func (uc *UpdateProfileUseCase) UpdateProfile(ctx context.Context, userID uint, 
 		AccountID:       user.AccountID,
 		Nickname:        user.Nickname,
 		ProfileImageURL: user.ProfileImageURL,
+		Bio:             user.Bio,
 		DefaultRoomID:   user.DefaultRoomID,
 	}, nil
 }

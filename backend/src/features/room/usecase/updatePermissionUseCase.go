@@ -47,8 +47,8 @@ func (uc *UpdatePermissionUseCase) Execute(ctx context.Context, requesterUserID 
 }
 
 var (
-	ErrForbidden          = &UseCaseError{Code: "FORBIDDEN", Message: "Only room owner can update permissions"}
-	ErrCannotModifySelf   = &UseCaseError{Code: "CANNOT_MODIFY_SELF", Message: "Cannot modify your own permission"}
+	ErrForbidden        = &UseCaseError{Code: "FORBIDDEN", Message: "Only room owner can update permissions"}
+	ErrCannotModifySelf = &UseCaseError{Code: "CANNOT_MODIFY_SELF", Message: "Cannot modify your own permission"}
 )
 
 type UseCaseError struct {

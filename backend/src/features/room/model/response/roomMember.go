@@ -6,6 +6,7 @@ type ResRoomMember struct {
 	UserName        string `json:"user_name"`
 	Email           string `json:"email"`
 	ProfileImageURL string `json:"profile_image_url"`
+	Bio             string `json:"bio"`
 	Permission      string `json:"permission"` // READ_ONLY, READ_WRITE, OWNER
 	JoinedAt        int64  `json:"joined_at"`
 }

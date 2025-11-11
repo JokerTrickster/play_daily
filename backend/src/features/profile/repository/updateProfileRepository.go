@@ -20,7 +20,7 @@ func NewUpdateProfileRepository(gormDB *gorm.DB) _interface.IUpdateProfileReposi
 	}
 }
 
-func (r *UpdateProfileRepository) UpdateProfile(ctx context.Context, userID uint, currentPassword string, nickname *string, newPassword *string, profileImageURL *string) (*mysql.User, error) {
+func (r *UpdateProfileRepository) UpdateProfile(ctx context.Context, userID uint, currentPassword string, nickname *string, newPassword *string, profileImageURL *string, bio *string) (*mysql.User, error) {
 	var user mysql.User
 
 	// 트랜잭션 시작
@@ -50,6 +50,10 @@ func (r *UpdateProfileRepository) UpdateProfile(ctx context.Context, userID uint
 
 		if profileImageURL != nil {
 			user.ProfileImageURL = profileImageURL
+		}
+
+		if bio != nil {
+			user.Bio = bio
 		}
 
 		// 4. 사용자 정보 저장

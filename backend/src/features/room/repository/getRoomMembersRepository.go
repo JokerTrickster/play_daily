@@ -42,11 +42,16 @@ func (r *GetRoomMembersRepository) GetRoomMembers(ctx context.Context, roomID ui
 			if member.User.ProfileImageURL != nil {
 				profileImageURL = *member.User.ProfileImageURL
 			}
+			bio := ""
+			if member.User.Bio != nil {
+				bio = *member.User.Bio
+			}
 			resMembers = append(resMembers, response.ResRoomMember{
 				UserID:          member.UserID,
 				UserName:        member.User.Nickname,
 				Email:           member.User.AccountID,
 				ProfileImageURL: profileImageURL,
+				Bio:             bio,
 				Permission:      string(member.Permission),
 				JoinedAt:        member.JoinedAt.Unix(),
 			})

@@ -40,6 +40,7 @@ func (uc *GetProfileUseCase) GetProfile(ctx context.Context, userID uint) (*resp
 		AccountID:          user.AccountID,
 		Nickname:           user.Nickname,
 		ProfileImageURL:    user.ProfileImageURL,
+		Bio:                user.Bio,
 		DefaultRoomID:      user.DefaultRoomID,
 		RoomPassword:       user.RoomPassword,
 		ReceivedLikesCount: memoLikesCount, // 메모 좋아요 개수로 변경

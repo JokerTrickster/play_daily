@@ -6,4 +6,5 @@ type ReqUpdateProfile struct {
 	Nickname        *string `json:"nickname"`
 	NewPassword     *string `json:"new_password"`
 	ProfileImageURL *string `json:"profile_image_url"`
+	Bio             *string `json:"bio"`
 }

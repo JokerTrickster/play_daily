@@ -6,6 +6,7 @@ type ResProfile struct {
 	AccountID          string  `json:"account_id"`
 	Nickname           string  `json:"nickname"`
 	ProfileImageURL    *string `json:"profile_image_url"`
+	Bio                *string `json:"bio"`
 	DefaultRoomID      *uint   `json:"default_room_id"`
 	RoomPassword       string  `json:"room_password"`
 	ReceivedLikesCount uint    `json:"received_likes_count"` // 내 방이 받은 좋아요 개수

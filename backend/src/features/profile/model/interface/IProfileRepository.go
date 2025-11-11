@@ -11,5 +11,5 @@ type IGetProfileRepository interface {
 }
 
 type IUpdateProfileRepository interface {
-	UpdateProfile(ctx context.Context, userID uint, currentPassword string, nickname *string, newPassword *string, profileImageURL *string) (*mysql.User, error)
+	UpdateProfile(ctx context.Context, userID uint, currentPassword string, nickname *string, newPassword *string, profileImageURL *string, bio *string) (*mysql.User, error)
 }

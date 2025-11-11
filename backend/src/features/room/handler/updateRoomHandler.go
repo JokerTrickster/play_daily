@@ -5,8 +5,8 @@ import (
 	"main/features/room/model/request"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 )
 
 type UpdateRoomHandler struct {
