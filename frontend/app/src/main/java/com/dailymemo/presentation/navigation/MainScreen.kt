@@ -139,6 +139,9 @@ fun MainScreen(
                     },
                     onNavigateToParticipants = {
                         bottomNavController.navigate(Screen.Profile.Participants.route)
+                    },
+                    onNavigateToRoomDiscovery = {
+                        mainNavController.navigate(Screen.Room.Discovery.route)
                     }
                 )
             }

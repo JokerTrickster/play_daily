@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -264,11 +265,11 @@ fun EditMemoScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        if (hasEditPermission) {
+                                        if (hasEditPermission && displayImageUri != null && displayImageUri.toString().isNotEmpty()) {
                                             Row(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                // Remove button
+                                                // Remove button (only show when image exists)
                                                 FilledTonalButton(
                                                     onClick = {
                                                         viewModel.onImageSelected(null)
@@ -330,32 +331,37 @@ fun EditMemoScreen(
                                     .fillMaxWidth()
                                     .clickable { showImagePickerDialog = true },
                                 colors = CardDefaults.outlinedCardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                    containerColor = Color.Transparent
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                                 )
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
+                                        .padding(20.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.AddPhotoAlternate,
                                         contentDescription = "이미지 추가",
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(28.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                     Column {
                                         Text(
                                             text = "이미지 추가",
                                             style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Medium
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             text = "탭하여 이미지를 선택하거나 촬영하세요",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                         )
                                     }
                                 }

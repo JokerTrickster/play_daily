@@ -122,7 +122,7 @@ fun ParticipantManagementScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "우리 팀 ${room.participants.size}명",
+                                    text = "내 방 멤버 ${room.participants.size}명",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary

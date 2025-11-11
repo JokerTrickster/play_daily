@@ -44,6 +44,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     onNavigateToEdit: () -> Unit = {},
     onNavigateToParticipants: () -> Unit = {},
+    onNavigateToRoomDiscovery: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val userName by viewModel.userName.collectAsState()
@@ -140,7 +141,8 @@ fun ProfileScreen(
                     onRoomPublicChange = { isPublic ->
                         viewModel.updateRoomPublic(isPublic)
                     },
-                    onNavigateToParticipants = onNavigateToParticipants
+                    onNavigateToParticipants = onNavigateToParticipants,
+                    onNavigateToRoomDiscovery = onNavigateToRoomDiscovery
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -599,7 +601,8 @@ fun RoomInfoSection(
     onKickParticipant: (Long) -> Unit,
     onPermissionChange: (Long, com.dailymemo.domain.models.RoomPermission) -> Unit = { _, _ -> },
     onRoomPublicChange: (Boolean) -> Unit = {},
-    onNavigateToParticipants: () -> Unit = {}
+    onNavigateToParticipants: () -> Unit = {},
+    onNavigateToRoomDiscovery: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -787,35 +790,86 @@ fun RoomInfoSection(
 
             // Action Buttons
             if (isMyRoom) {
-                // 내 방에 접속 중: 다른 방 참여하기 버튼만 표시
-                Button(
-                    onClick = onJoinRoomClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = "방 참여",
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "다른 방 참여하기",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            } else {
-                // 다른 방에 접속 중: 방 나가기 + 다른 방 참여하기 버튼 표시
+                // 내 방에 접속 중: 방 검색 + 다른 방 참여하기 버튼 표시
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    // 방 검색 버튼
+                    Button(
+                        onClick = onNavigateToRoomDiscovery,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "방 검색",
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "방 검색",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // 다른 방 참여하기 버튼
+                    OutlinedButton(
+                        onClick = onJoinRoomClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = "방 참여",
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "다른 방 참여하기",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            } else {
+                // 다른 방에 접속 중: 방 검색 + 방 나가기 + 다른 방 참여하기 버튼 표시
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // 방 검색 버튼
+                    Button(
+                        onClick = onNavigateToRoomDiscovery,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "방 검색",
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "방 검색",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
                     // 방 나가기 버튼
                     OutlinedButton(
                         onClick = onLeaveRoomClick,
@@ -845,15 +899,12 @@ fun RoomInfoSection(
                     }
 
                     // 다른 방 참여하기 버튼
-                    Button(
+                    OutlinedButton(
                         onClick = onJoinRoomClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
+                        shape = RoundedCornerShape(14.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Add,
