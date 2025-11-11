@@ -41,6 +41,21 @@
     <string name="room_password_placeholder">4자리 숫자</string>
     <string name="join_button">입장</string>
 
+    <!-- Room Password Reset -->
+    <string name="password_reset_confirm_title">비밀번호 재설정</string>
+    <string name="password_reset_success_title">새 비밀번호</string>
+    <string name="password_reset_warning_message">방 비밀번호를 재설정하시겠습니까?</string>
+    <string name="password_reset_consequences_title">주의사항</string>
+    <string name="password_reset_consequence_1">새로운 4자리 비밀번호가 생성됩니다</string>
+    <string name="password_reset_consequence_2">모든 참여자에게 새 비밀번호를 공유해야 합니다</string>
+    <string name="password_reset_proceed_question">계속하시겠습니까?</string>
+    <string name="password_reset_button">비밀번호 재설정</string>
+    <string name="password_reset_new_password_message">새로운 방 비밀번호가 생성되었습니다</string>
+    <string name="password_reset_new_password_label">새 비밀번호</string>
+    <string name="password_reset_copy_button">클립보드에 복사</string>
+    <string name="password_reset_copied_message">비밀번호가 복사되었습니다</string>
+    <string name="password_reset_share_reminder">참여자들에게 새 비밀번호를 공유하세요</string>
+
     <!-- Memo -->
     <string name="memo_title">제목</string>
     <string name="memo_content">내용</string>
@@ -85,6 +100,7 @@
     <string name="error_profile_update_failed">프로필 업데이트에 실패했습니다</string>
     <string name="error_image_upload_failed">이미지 업로드에 실패했습니다</string>
     <string name="error_image_read_failed">이미지를 읽을 수 없습니다</string>
+    <string name="error_rate_limit_exceeded">요청 횟수 제한을 초과했습니다. 잠시 후 다시 시도해주세요</string>
     <string name="error_server">서버 오류가 발생했습니다</string>
     <string name="error_unknown">알 수 없는 오류가 발생했습니다</string>
 

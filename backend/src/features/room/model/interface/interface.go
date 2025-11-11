@@ -49,3 +49,20 @@ type IGetRoomMembersRepository interface {
 	GetRoomMembers(ctx context.Context, roomID uint) (*response.ResRoomMembers, error)
 	CheckRoomMember(ctx context.Context, roomID uint, userID uint) (bool, error)
 }
+
+type IResetPasswordHandler interface {
+	ResetPassword(c echo.Context) error
+}
+
+type IResetPasswordUseCase interface {
+	ResetPassword(ctx context.Context, userID uint, req *request.ReqResetPassword, ipAddress *string, userAgent *string) (*response.ResResetPassword, error)
+}
+
+type IResetPasswordRepository interface {
+	GenerateSecurePassword(ctx context.Context) (string, error)
+	CheckRoomOwner(ctx context.Context, roomID uint, userID uint) (bool, error)
+	GetRoomPassword(ctx context.Context, roomID uint) (string, error)
+	CheckRecentResets(ctx context.Context, roomID uint, limit int, windowHours int) (int, error)
+	ResetPassword(ctx context.Context, roomID uint, userID uint, newPassword string, previousPassword string, ipAddress *string, userAgent *string) error
+	LogRateLimitViolation(ctx context.Context, roomID uint, userID uint, ipAddress *string, userAgent *string) error
+}

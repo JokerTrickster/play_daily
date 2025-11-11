@@ -16,6 +16,7 @@ import com.dailymemo.presentation.memo.CreateMemoScreen
 import com.dailymemo.presentation.memo.EditMemoScreen
 import com.dailymemo.presentation.memo.MemoDetailScreen
 import com.dailymemo.presentation.profile.ProfileEditScreen
+import com.dailymemo.presentation.room.RoomDiscoveryScreen
 
 @Composable
 fun NavGraph(
@@ -131,6 +132,21 @@ fun NavGraph(
                     navController.popBackStack()
                 }
             )
+        }
+
+        // Room screens
+        composable(Screen.Room.Discovery.route) {
+            RoomDiscoveryScreen(
+                onNavigateToRoomDetail = { roomId ->
+                    navController.navigate("${Screen.Room.Detail.route}/$roomId")
+                }
+            )
+        }
+
+        composable("${Screen.Room.Detail.route}/{roomId}") { backStackEntry ->
+            val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
+            // TODO: Implement RoomDetailScreen in future task
+            Text("Room Detail: $roomId (To be implemented)")
         }
 
         // Collaboration screens

@@ -179,3 +179,22 @@ type MemoCategorySelection struct {
 func (MemoCategorySelection) TableName() string {
 	return "memo_category_selections"
 }
+
+// RoomPasswordReset 방 비밀번호 변경 감사 로그 테이블
+type RoomPasswordReset struct {
+	ID                   uint      `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	RoomID               uint      `json:"room_id" gorm:"column:room_id;not null;index;comment:비밀번호가 변경된 방 ID"`
+	ResetByUserID        *uint     `json:"reset_by_user_id" gorm:"column:reset_by_user_id;index;comment:비밀번호를 변경한 사용자 ID (방 소유자, NULL if user deleted)"`
+	ResetAt              time.Time `json:"reset_at" gorm:"column:reset_at;default:CURRENT_TIMESTAMP;index;comment:비밀번호 변경 시간"`
+	PreviousPasswordHash string    `json:"previous_password_hash" gorm:"column:previous_password_hash;type:varchar(255);not null;comment:이전 비밀번호 해시값 (복구용)"`
+	NewPasswordHash      string    `json:"new_password_hash" gorm:"column:new_password_hash;type:varchar(255);not null;comment:새 비밀번호 해시값"`
+	IPAddress            *string   `json:"ip_address,omitempty" gorm:"column:ip_address;type:varchar(45);comment:요청 IP 주소 (IPv4/IPv6)"`
+	UserAgent            *string   `json:"user_agent,omitempty" gorm:"column:user_agent;type:varchar(500);comment:사용자 브라우저/클라이언트 정보"`
+	Room                 *Room     `json:"room,omitempty" gorm:"foreignKey:RoomID"`
+	ResetByUser          *User     `json:"reset_by_user,omitempty" gorm:"foreignKey:ResetByUserID"`
+}
+
+// TableName RoomPasswordReset 테이블명 지정
+func (RoomPasswordReset) TableName() string {
+	return "room_password_resets"
+}

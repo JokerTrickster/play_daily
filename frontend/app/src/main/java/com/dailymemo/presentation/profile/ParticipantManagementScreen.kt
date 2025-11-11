@@ -26,6 +26,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.dailymemo.presentation.components.UserProfileModal
+import com.dailymemo.presentation.components.ProfileModalContext
+import com.dailymemo.presentation.components.getGradientForName
+import com.dailymemo.presentation.components.getInitials
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -438,43 +442,11 @@ fun ParticipantCard(
     if (showProfileModal) {
         UserProfileModal(
             participant = participant,
+            context = ProfileModalContext.PARTICIPANT_MANAGEMENT,
             onDismiss = { showProfileModal = false }
         )
     }
 }
-
-
-// Helper function to generate consistent gradient colors based on name
-@Composable
-fun getGradientForName(name: String): List<Color> {
-    val gradients = listOf(
-        listOf(Color(0xFF667eea), Color(0xFF764ba2)), // Purple Blue
-        listOf(Color(0xFFf093fb), Color(0xFFf5576c)), // Pink Red
-        listOf(Color(0xFF4facfe), Color(0xFF00f2fe)), // Blue Cyan
-        listOf(Color(0xFF43e97b), Color(0xFF38f9d7)), // Green Cyan
-        listOf(Color(0xFFfa709a), Color(0xFFfee140)), // Pink Yellow
-        listOf(Color(0xFF30cfd0), Color(0xFF330867)), // Cyan Purple
-        listOf(Color(0xFFa8edea), Color(0xFFfed6e3)), // Cyan Pink
-        listOf(Color(0xFFff9a9e), Color(0xFFfecfef)), // Coral Pink
-        listOf(Color(0xFFffecd2), Color(0xFFfcb69f)), // Peach
-        listOf(Color(0xFFff6e7f), Color(0xFFbfe9ff))  // Red Blue
-    )
-
-    val hash = name.hashCode()
-    val index = Math.abs(hash % gradients.size)
-    return gradients[index]
-}
-
-// Helper function to get initials from name
-fun getInitials(name: String): String {
-    val parts = name.trim().split(" ")
-    return when {
-        parts.size >= 2 -> "${parts[0].firstOrNull()?.uppercase() ?: ""}${parts[1].firstOrNull()?.uppercase() ?: ""}"
-        parts.isNotEmpty() -> parts[0].take(2).uppercase()
-        else -> "?"
-    }
-}
-
 
 @Composable
 fun PermissionChangeDialog(
@@ -545,194 +517,4 @@ fun PermissionChangeDialog(
             }
         }
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun UserProfileModal(
-    participant: com.dailymemo.domain.models.Participant,
-    onDismiss: () -> Unit
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scrollState = rememberScrollState()
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Large profile image
-            Box(
-                modifier = Modifier
-                    .size(140.dp)
-                    .padding(bottom = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (!participant.profileImageUrl.isNullOrBlank()) {
-                    coil.compose.AsyncImage(
-                        model = participant.profileImageUrl,
-                        contentDescription = "${participant.name} 프로필",
-                        modifier = Modifier
-                            .size(140.dp)
-                            .clip(CircleShape),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(140.dp)
-                            .clip(CircleShape)
-                            .background(Brush.linearGradient(colors = getGradientForName(participant.name))),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = getInitials(participant.name),
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            fontSize = 48.sp
-                        )
-                    }
-                }
-
-                // Owner badge if applicable
-                if (participant.permission == com.dailymemo.domain.models.RoomPermission.OWNER) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFFFD700)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = "방장",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            // User name
-            Text(
-                text = participant.name,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Permission badge
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = when (participant.permission) {
-                    com.dailymemo.domain.models.RoomPermission.OWNER -> Color(0xFFFFD700).copy(alpha = 0.2f)
-                    com.dailymemo.domain.models.RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.primaryContainer
-                    com.dailymemo.domain.models.RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.secondaryContainer
-                }
-            ) {
-                Text(
-                    text = when (participant.permission) {
-                        com.dailymemo.domain.models.RoomPermission.OWNER -> "방장"
-                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> "편집 가능"
-                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> "읽기 전용"
-                    },
-                    style = MaterialTheme.typography.labelLarge,
-                    color = when (participant.permission) {
-                        com.dailymemo.domain.models.RoomPermission.OWNER -> Color(0xFF855A00)
-                        com.dailymemo.domain.models.RoomPermission.READ_WRITE -> MaterialTheme.colorScheme.onPrimaryContainer
-                        com.dailymemo.domain.models.RoomPermission.READ_ONLY -> MaterialTheme.colorScheme.onSecondaryContainer
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Bio section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountCircle,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "소개",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    // TODO: Replace with actual bio field when available from backend
-                    Text(
-                        text = "아직 자기소개가 없습니다.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        lineHeight = 22.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Join room button (disabled for now - will be enabled when room info is available)
-            Button(
-                onClick = { /* TODO: Navigate to participant's room when available */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                enabled = false, // TODO: Enable when participant has their own room
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.MeetingRoom,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "방 참여하기",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
 }

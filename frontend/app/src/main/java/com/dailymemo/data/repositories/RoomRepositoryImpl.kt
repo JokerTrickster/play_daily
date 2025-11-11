@@ -4,9 +4,12 @@ import com.dailymemo.data.datasources.remote.api.RoomApiService
 import com.dailymemo.data.models.request.JoinRoomRequestDto
 import com.dailymemo.data.models.request.KickUserRequestDto
 import com.dailymemo.domain.error.DomainError
+import com.dailymemo.domain.models.MemoCategory
+import com.dailymemo.domain.models.CategorySentiment
 import com.dailymemo.domain.models.RoomMember
 import com.dailymemo.domain.models.RoomPermission
 import com.dailymemo.domain.repositories.RoomRepository
+import com.dailymemo.presentation.room.RoomCardData
 import javax.inject.Inject
 
 class RoomRepositoryImpl @Inject constructor(
@@ -161,6 +164,109 @@ class RoomRepositoryImpl @Inject constructor(
                     403 -> DomainError.Forbidden
                     400 -> DomainError.BadRequest
                     404 -> DomainError.RoomNotFound
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
+
+    override suspend fun getPopularRooms(page: Int, limit: Int): Result<Pair<List<RoomCardData>, Boolean>> {
+        return try {
+            val response = roomApiService.getPopularRooms(page, limit)
+            if (response.isSuccessful && response.body() != null) {
+                val dto = response.body()!!
+                val rooms = dto.rooms.map { roomDto ->
+                    RoomCardData(
+                        id = roomDto.id.toString(),
+                        title = roomDto.name,
+                        description = "Room Code: ${roomDto.roomCode}",
+                        participantCount = 0, // Backend doesn't return participant count yet
+                        categories = emptyList(), // Backend doesn't return categories yet
+                        thumbnailUrl = null,
+                        ownerName = "User ${roomDto.ownerId}",
+                        isPublic = roomDto.isPublic
+                    )
+                }
+                Result.success(Pair(rooms, dto.hasNext))
+            } else {
+                val error = when (response.code()) {
+                    400 -> DomainError.BadRequest
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
+
+    override suspend fun getRecentRooms(page: Int, limit: Int): Result<Pair<List<RoomCardData>, Boolean>> {
+        return try {
+            val response = roomApiService.getRecentRooms(page, limit)
+            if (response.isSuccessful && response.body() != null) {
+                val dto = response.body()!!
+                val rooms = dto.rooms.map { roomDto ->
+                    RoomCardData(
+                        id = roomDto.id.toString(),
+                        title = roomDto.name,
+                        description = "Room Code: ${roomDto.roomCode}",
+                        participantCount = 0, // Backend doesn't return participant count yet
+                        categories = emptyList(), // Backend doesn't return categories yet
+                        thumbnailUrl = null,
+                        ownerName = "User ${roomDto.ownerId}",
+                        isPublic = roomDto.isPublic
+                    )
+                }
+                Result.success(Pair(rooms, dto.hasNext))
+            } else {
+                val error = when (response.code()) {
+                    400 -> DomainError.BadRequest
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
+
+    override suspend fun resetRoomPassword(roomId: Long): Result<String> {
+        return try {
+            val response = roomApiService.resetRoomPassword(roomId)
+            if (response.isSuccessful && response.body() != null) {
+                val dto = response.body()!!
+                if (dto.success) {
+                    Result.success(dto.newPassword)
+                } else {
+                    Result.failure(DomainError.UnknownError)
+                }
+            } else {
+                val error = when (response.code()) {
+                    401 -> DomainError.Unauthorized
+                    403 -> DomainError.Forbidden
+                    404 -> DomainError.RoomNotFound
+                    429 -> DomainError.RateLimitExceeded
                     else -> DomainError.UnknownError
                 }
                 Result.failure(error)

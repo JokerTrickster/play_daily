@@ -25,6 +25,7 @@ sealed class DomainError(
     data object RoomJoinFailed : DomainError("error_room_join_failed")
     data object Forbidden : DomainError("error_forbidden")
     data object BadRequest : DomainError("error_bad_request")
+    data object RateLimitExceeded : DomainError("error_rate_limit_exceeded")
 
     // Memo Errors
     data object MemoNotFound : DomainError("error_memo_not_found")

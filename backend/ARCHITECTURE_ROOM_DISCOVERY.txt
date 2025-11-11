@@ -1,0 +1,125 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    ROOM DISCOVERY ARCHITECTURE                            ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                             CLIENT LAYER                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+        GET /v0.1/rooms/popular      GET /v0.1/rooms/recent
+        ?page=1&limit=20              ?page=1&limit=20
+                    │                               │
+                    └───────────────┬───────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           HANDLER LAYER                                  │
+│  File: features/room/handler/roomDiscoveryHandler.go                    │
+│                                                                           │
+│  • GetPopularRooms(c echo.Context)                                       │
+│  • GetRecentRooms(c echo.Context)                                        │
+│  • Parameter validation (page >= 1, limit 1-100)                         │
+│  • Error handling                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           USE CASE LAYER                                 │
+│  File: features/room/usecase/roomDiscoveryUseCase.go                    │
+│                                                                           │
+│  • GetPopularRooms(ctx, page, limit) → ResRoomList                       │
+│  • GetRecentRooms(ctx, page, limit) → ResRoomList                        │
+│  • Offset calculation: (page - 1) * limit                                │
+│  • hasNext calculation: (offset + limit) < total                         │
+│  • Response conversion                                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+             CountPublicRooms  GetPopularRooms  GetRecentRooms
+                                    │
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         REPOSITORY LAYER                                 │
+│  File: features/room/repository/roomDiscoveryRepository.go              │
+│                                                                           │
+│  • GetPopularRooms(ctx, offset, limit) → []Room                          │
+│    WHERE is_public = 1                                                   │
+│    ORDER BY likes_count DESC, created_at DESC                            │
+│                                                                           │
+│  • GetRecentRooms(ctx, offset, limit) → []Room                           │
+│    WHERE is_public = 1                                                   │
+│    ORDER BY created_at DESC, likes_count DESC                            │
+│                                                                           │
+│  • CountPublicRooms(ctx) → int64                                         │
+│    COUNT(*) WHERE is_public = 1                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          DATABASE LAYER                                  │
+│  Table: rooms                                                             │
+│                                                                           │
+│  Index: idx_rooms_discovery (is_public, likes_count DESC, created_at DESC)│
+│  Type: BTREE Composite                                                   │
+│                                                                           │
+│  Columns:                                                                 │
+│  • id, name, room_code, is_public                                        │
+│  • likes_count, owner_user_id, created_at                                │
+│  • (room_password excluded from response)                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                           RESPONSE FORMAT                                 ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+{
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Room Name",
+      "room_code": "uuid",
+      "is_public": true,
+      "likes_count": 42,
+      "owner_id": 5,
+      "created_at": "2025-11-11T10:30:00Z"
+    }
+  ],
+  "total": 100,      ← Total public rooms
+  "page": 1,         ← Current page
+  "limit": 20,       ← Items per page
+  "has_next": true   ← More pages available?
+}
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                         PAGINATION LOGIC                                  ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Input:  page=2, limit=20
+        ↓
+Offset: (2-1) * 20 = 20
+        ↓
+Query:  SELECT * ... LIMIT 20 OFFSET 20
+        ↓
+hasNext: (20 + 20) < total
+        ↓
+Output: Items 21-40 of total
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                          INDEX STRATEGY                                   ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Single Composite Index: (is_public, likes_count DESC, created_at DESC)
+
+Popular Query (likes first):
+  ✓ WHERE is_public = 1               → Index: exact match
+  ✓ ORDER BY likes_count DESC         → Index: direct scan
+  ✓ ORDER BY created_at DESC          → Index: included in scan
+
+Recent Query (created_at first):
+  ✓ WHERE is_public = 1               → Index: exact match
+  ✓ ORDER BY created_at DESC          → Index: reverse scan
+  ✓ ORDER BY likes_count DESC         → Index: tie-breaker
+
+Performance: < 100ms total response time
