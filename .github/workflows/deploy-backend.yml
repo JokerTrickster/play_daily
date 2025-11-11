@@ -97,6 +97,25 @@ jobs:
             DEALLOCATE PREPARE stmt;
           EOF
 
+          # Check and add bio column to users table if missing
+          docker run -i --rm mysql:8.0 mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD daily_test <<'EOF' 2>&1 | grep -v "Warning" || true
+            SET @col_exists = (
+              SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+              WHERE TABLE_SCHEMA = 'daily_test'
+              AND TABLE_NAME = 'users'
+              AND COLUMN_NAME = 'bio'
+            );
+
+            SET @query = IF(@col_exists = 0,
+              'ALTER TABLE users ADD COLUMN bio VARCHAR(500) NULL COMMENT ''사용자 자기소개'' AFTER profile_image_url;',
+              'SELECT ''users.bio column already exists'' AS info;'
+            );
+
+            PREPARE stmt FROM @query;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+          EOF
+
           echo "✓ Test database schema updated"
 
       - name: Run E2E Tests

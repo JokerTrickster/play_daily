@@ -162,6 +162,20 @@ fun EditMemoScreen(
                     }
                 },
                 actions = {
+                    // Add Image Button (only show when no image)
+                    val displayImageUri = imageUri ?: existingImageUrl?.let { Uri.parse(it) }
+                    if (displayImageUri == null && hasEditPermission) {
+                        IconButton(
+                            onClick = { showImagePickerDialog = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AddPhotoAlternate,
+                                contentDescription = "이미지 추가",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
                     // Pin Toggle
                     IconButton(
                         onClick = { viewModel.togglePin() },
@@ -244,7 +258,7 @@ fun EditMemoScreen(
                             maxLines = 5
                         )
 
-                        // Image Section - Only show when image exists or can be added
+                        // Image Section - Only show when image exists
                         val displayImageUri = imageUri ?: existingImageUrl?.let { Uri.parse(it) }
 
                         if (displayImageUri != null) {
@@ -265,11 +279,11 @@ fun EditMemoScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        if (hasEditPermission && displayImageUri != null && displayImageUri.toString().isNotEmpty()) {
+                                        if (hasEditPermission) {
                                             Row(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
-                                                // Remove button (only show when image exists)
+                                                // Remove button
                                                 FilledTonalButton(
                                                     onClick = {
                                                         viewModel.onImageSelected(null)
@@ -320,48 +334,6 @@ fun EditMemoScreen(
                                             contentDescription = "메모 이미지",
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
-                                        )
-                                    }
-                                }
-                            }
-                        } else if (hasEditPermission) {
-                            // Show compact add button when no image
-                            OutlinedCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showImagePickerDialog = true },
-                                colors = CardDefaults.outlinedCardColors(
-                                    containerColor = Color.Transparent
-                                ),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = 1.dp,
-                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(20.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AddPhotoAlternate,
-                                        contentDescription = "이미지 추가",
-                                        modifier = Modifier.size(28.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Column {
-                                        Text(
-                                            text = "이미지 추가",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = "탭하여 이미지를 선택하거나 촬영하세요",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                         )
                                     }
                                 }
