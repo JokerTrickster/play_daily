@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ParticipantManagementScreen(
     onNavigateBack: () -> Unit,
@@ -48,82 +48,109 @@ fun ParticipantManagementScreen(
         }
     ) { paddingValues ->
         currentRoom?.let { room ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 20.dp)
-            ) {
-                Spacer(modifier = Modifier.height(16.dp))
+            val participantCount = room.participants.size
 
-                Text(
-                    text = "참여자 ${room.participants.size}명",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+            // Use Box with center alignment for small groups, Column for larger groups
+            if (participantCount <= 4) {
+                // Small groups: vertically centered
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "참여자 ${room.participants.size}명",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
 
-                // Dynamic layout based on participant count
-                val participantCount = room.participants.size
-                when {
-                    // 1-2 participants: Center alignment
-                    participantCount <= 2 -> {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            room.participants.forEach { participant ->
-                                ParticipantCard(
-                                    participant = participant,
-                                    isCurrentUser = participant.id == currentUserId,
-                                    isOwner = isOwner,
-                                    onKick = { viewModel.kickParticipant(participant.id) },
-                                    onPermissionChange = { permission ->
-                                        viewModel.updateMemberPermission(participant.id, permission)
+                        when {
+                            // 1-2 participants: Single column centered
+                            participantCount <= 2 -> {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(32.dp)
+                                ) {
+                                    room.participants.forEach { participant ->
+                                        ParticipantCard(
+                                            participant = participant,
+                                            isCurrentUser = participant.id == currentUserId,
+                                            isOwner = isOwner,
+                                            onKick = { viewModel.kickParticipant(participant.id) },
+                                            onPermissionChange = { permission ->
+                                                viewModel.updateMemberPermission(participant.id, permission)
+                                            }
+                                        )
                                     }
-                                )
+                                }
+                            }
+                            // 3-4 participants: 2 columns centered
+                            else -> {
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                                    verticalArrangement = Arrangement.spacedBy(32.dp),
+                                    maxItemsInEachRow = 2
+                                ) {
+                                    room.participants.forEach { participant ->
+                                        ParticipantCard(
+                                            participant = participant,
+                                            isCurrentUser = participant.id == currentUserId,
+                                            isOwner = isOwner,
+                                            onKick = { viewModel.kickParticipant(participant.id) },
+                                            onPermissionChange = { permission ->
+                                                viewModel.updateMemberPermission(participant.id, permission)
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-                    // 3-4 participants: 2 columns grid
-                    participantCount <= 4 -> {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            items(room.participants) { participant ->
-                                ParticipantCard(
-                                    participant = participant,
-                                    isCurrentUser = participant.id == currentUserId,
-                                    isOwner = isOwner,
-                                    onKick = { viewModel.kickParticipant(participant.id) },
-                                    onPermissionChange = { permission ->
-                                        viewModel.updateMemberPermission(participant.id, permission)
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    // 5+ participants: 3 columns grid
-                    else -> {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(3),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            items(room.participants) { participant ->
-                                ParticipantCard(
-                                    participant = participant,
-                                    isCurrentUser = participant.id == currentUserId,
-                                    isOwner = isOwner,
-                                    onKick = { viewModel.kickParticipant(participant.id) },
-                                    onPermissionChange = { permission ->
-                                        viewModel.updateMemberPermission(participant.id, permission)
-                                    }
-                                )
-                            }
+                }
+            } else {
+                // Large groups: scrollable grid from top
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 20.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "참여자 ${room.participants.size}명",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(32.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(room.participants) { participant ->
+                            ParticipantCard(
+                                participant = participant,
+                                isCurrentUser = participant.id == currentUserId,
+                                isOwner = isOwner,
+                                onKick = { viewModel.kickParticipant(participant.id) },
+                                onPermissionChange = { permission ->
+                                    viewModel.updateMemberPermission(participant.id, permission)
+                                }
+                            )
                         }
                     }
                 }
