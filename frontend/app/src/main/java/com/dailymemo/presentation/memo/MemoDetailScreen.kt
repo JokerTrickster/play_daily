@@ -161,28 +161,32 @@ private fun MemoDetailContent(
     onPostComment: () -> Unit,
     onDeleteComment: (Long) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-    ) {
-        // Hero Image Section
-        if (data.imageUrls.isNotEmpty()) {
-            HeroImageSection(
-                imageUrl = data.imageUrls.first(),
-                isPinned = data.isPinned,
-                isScrolledPastHeader = isScrolledPastHeader,
-                onNavigateBack = onNavigateBack
-            )
-        }
-
-        // Main Content
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .fillMaxSize()
+                .verticalScroll(scrollState)
         ) {
+            // Hero Image Section - only show if images exist
+            if (data.imageUrls.isNotEmpty()) {
+                HeroImageSection(
+                    imageUrl = data.imageUrls.first(),
+                    isPinned = data.isPinned,
+                    isScrolledPastHeader = isScrolledPastHeader,
+                    onNavigateBack = onNavigateBack
+                )
+            } else {
+                // Add spacing when no image
+                Spacer(modifier = Modifier.height(56.dp))
+            }
+
+            // Main Content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
             // Title and Rating
             TitleSection(
                 title = data.title,
@@ -229,6 +233,28 @@ private fun MemoDetailContent(
 
             // Bottom spacing for FAB
             Spacer(modifier = Modifier.height(80.dp))
+        }
+    }
+
+        // Back button overlay - always visible when not scrolled past header
+        if (!isScrolledPastHeader) {
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .align(Alignment.TopStart)
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
