@@ -63,21 +63,68 @@ fun ParticipantManagementScreen(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    items(room.participants) { participant ->
-                        ParticipantCard(
-                            participant = participant,
-                            isCurrentUser = participant.id == currentUserId,
-                            isOwner = isOwner,
-                            onKick = { viewModel.kickParticipant(participant.id) },
-                            onPermissionChange = { permission ->
-                                viewModel.updateMemberPermission(participant.id, permission)
+                // Dynamic layout based on participant count
+                val participantCount = room.participants.size
+                when {
+                    // 1-2 participants: Center alignment
+                    participantCount <= 2 -> {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            room.participants.forEach { participant ->
+                                ParticipantCard(
+                                    participant = participant,
+                                    isCurrentUser = participant.id == currentUserId,
+                                    isOwner = isOwner,
+                                    onKick = { viewModel.kickParticipant(participant.id) },
+                                    onPermissionChange = { permission ->
+                                        viewModel.updateMemberPermission(participant.id, permission)
+                                    }
+                                )
                             }
-                        )
+                        }
+                    }
+                    // 3-4 participants: 2 columns grid
+                    participantCount <= 4 -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            items(room.participants) { participant ->
+                                ParticipantCard(
+                                    participant = participant,
+                                    isCurrentUser = participant.id == currentUserId,
+                                    isOwner = isOwner,
+                                    onKick = { viewModel.kickParticipant(participant.id) },
+                                    onPermissionChange = { permission ->
+                                        viewModel.updateMemberPermission(participant.id, permission)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    // 5+ participants: 3 columns grid
+                    else -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            items(room.participants) { participant ->
+                                ParticipantCard(
+                                    participant = participant,
+                                    isCurrentUser = participant.id == currentUserId,
+                                    isOwner = isOwner,
+                                    onKick = { viewModel.kickParticipant(participant.id) },
+                                    onPermissionChange = { permission ->
+                                        viewModel.updateMemberPermission(participant.id, permission)
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
