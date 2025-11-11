@@ -266,30 +266,43 @@ class EditMemoViewModel @Inject constructor(
     }
 
     fun updateMemo() {
+        android.util.Log.d("EditMemoViewModel", "updateMemo 호출됨")
+        android.util.Log.d("EditMemoViewModel", "hasEditPermission: ${_hasEditPermission.value}")
+
         if (!_hasEditPermission.value) {
+            android.util.Log.e("EditMemoViewModel", "편집 권한이 없습니다")
             _uiState.value = EditMemoUiState.Error("편집 권한이 없습니다")
             return
         }
 
         viewModelScope.launch {
+            android.util.Log.d("EditMemoViewModel", "메모 저장 시작...")
             _uiState.value = EditMemoUiState.Saving
 
             // Handle image upload if new image is selected
             val imageUrl = if (_imageUri.value != null) {
+                android.util.Log.d("EditMemoViewModel", "새 이미지 업로드 중...")
                 // Upload new image and get URL
                 memoRepository.uploadImage(_imageUri.value!!).fold(
-                    onSuccess = { url -> url },
+                    onSuccess = { url ->
+                        android.util.Log.d("EditMemoViewModel", "이미지 업로드 성공: $url")
+                        url
+                    },
                     onFailure = { error ->
+                        android.util.Log.e("EditMemoViewModel", "이미지 업로드 실패: ${error.message}")
                         _uiState.value = EditMemoUiState.Error(error.message ?: "이미지 업로드에 실패했습니다")
                         return@launch
                     }
                 )
             } else {
+                android.util.Log.d("EditMemoViewModel", "기존 이미지 사용: ${_existingImageUrl.value}")
                 // Use existing image URL if no new image selected
                 _existingImageUrl.value
             }
 
             val location = _currentLocation.value
+            android.util.Log.d("EditMemoViewModel", "메모 업데이트 요청 - ID: $memoId, Title: ${_title.value}, CategoryIds: ${_selectedCategoryIds.value}")
+
             updateMemoUseCase(
                 id = memoId,
                 title = _title.value,
@@ -308,9 +321,11 @@ class EditMemoViewModel @Inject constructor(
                 categoryIds = _selectedCategoryIds.value.toList()
             ).fold(
                 onSuccess = {
+                    android.util.Log.d("EditMemoViewModel", "메모 업데이트 성공!")
                     _uiState.value = EditMemoUiState.Success
                 },
                 onFailure = { error ->
+                    android.util.Log.e("EditMemoViewModel", "메모 업데이트 실패: ${error.message}")
                     _uiState.value = EditMemoUiState.Error(error.message ?: "메모 수정에 실패했습니다")
                 }
             )

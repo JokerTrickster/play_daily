@@ -167,12 +167,12 @@ fun ParticipantCard(
                 }
             }
 
-            // Edit icon on the left (only for owner viewing non-owner participants)
+            // Edit icon on the top-left (only for owner viewing non-owner participants)
             if (isOwner && !isParticipantOwner && !isCurrentUser) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .offset(x = (-6).dp)
+                        .align(Alignment.TopStart)
+                        .offset(x = (-6).dp, y = (-6).dp)
                         .size(24.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
