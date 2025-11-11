@@ -62,76 +62,110 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid memo id"})
 	}
 
-	// Form 데이터 파싱
-	req := request.ReqUpdateMemo{
-		Title:   c.FormValue("title"),
-		Content: c.FormValue("content"),
-	}
+	var req request.ReqUpdateMemo
 
-	// Rating 파싱 (Float로 받아서 uint8로 변환)
-	if ratingStr := c.FormValue("rating"); ratingStr != "" {
-		if rating, err := strconv.ParseFloat(ratingStr, 64); err == nil {
-			// 반올림하여 uint8로 변환 (0-5 범위)
-			req.Rating = uint8(rating + 0.5)
+	// Content-Type에 따라 다르게 처리
+	contentType := c.Request().Header.Get("Content-Type")
+
+	// JSON Body로 받는 경우 (기본)
+	if contentType == "application/json" || contentType == "" {
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		}
-	}
-
-	// IsPinned 파싱 (optional)
-	if pinnedStr := c.FormValue("is_pinned"); pinnedStr != "" {
-		if pinned, err := strconv.ParseBool(pinnedStr); err == nil {
-			req.IsPinned = pinned
-		}
-	}
-
-	// Latitude 파싱 (optional)
-	if latStr := c.FormValue("latitude"); latStr != "" {
-		if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
-			req.Latitude = &lat
-		}
-	}
-
-	// Longitude 파싱 (optional)
-	if lngStr := c.FormValue("longitude"); lngStr != "" {
-		if lng, err := strconv.ParseFloat(lngStr, 64); err == nil {
-			req.Longitude = &lng
-		}
-	}
-
-	// LocationName 파싱 (optional)
-	if locName := c.FormValue("location_name"); locName != "" {
-		req.LocationName = &locName
-	}
-
-	// CategoryIds 파싱 (optional)
-	if categoryIdsStr := c.FormValue("category_ids"); categoryIdsStr != "" {
-		var categoryIds []int
-		if err := json.Unmarshal([]byte(categoryIdsStr), &categoryIds); err == nil {
-			req.CategoryIds = categoryIds
-		}
-	}
-
-	// 이미지 파일 검증 및 처리
-	fileHeader, err := c.FormFile("image")
-	if err == nil && fileHeader != nil {
-		// 파일 크기 검증
-		if fileHeader.Size > common.Env.MaxFileSize {
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": fmt.Sprintf("file size exceeds maximum allowed size (%d bytes)", common.Env.MaxFileSize),
-			})
+	} else {
+		// Multipart Form 데이터로 받는 경우 (이미지 직접 업로드 시)
+		req = request.ReqUpdateMemo{
+			Title:   c.FormValue("title"),
+			Content: c.FormValue("content"),
 		}
 
-		// 파일 열기
-		file, err := fileHeader.Open()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{
-				"error": "failed to open image file",
-			})
+		// Rating 파싱 (Float로 받아서 uint8로 변환)
+		if ratingStr := c.FormValue("rating"); ratingStr != "" {
+			if rating, err := strconv.ParseFloat(ratingStr, 64); err == nil {
+				// 반올림하여 uint8로 변환 (0-5 범위)
+				req.Rating = uint8(rating + 0.5)
+			}
 		}
-		defer file.Close()
 
-		// Request에 파일 정보 담기 (UseCase에서 S3 업로드 처리)
-		req.ImageFile = file
-		req.ImageHeader = fileHeader
+		// IsPinned 파싱 (optional)
+		if pinnedStr := c.FormValue("is_pinned"); pinnedStr != "" {
+			if pinned, err := strconv.ParseBool(pinnedStr); err == nil {
+				req.IsPinned = pinned
+			}
+		}
+
+		// IsWishlist 파싱 (optional)
+		if wishlistStr := c.FormValue("is_wishlist"); wishlistStr != "" {
+			if wishlist, err := strconv.ParseBool(wishlistStr); err == nil {
+				req.IsWishlist = wishlist
+			}
+		}
+
+		// Latitude 파싱 (optional)
+		if latStr := c.FormValue("latitude"); latStr != "" {
+			if lat, err := strconv.ParseFloat(latStr, 64); err == nil {
+				req.Latitude = &lat
+			}
+		}
+
+		// Longitude 파싱 (optional)
+		if lngStr := c.FormValue("longitude"); lngStr != "" {
+			if lng, err := strconv.ParseFloat(lngStr, 64); err == nil {
+				req.Longitude = &lng
+			}
+		}
+
+		// LocationName 파싱 (optional)
+		if locName := c.FormValue("location_name"); locName != "" {
+			req.LocationName = &locName
+		}
+
+		// BusinessName 파싱 (optional)
+		if bizName := c.FormValue("business_name"); bizName != "" {
+			req.BusinessName = &bizName
+		}
+
+		// BusinessPhone 파싱 (optional)
+		if bizPhone := c.FormValue("business_phone"); bizPhone != "" {
+			req.BusinessPhone = &bizPhone
+		}
+
+		// BusinessAddress 파싱 (optional)
+		if bizAddr := c.FormValue("business_address"); bizAddr != "" {
+			req.BusinessAddress = &bizAddr
+		}
+
+		// CategoryIds 파싱 (optional)
+		if categoryIdsStr := c.FormValue("category_ids"); categoryIdsStr != "" {
+			var categoryIds []int
+			if err := json.Unmarshal([]byte(categoryIdsStr), &categoryIds); err == nil {
+				req.CategoryIds = categoryIds
+			}
+		}
+
+		// 이미지 파일 검증 및 처리
+		fileHeader, err := c.FormFile("image")
+		if err == nil && fileHeader != nil {
+			// 파일 크기 검증
+			if fileHeader.Size > common.Env.MaxFileSize {
+				return c.JSON(http.StatusBadRequest, map[string]string{
+					"error": fmt.Sprintf("file size exceeds maximum allowed size (%d bytes)", common.Env.MaxFileSize),
+				})
+			}
+
+			// 파일 열기
+			file, err := fileHeader.Open()
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]string{
+					"error": "failed to open image file",
+				})
+			}
+			defer file.Close()
+
+			// Request에 파일 정보 담기 (UseCase에서 S3 업로드 처리)
+			req.ImageFile = file
+			req.ImageHeader = fileHeader
+		}
 	}
 
 	memo, err := h.UseCase.UpdateMemo(ctx, uint(id), userID, req)
