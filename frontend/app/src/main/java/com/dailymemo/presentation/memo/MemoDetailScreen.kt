@@ -57,9 +57,13 @@ fun MemoDetailScreen(
         }
     }
 
-    // Refresh memo when returning from edit
-    LaunchedEffect(Unit) {
+    // Refresh memo when screen appears (including when returning from edit)
+    DisposableEffect(Unit) {
+        android.util.Log.d("MemoDetailScreen", "화면 진입/재진입 - refresh 호출")
         viewModel.refresh()
+        onDispose {
+            android.util.Log.d("MemoDetailScreen", "화면 나감")
+        }
     }
 
     DeleteConfirmationDialog(
