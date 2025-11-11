@@ -57,52 +57,50 @@ fun RoomDiscoveryScreen(
     val userSearchQuery by viewModel.userSearchQuery.collectAsStateWithLifecycle()
     val userSearchState by viewModel.userSearchState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "방 탐색",
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                )
-                TabRow(
-                    selectedTabIndex = when (currentTab) {
-                        RoomTab.POPULAR -> 0
-                        RoomTab.NEW -> 1
-                        RoomTab.SEARCH -> 2
-                    },
-                    containerColor = MaterialTheme.colorScheme.surface
-                ) {
-                    Tab(
-                        selected = currentTab == RoomTab.POPULAR,
-                        onClick = { viewModel.switchTab(RoomTab.POPULAR) },
-                        text = { Text("인기방") }
-                    )
-                    Tab(
-                        selected = currentTab == RoomTab.NEW,
-                        onClick = { viewModel.switchTab(RoomTab.NEW) },
-                        text = { Text("새로운 방") }
-                    )
-                    Tab(
-                        selected = currentTab == RoomTab.SEARCH,
-                        onClick = { viewModel.switchTab(RoomTab.SEARCH) },
-                        text = { Text("검색") }
-                    )
-                }
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        // Modal Header
+        Text(
+            text = "방 탐색",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+        )
+
+        // Tab Row
+        TabRow(
+            selectedTabIndex = when (currentTab) {
+                RoomTab.POPULAR -> 0
+                RoomTab.NEW -> 1
+                RoomTab.SEARCH -> 2
+            },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Tab(
+                selected = currentTab == RoomTab.POPULAR,
+                onClick = { viewModel.switchTab(RoomTab.POPULAR) },
+                text = { Text("인기방") }
+            )
+            Tab(
+                selected = currentTab == RoomTab.NEW,
+                onClick = { viewModel.switchTab(RoomTab.NEW) },
+                text = { Text("새로운 방") }
+            )
+            Tab(
+                selected = currentTab == RoomTab.SEARCH,
+                onClick = { viewModel.switchTab(RoomTab.SEARCH) },
+                text = { Text("검색") }
+            )
         }
-    ) { paddingValues ->
+
+        // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(paddingValues)
         ) {
             // Search tab shows both room and user search
             if (currentTab == RoomTab.SEARCH) {

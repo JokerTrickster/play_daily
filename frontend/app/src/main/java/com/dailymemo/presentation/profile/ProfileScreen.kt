@@ -39,6 +39,7 @@ import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelStyles
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
@@ -57,6 +58,12 @@ fun ProfileScreen(
     val memosWithLocation by viewModel.memosWithLocation.collectAsState()
     val likedRooms by viewModel.likedRooms.collectAsState()
     val roomPassword by viewModel.roomPassword.collectAsState()
+
+    // Room Discovery Modal state
+    var showRoomDiscoveryModal by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
     val receivedLikesCount by viewModel.receivedLikesCount.collectAsState()
     val profileImageUrl by viewModel.profileImageUrl.collectAsState()
 
@@ -142,7 +149,7 @@ fun ProfileScreen(
                         viewModel.updateRoomPublic(isPublic)
                     },
                     onNavigateToParticipants = onNavigateToParticipants,
-                    onNavigateToRoomDiscovery = onNavigateToRoomDiscovery
+                    onNavigateToRoomDiscovery = { showRoomDiscoveryModal = true }
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -249,6 +256,22 @@ fun ProfileScreen(
                 }
             }
         )
+    }
+
+    // Room Discovery Modal
+    if (showRoomDiscoveryModal) {
+        ModalBottomSheet(
+            onDismissRequest = { showRoomDiscoveryModal = false },
+            sheetState = sheetState,
+            modifier = Modifier.fillMaxHeight(0.95f)
+        ) {
+            com.dailymemo.presentation.room.RoomDiscoveryScreen(
+                onNavigateToRoomDetail = { roomId ->
+                    showRoomDiscoveryModal = false
+                    // TODO: Navigate to room detail if needed
+                }
+            )
+        }
     }
 }
 
