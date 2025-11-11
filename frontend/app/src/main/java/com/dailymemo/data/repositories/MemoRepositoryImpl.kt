@@ -179,6 +179,9 @@ class MemoRepositoryImpl @Inject constructor(
         categoryIds: List<Int>
     ): Result<Memo> {
         return try {
+            android.util.Log.d("MemoRepository", "updateMemo 시작 - ID: $id")
+            android.util.Log.d("MemoRepository", "Request: title=$title, content=${content.take(50)}..., categoryIds=$categoryIds")
+
             val request = UpdateMemoRequestDto(
                 title = title,
                 content = content,
@@ -194,13 +197,22 @@ class MemoRepositoryImpl @Inject constructor(
                 businessAddress = businessAddress,
                 categoryIds = categoryIds
             )
+
+            android.util.Log.d("MemoRepository", "API 호출 중...")
             val response = memoApiService.updateMemo(id, request)
+
+            android.util.Log.d("MemoRepository", "API 응답: code=${response.code()}, successful=${response.isSuccessful}")
+
             if (response.isSuccessful && response.body() != null) {
+                android.util.Log.d("MemoRepository", "메모 업데이트 성공!")
                 Result.success(response.body()!!.toDomain())
             } else {
+                val errorBody = response.errorBody()?.string()
+                android.util.Log.e("MemoRepository", "메모 업데이트 실패 - code: ${response.code()}, error: $errorBody")
                 Result.failure(DomainError.MemoUpdateFailed)
             }
         } catch (e: Exception) {
+            android.util.Log.e("MemoRepository", "메모 업데이트 예외 발생: ${e.message}", e)
             val error = handleException(e)
             Result.failure(error)
         }

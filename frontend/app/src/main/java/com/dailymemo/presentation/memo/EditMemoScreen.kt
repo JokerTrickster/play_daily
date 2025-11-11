@@ -101,8 +101,13 @@ fun EditMemoScreen(
 
     // Handle save success
     LaunchedEffect(uiState) {
+        android.util.Log.d("EditMemoScreen", "uiState 변경: $uiState")
         if (uiState is EditMemoUiState.Success) {
+            android.util.Log.d("EditMemoScreen", "저장 성공! 화면 닫기 시작...")
             onSaveSuccess()
+            android.util.Log.d("EditMemoScreen", "onSaveSuccess() 호출 완료")
+        } else if (uiState is EditMemoUiState.Error) {
+            android.util.Log.e("EditMemoScreen", "저장 실패: ${(uiState as EditMemoUiState.Error).message}")
         }
     }
 
