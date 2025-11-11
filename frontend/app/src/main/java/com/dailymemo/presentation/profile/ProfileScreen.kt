@@ -269,7 +269,8 @@ fun ProfileScreen(
                 onNavigateToRoomDetail = { roomId ->
                     showRoomDiscoveryModal = false
                     // TODO: Navigate to room detail if needed
-                }
+                },
+                onDismiss = { showRoomDiscoveryModal = false }
             )
         }
     }
