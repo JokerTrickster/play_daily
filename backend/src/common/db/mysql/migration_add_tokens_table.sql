@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     refresh_token_expires_at TIMESTAMP NOT NULL COMMENT 'Refresh Token 만료 시간',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '토큰 생성 시간',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '토큰 업데이트 시간',
+    deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '소프트 삭제 시간 (GORM soft delete)',
     revoked_at TIMESTAMP NULL DEFAULT NULL COMMENT '토큰 무효화 시간 (NULL = active)',
 
     -- Indexes for performance
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     INDEX idx_access_token (access_token),
     INDEX idx_refresh_token (refresh_token),
     INDEX idx_expires_at (access_token_expires_at, refresh_token_expires_at),
+    INDEX idx_deleted_at (deleted_at),
     INDEX idx_revoked_at (revoked_at),
 
     -- Foreign key constraint
