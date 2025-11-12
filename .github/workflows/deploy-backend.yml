@@ -139,6 +139,25 @@ jobs:
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='JWT Token Storage for Revocation and Rotation';
           EOF
 
+          # Check and add deleted_at column to tokens table if missing
+          docker run -i --rm mysql:8.0 mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD daily_test <<'EOF' 2>&1 | grep -v "Warning" || true
+            SET @col_exists = (
+              SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+              WHERE TABLE_SCHEMA = 'daily_test'
+              AND TABLE_NAME = 'tokens'
+              AND COLUMN_NAME = 'deleted_at'
+            );
+
+            SET @query = IF(@col_exists = 0,
+              'ALTER TABLE tokens ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT ''소프트 삭제 시간 (GORM soft delete)'' AFTER updated_at, ADD INDEX idx_deleted_at (deleted_at);',
+              'SELECT ''tokens.deleted_at column already exists'' AS info;'
+            );
+
+            PREPARE stmt FROM @query;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+          EOF
+
           echo "✓ Test database schema updated"
 
       - name: Run E2E Tests
