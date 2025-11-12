@@ -2,6 +2,7 @@ package _middleware
 
 import (
 	"main/common"
+	"main/common/db/mysql"
 
 	"github.com/labstack/echo/v4"
 )
@@ -14,22 +15,32 @@ func TokenChecker(next echo.HandlerFunc) echo.HandlerFunc {
 		println("TokenChecker - tkn header:", accessToken)
 		println("TokenChecker - all headers:", c.Request().Header)
 
-		// TEMPORARY: Allow requests without token for development (default to user ID 1)
+		// Return 401 if no token provided
 		if accessToken == "" {
-			println("TokenChecker - WARNING: No token, using default user ID 1 for development")
-			c.Set("uID", uint(1))
-			c.Set("email", "a")
-			return next(c)
+			return common.ErrorMsg(c.Request().Context(), common.ErrBadToken, common.Trace(), "access token required", common.ErrFromClient)
 		}
 
-		// verify & get Data
+		// verify JWT signature
 		err := common.VerifyToken(accessToken)
 		if err != nil {
 			return err
 		}
+
+		// validate token exists in database and is not revoked
+		token, err := common.GetTokenByAccessToken(mysql.GormMysqlDB, accessToken)
+		if err != nil {
+			return err
+		}
+
+		// parse token claims
 		uID, email, err := common.ParseToken(accessToken)
 		if err != nil {
 			return err
+		}
+
+		// verify user ID matches token record
+		if token.UserID != uID {
+			return common.ErrorMsg(c.Request().Context(), common.ErrBadToken, common.Trace(), "token user mismatch", common.ErrFromClient)
 		}
 
 		// set token data to Context

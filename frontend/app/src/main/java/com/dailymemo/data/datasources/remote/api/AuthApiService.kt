@@ -1,8 +1,10 @@
 package com.dailymemo.data.datasources.remote.api
 
+import com.dailymemo.data.models.request.ReissueTokenRequest
 import com.dailymemo.data.models.request.SignInRequestDto
 import com.dailymemo.data.models.request.SignUpRequestDto
 import com.dailymemo.data.models.response.AuthResponseDto
+import com.dailymemo.data.models.response.ReissueTokenResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -18,4 +20,9 @@ interface AuthApiService {
     suspend fun signIn(
         @Body request: SignInRequestDto
     ): Response<AuthResponseDto>
+
+    @POST("/v0.1/auth/reissue")
+    suspend fun reissueToken(
+        @Body request: ReissueTokenRequest
+    ): Response<ReissueTokenResponse>
 }

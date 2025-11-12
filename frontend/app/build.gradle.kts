@@ -16,7 +16,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.dailymemo.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -117,6 +117,24 @@ dependencies {
     // LeakCanary for memory leak detection (debug only)
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 
+    // Testing dependencies
     // Benchmark library for performance testing
     androidTestImplementation("androidx.benchmark:benchmark-junit4:1.2.2")
+
+    // Hilt testing
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
+    kspAndroidTest("com.google.dagger:hilt-compiler:2.50")
+
+    // Compose testing
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // AndroidX Test
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+
+    // Coroutines testing
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }

@@ -41,8 +41,22 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideTokenRefreshInterceptor(
+        authLocalDataSource: AuthLocalDataSource,
+        authApiService: dagger.Lazy<AuthApiService>
+    ): com.dailymemo.data.network.TokenRefreshInterceptor {
+        return com.dailymemo.data.network.TokenRefreshInterceptor(
+            authLocalDataSource = authLocalDataSource,
+            authApiServiceProvider = authApiService,
+            sessionExpiredCallback = null // Will be set by MainActivity if needed
+        )
+    }
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(
-        authLocalDataSource: AuthLocalDataSource
+        authLocalDataSource: AuthLocalDataSource,
+        tokenRefreshInterceptor: com.dailymemo.data.network.TokenRefreshInterceptor
     ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
@@ -75,6 +89,7 @@ object AppModule {
 
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(tokenRefreshInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

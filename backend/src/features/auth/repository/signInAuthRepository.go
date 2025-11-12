@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"main/common/db/mysql"
 	_interface "main/features/auth/model/interface"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -39,4 +40,21 @@ func (r *SignInAuthRepository) CheckPassword(ctx context.Context, accountID, pas
 
 	// 사용자 정보 반환
 	return &user, nil
+}
+
+// StoreToken 토큰을 데이터베이스에 저장
+func (r *SignInAuthRepository) StoreToken(ctx context.Context, userID uint, accessToken, refreshToken string, accessTokenExpiresAt, refreshTokenExpiresAt time.Time) error {
+	token := &mysql.Token{
+		UserID:                userID,
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		AccessTokenExpiresAt:  accessTokenExpiresAt,
+		RefreshTokenExpiresAt: refreshTokenExpiresAt,
+	}
+
+	if err := r.GormDB.WithContext(ctx).Create(token).Error; err != nil {
+		return fmt.Errorf("failed to store token: %w", err)
+	}
+
+	return nil
 }

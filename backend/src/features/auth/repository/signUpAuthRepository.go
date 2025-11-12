@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"main/common/db/mysql"
 	_interface "main/features/auth/model/interface"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -77,4 +78,21 @@ func (r *SignUpAuthRepository) CreateUser(ctx context.Context, userDTO *mysql.Us
 
 	// 생성된 사용자 정보 반환 (ID와 DefaultRoomID가 자동 할당됨)
 	return userDTO, nil
+}
+
+// StoreToken 토큰을 데이터베이스에 저장
+func (r *SignUpAuthRepository) StoreToken(ctx context.Context, userID uint, accessToken, refreshToken string, accessTokenExpiresAt, refreshTokenExpiresAt time.Time) error {
+	token := &mysql.Token{
+		UserID:                userID,
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		AccessTokenExpiresAt:  accessTokenExpiresAt,
+		RefreshTokenExpiresAt: refreshTokenExpiresAt,
+	}
+
+	if err := r.GormDB.WithContext(ctx).Create(token).Error; err != nil {
+		return fmt.Errorf("failed to store token: %w", err)
+	}
+
+	return nil
 }

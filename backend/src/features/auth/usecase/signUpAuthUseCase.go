@@ -52,6 +52,13 @@ func (uc *SignUpAuthUseCase) SignUp(ctx context.Context, req request.ReqSignUp) 
 		return nil, err
 	}
 
+	// 토큰을 데이터베이스에 저장
+	accessTokenTime := time.Unix(accessTokenExpiredAt, 0)
+	refreshTokenTime := time.Unix(refreshTokenExpiredAt, 0)
+	if err := uc.Repository.StoreToken(ctx, user.ID, accessToken, refreshToken, accessTokenTime, refreshTokenTime); err != nil {
+		return nil, err
+	}
+
 	// 응답 생성
 	res := &response.ResAuth{
 		AccessToken:           accessToken,

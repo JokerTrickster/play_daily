@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -23,6 +24,8 @@ class AuthLocalDataSource @Inject constructor(
     companion object {
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
         private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
+        private val ACCESS_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("access_token_expires_at")
+        private val REFRESH_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("refresh_token_expires_at")
         private val USER_ID_KEY = stringPreferencesKey("user_id")
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val MEMO_SPACE_ID_KEY = stringPreferencesKey("memo_space_id")
@@ -39,7 +42,9 @@ class AuthLocalDataSource @Inject constructor(
         username: String,
         memoSpaceId: String,
         defaultRoomId: String? = null,
-        roomPassword: String? = null
+        roomPassword: String? = null,
+        accessTokenExpiresAt: Long? = null,
+        refreshTokenExpiresAt: Long? = null
     ) {
         android.util.Log.d("AuthLocalDataSource", "saveTokens - memoSpaceId: $memoSpaceId, defaultRoomId: $defaultRoomId, roomPassword: $roomPassword")
         dataStore.edit { preferences ->
@@ -58,6 +63,14 @@ class AuthLocalDataSource @Inject constructor(
             if (roomPassword != null) {
                 preferences[ROOM_PASSWORD_KEY] = roomPassword
             }
+
+            // Save token expiration times if provided
+            if (accessTokenExpiresAt != null) {
+                preferences[ACCESS_TOKEN_EXPIRES_AT_KEY] = accessTokenExpiresAt
+            }
+            if (refreshTokenExpiresAt != null) {
+                preferences[REFRESH_TOKEN_EXPIRES_AT_KEY] = refreshTokenExpiresAt
+            }
         }
         android.util.Log.d("AuthLocalDataSource", "saveTokens completed - saved room_id: $memoSpaceId, defaultRoomId: $defaultRoomId")
     }
@@ -70,6 +83,33 @@ class AuthLocalDataSource @Inject constructor(
         return runBlocking {
             dataStore.data.first()[ACCESS_TOKEN_KEY]
         }
+    }
+
+    suspend fun getRefreshToken(): String? {
+        return dataStore.data.first()[REFRESH_TOKEN_KEY]
+    }
+
+    suspend fun getAccessTokenExpiresAt(): Long? {
+        return dataStore.data.first()[ACCESS_TOKEN_EXPIRES_AT_KEY]
+    }
+
+    suspend fun getRefreshTokenExpiresAt(): Long? {
+        return dataStore.data.first()[REFRESH_TOKEN_EXPIRES_AT_KEY]
+    }
+
+    suspend fun updateTokens(
+        accessToken: String,
+        refreshToken: String,
+        accessTokenExpiresAt: Long,
+        refreshTokenExpiresAt: Long
+    ) {
+        dataStore.edit { preferences ->
+            preferences[ACCESS_TOKEN_KEY] = accessToken
+            preferences[REFRESH_TOKEN_KEY] = refreshToken
+            preferences[ACCESS_TOKEN_EXPIRES_AT_KEY] = accessTokenExpiresAt
+            preferences[REFRESH_TOKEN_EXPIRES_AT_KEY] = refreshTokenExpiresAt
+        }
+        android.util.Log.d("AuthLocalDataSource", "updateTokens completed - accessToken updated with expiry: $accessTokenExpiresAt, refreshToken expiry: $refreshTokenExpiresAt")
     }
 
     suspend fun getUserId(): String? {

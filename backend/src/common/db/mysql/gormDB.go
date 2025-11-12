@@ -198,3 +198,20 @@ type RoomPasswordReset struct {
 func (RoomPasswordReset) TableName() string {
 	return "room_password_resets"
 }
+
+// Token JWT 토큰 저장 및 관리 테이블
+type Token struct {
+	gorm.Model
+	UserID                 uint       `json:"user_id" gorm:"column:user_id;not null;index;comment:사용자 ID (FK to users table)"`
+	AccessToken            string     `json:"access_token" gorm:"column:access_token;type:varchar(500);not null;index;comment:JWT Access Token"`
+	RefreshToken           string     `json:"refresh_token" gorm:"column:refresh_token;type:varchar(500);not null;uniqueIndex;comment:JWT Refresh Token (unique, single-use)"`
+	AccessTokenExpiresAt   time.Time  `json:"access_token_expires_at" gorm:"column:access_token_expires_at;not null;index:idx_expires_at;comment:Access Token 만료 시간"`
+	RefreshTokenExpiresAt  time.Time  `json:"refresh_token_expires_at" gorm:"column:refresh_token_expires_at;not null;index:idx_expires_at;comment:Refresh Token 만료 시간"`
+	RevokedAt              *time.Time `json:"revoked_at,omitempty" gorm:"column:revoked_at;index;comment:토큰 무효화 시간 (NULL = active)"`
+	User                   *User      `json:"user,omitempty" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+}
+
+// TableName Token 테이블명 지정
+func (Token) TableName() string {
+	return "tokens"
+}
