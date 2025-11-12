@@ -114,10 +114,15 @@ func TestAuthFlow(t *testing.T) {
 		assert.Equal(t, accountID, result["account_id"])
 	})
 
-	t.Run("7. 토큰 없이 프로필 조회 (개발 모드에서는 성공)", func(t *testing.T) {
+	t.Run("7. 토큰 없이 프로필 조회 실패 (인증 필수)", func(t *testing.T) {
 		resp, body, err := makeRequest("GET", "/v0.1/profile", nil, "")
 		assert.NoError(t, err)
-		// 개발 모드에서는 기본 user ID 1로 접근 가능
-		assertStatusCode(t, 200, resp.StatusCode, body)
+		// 토큰 관리 시스템 도입으로 모든 환경에서 인증 필수
+		assertStatusCode(t, 401, resp.StatusCode, body)
+
+		var result map[string]interface{}
+		parseJSONResponse(t, body, &result)
+		assert.Contains(t, result, "errType")
+		assert.Equal(t, "TOKEN_BAD", result["errType"])
 	})
 }
