@@ -18,6 +18,7 @@ class PlaceRepositoryImpl @Inject constructor(
         radius: Int
     ): Result<List<Place>> {
         return try {
+            android.util.Log.d("PlaceRepository", "searchPlaces - query: $query, lon: $longitude, lat: $latitude, radius: $radius")
             val response = kakaoLocalApiService.searchPlaces(
                 authorization = "KakaoAK $kakaoRestApiKey",
                 query = query,
@@ -25,6 +26,11 @@ class PlaceRepositoryImpl @Inject constructor(
                 latitude = latitude,
                 radius = radius
             )
+
+            android.util.Log.d("PlaceRepository", "API response - code: ${response.code()}, successful: ${response.isSuccessful}")
+            if (response.code() == 400) {
+                android.util.Log.e("PlaceRepository", "400 Error body: ${response.errorBody()?.string()}")
+            }
 
             if (response.isSuccessful) {
                 val places = response.body()?.documents?.map { dto ->
