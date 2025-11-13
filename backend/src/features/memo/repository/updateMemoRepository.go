@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"main/common/db/mysql"
 	_interface "main/features/memo/model/interface"
 
@@ -98,6 +99,9 @@ func (r *UpdateMemoRepository) UpdateMemoWithCategories(ctx context.Context, mem
 			return err
 		}
 
+		fmt.Printf("[UpdateMemoRepository] Existing memo - ID: %d, Rating: %.1f\n", existingMemo.ID, existingMemo.Rating)
+		fmt.Printf("[UpdateMemoRepository] New memo data - Rating: %.1f\n", memo.Rating)
+
 		// 2. 메모 업데이트 (제공된 필드만 선택적으로 업데이트)
 		updates := map[string]interface{}{}
 
@@ -109,6 +113,9 @@ func (r *UpdateMemoRepository) UpdateMemoWithCategories(ctx context.Context, mem
 		// Rating: 제공되었고 기존 값과 다르면 업데이트 (0도 유효한 값)
 		if memo.Rating != existingMemo.Rating {
 			updates["rating"] = memo.Rating
+			fmt.Printf("[UpdateMemoRepository] Rating will be updated: %.1f -> %.1f\n", existingMemo.Rating, memo.Rating)
+		} else {
+			fmt.Printf("[UpdateMemoRepository] Rating NOT updated (same value): %.1f\n", existingMemo.Rating)
 		}
 
 		// Boolean 필드: 값이 변경되었으면 업데이트

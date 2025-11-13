@@ -72,7 +72,8 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		}
-		fmt.Printf("[UpdateMemo] Parsed request - Title: %s, Rating: %d, CategoryIds: %v\n", req.Title, req.Rating, req.CategoryIds)
+		fmt.Printf("[UpdateMemo] Parsed JSON request - Title: %s, Rating: %.1f (type: float32), IsPinned: %v, CategoryIds: %v\n",
+			req.Title, req.Rating, req.IsPinned, req.CategoryIds)
 	} else {
 		// Multipart Form 데이터로 받는 경우 (이미지 직접 업로드 시)
 		req = request.ReqUpdateMemo{
