@@ -10,6 +10,7 @@ import com.dailymemo.domain.models.RoomMember
 import com.dailymemo.domain.models.RoomPermission
 import com.dailymemo.domain.repositories.RoomRepository
 import com.dailymemo.presentation.room.RoomCardData
+import com.dailymemo.presentation.room.RoomDetail
 import javax.inject.Inject
 
 class RoomRepositoryImpl @Inject constructor(
@@ -271,6 +272,41 @@ class RoomRepositoryImpl @Inject constructor(
                     403 -> DomainError.Forbidden
                     404 -> DomainError.RoomNotFound
                     429 -> DomainError.RateLimitExceeded
+                    else -> DomainError.UnknownError
+                }
+                Result.failure(error)
+            }
+        } catch (e: Exception) {
+            val error = when (e) {
+                is java.net.UnknownHostException -> DomainError.NoConnection
+                is java.net.SocketTimeoutException -> DomainError.Timeout
+                is java.io.IOException -> DomainError.NetworkError(e)
+                else -> DomainError.UnknownError
+            }
+            Result.failure(error)
+        }
+    }
+
+    override suspend fun getRoomDetail(roomId: Long): Result<RoomDetail> {
+        return try {
+            val response = roomApiService.getRoomDetail(roomId)
+            if (response.isSuccessful && response.body() != null) {
+                val dto = response.body()!!
+                val roomDetail = RoomDetail(
+                    id = dto.id.toString(),
+                    name = dto.name,
+                    roomCode = dto.roomCode,
+                    isPublic = dto.isPublic,
+                    likesCount = dto.likesCount.toInt(),
+                    ownerId = dto.ownerId.toString(),
+                    ownerName = dto.ownerName,
+                    ownerBio = dto.ownerBio,
+                    createdAt = dto.createdAt
+                )
+                Result.success(roomDetail)
+            } else {
+                val error = when (response.code()) {
+                    404 -> DomainError.RoomNotFound
                     else -> DomainError.UnknownError
                 }
                 Result.failure(error)

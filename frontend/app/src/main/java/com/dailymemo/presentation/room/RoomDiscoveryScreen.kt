@@ -59,6 +59,10 @@ fun RoomDiscoveryScreen(
     val userSearchQuery by viewModel.userSearchQuery.collectAsStateWithLifecycle()
     val userSearchState by viewModel.userSearchState.collectAsStateWithLifecycle()
 
+    // Room detail modal state
+    val selectedRoomDetail by viewModel.selectedRoomDetail.collectAsStateWithLifecycle()
+    val showRoomDetailModal by viewModel.showRoomDetailModal.collectAsStateWithLifecycle()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -223,12 +227,21 @@ fun RoomDiscoveryScreen(
                         searchQuery = searchQuery,
                         hasMore = hasMore,
                         isLoadingMore = isLoadingMore,
-                        onNavigateToRoomDetail = onNavigateToRoomDetail,
+                        onNavigateToRoomDetail = { roomId -> viewModel.onRoomClick(roomId) },
                         onLoadMore = { viewModel.loadMoreRooms() }
                     )
                 }
             }
         }
+    }
+
+    // Show room detail modal
+    if (showRoomDetailModal && selectedRoomDetail != null) {
+        RoomDetailModal(
+            roomDetail = selectedRoomDetail!!,
+            onDismiss = { viewModel.hideRoomDetailModal() },
+            onJoinRoom = { roomId -> viewModel.onJoinRoom(roomId) }
+        )
     }
 }
 

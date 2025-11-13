@@ -18,7 +18,8 @@ import javax.inject.Inject
 class RoomDiscoveryViewModel @Inject constructor(
     private val getPopularRoomsUseCase: com.dailymemo.domain.usecases.room.GetPopularRoomsUseCase,
     private val getRecentRoomsUseCase: com.dailymemo.domain.usecases.room.GetRecentRoomsUseCase,
-    private val resetRoomPasswordUseCase: com.dailymemo.domain.usecases.room.ResetRoomPasswordUseCase
+    private val resetRoomPasswordUseCase: com.dailymemo.domain.usecases.room.ResetRoomPasswordUseCase,
+    private val getRoomDetailUseCase: com.dailymemo.domain.usecases.room.GetRoomDetailUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<RoomDiscoveryUiState>(RoomDiscoveryUiState.Loading)
@@ -52,6 +53,16 @@ class RoomDiscoveryViewModel @Inject constructor(
     // Pull-to-refresh state
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    // Room detail state
+    private val _selectedRoomDetail = MutableStateFlow<RoomDetail?>(null)
+    val selectedRoomDetail: StateFlow<RoomDetail?> = _selectedRoomDetail.asStateFlow()
+
+    private val _showRoomDetailModal = MutableStateFlow(false)
+    val showRoomDetailModal: StateFlow<Boolean> = _showRoomDetailModal.asStateFlow()
+
+    private val _isLoadingDetail = MutableStateFlow(false)
+    val isLoadingDetail: StateFlow<Boolean> = _isLoadingDetail.asStateFlow()
 
     init {
         loadRooms()
@@ -252,6 +263,50 @@ class RoomDiscoveryViewModel @Inject constructor(
      */
     suspend fun resetPassword(roomId: Long): Result<String> {
         return resetRoomPasswordUseCase(roomId)
+    }
+
+    /**
+     * Load room detail and show modal
+     */
+    fun onRoomClick(roomId: String) {
+        viewModelScope.launch {
+            _isLoadingDetail.value = true
+
+            try {
+                val roomIdLong = roomId.toLongOrNull() ?: return@launch
+
+                getRoomDetailUseCase(roomIdLong).fold(
+                    onSuccess = { roomDetail ->
+                        _selectedRoomDetail.value = roomDetail
+                        _showRoomDetailModal.value = true
+                        _isLoadingDetail.value = false
+                    },
+                    onFailure = { error ->
+                        // Log error but don't show modal if failed
+                        _isLoadingDetail.value = false
+                    }
+                )
+            } catch (e: Exception) {
+                _isLoadingDetail.value = false
+            }
+        }
+    }
+
+    /**
+     * Hide room detail modal
+     */
+    fun hideRoomDetailModal() {
+        _showRoomDetailModal.value = false
+        _selectedRoomDetail.value = null
+    }
+
+    /**
+     * Handle join room action from detail modal
+     */
+    fun onJoinRoom(roomId: String) {
+        // TODO: Implement join room logic
+        // This should navigate to room or handle join flow
+        hideRoomDetailModal()
     }
 }
 
