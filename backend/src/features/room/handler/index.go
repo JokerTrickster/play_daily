@@ -21,6 +21,7 @@ func NewRoomHandler(c *echo.Echo) {
 	updateRoomRepo := repository.NewUpdateRoomRepository(db)
 	roomDiscoveryRepo := repository.NewRoomDiscoveryRepository(db)
 	resetPasswordRepo := repository.NewResetPasswordRepository(db)
+	getRoomDetailRepo := repository.NewGetRoomDetailRepository(db)
 
 	// UseCase 초기화
 	joinRoomUseCase := usecase.NewJoinRoomUseCase(joinRoomRepo, 30*time.Second)
@@ -30,6 +31,7 @@ func NewRoomHandler(c *echo.Echo) {
 	updateRoomUseCase := usecase.NewUpdateRoomUseCase(updateRoomRepo, 30*time.Second)
 	roomDiscoveryUseCase := usecase.NewRoomDiscoveryUseCase(roomDiscoveryRepo, 30*time.Second)
 	resetPasswordUseCase := usecase.NewResetPasswordUseCase(resetPasswordRepo, 30*time.Second)
+	getRoomDetailUseCase := usecase.NewGetRoomDetailUseCase(getRoomDetailRepo, 30*time.Second)
 
 	// Handler 초기화
 	joinRoomHandler := NewJoinRoomHandler(joinRoomUseCase)
@@ -38,6 +40,7 @@ func NewRoomHandler(c *echo.Echo) {
 	updatePermissionHandler := NewUpdatePermissionHandler(updatePermissionUseCase)
 	updateRoomHandler := NewUpdateRoomHandler(updateRoomUseCase)
 	resetPasswordHandler := NewResetPasswordHandler(resetPasswordUseCase)
+	getRoomDetailHandler := NewGetRoomDetailHandler(getRoomDetailUseCase)
 
 	// Discovery Handler (No authentication required)
 	NewRoomDiscoveryHandler(c, roomDiscoveryUseCase)
@@ -49,4 +52,5 @@ func NewRoomHandler(c *echo.Echo) {
 	c.POST("/v0.1/room/permission", updatePermissionHandler.UpdatePermission, _middleware.TokenChecker)
 	c.POST("/v0.1/room/update", updateRoomHandler.UpdateRoom, _middleware.TokenChecker)
 	c.POST("/v0.1/rooms/:id/reset-password", resetPasswordHandler.ResetPassword, _middleware.TokenChecker)
+	c.GET("/v0.1/rooms/:id/detail", getRoomDetailHandler.GetRoomDetail) // No auth required for room discovery
 }
