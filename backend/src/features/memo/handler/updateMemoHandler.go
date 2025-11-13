@@ -9,6 +9,7 @@ import (
 	_middleware "main/middleware"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -66,15 +67,10 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 
 	// Content-Type에 따라 다르게 처리
 	contentType := c.Request().Header.Get("Content-Type")
+	fmt.Printf("[UpdateMemo] Content-Type: %s\n", contentType)
 
-	// JSON Body로 받는 경우 (기본)
-	if contentType == "application/json" || contentType == "" {
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
-		}
-		fmt.Printf("[UpdateMemo] Parsed JSON request - Title: %s, Rating: %.1f (type: float32), IsPinned: %v, CategoryIds: %v\n",
-			req.Title, req.Rating, req.IsPinned, req.CategoryIds)
-	} else {
+	// multipart/form-data로 받는 경우 (기본)
+	if strings.Contains(contentType, "multipart/form-data") {
 		// Multipart Form 데이터로 받는 경우 (이미지 직접 업로드 시)
 		req = request.ReqUpdateMemo{
 			Title:   c.FormValue("title"),
@@ -167,6 +163,16 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 			req.ImageFile = file
 			req.ImageHeader = fileHeader
 		}
+
+		fmt.Printf("[UpdateMemo] Parsed FormData request - Title: %s, Rating: %.1f (type: float32), IsPinned: %v, CategoryIds: %v\n",
+			req.Title, req.Rating, req.IsPinned, req.CategoryIds)
+	} else {
+		// JSON Body로 받는 경우
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		}
+		fmt.Printf("[UpdateMemo] Parsed JSON request - Title: %s, Rating: %.1f (type: float32), IsPinned: %v, CategoryIds: %v\n",
+			req.Title, req.Rating, req.IsPinned, req.CategoryIds)
 	}
 
 	memo, err := h.UseCase.UpdateMemo(ctx, uint(id), userID, req)
