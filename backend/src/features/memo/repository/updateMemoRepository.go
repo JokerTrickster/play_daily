@@ -92,19 +92,35 @@ func (r *UpdateMemoRepository) UpdateCategories(ctx context.Context, memoID uint
 // UpdateMemoWithCategories 메모와 카테고리를 단일 트랜잭션으로 업데이트 (원자적 연산)
 func (r *UpdateMemoRepository) UpdateMemoWithCategories(ctx context.Context, memoID uint, userID uint, memo *mysql.Memo, categoryIDs []uint) error {
 	return r.GormDB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// 1. 메모 업데이트 (map을 사용하여 zero value도 업데이트)
+		// 1. 기존 메모 조회 (merge를 위해)
+		var existingMemo mysql.Memo
+		if err := tx.Where("id = ? AND user_id = ?", memoID, userID).First(&existingMemo).Error; err != nil {
+			return err
+		}
+
+		// 2. 메모 업데이트 (제공된 필드만 선택적으로 업데이트)
 		updates := map[string]interface{}{}
 
-		// Title은 항상 업데이트 (빈 문자열도 허용)
-		updates["title"] = memo.Title
-		// Rating은 항상 업데이트 (0~5 범위)
-		updates["rating"] = memo.Rating
-		// Boolean 필드는 항상 업데이트
-		updates["is_pinned"] = memo.IsPinned
-		updates["is_wishlist"] = memo.IsWishlist
+		// Title: 제공되었고 기존 값과 다르면 업데이트
+		if memo.Title != "" && memo.Title != existingMemo.Title {
+			updates["title"] = memo.Title
+		}
+
+		// Rating: 제공되었고 기존 값과 다르면 업데이트 (0도 유효한 값)
+		if memo.Rating != existingMemo.Rating {
+			updates["rating"] = memo.Rating
+		}
+
+		// Boolean 필드: 값이 변경되었으면 업데이트
+		if memo.IsPinned != existingMemo.IsPinned {
+			updates["is_pinned"] = memo.IsPinned
+		}
+		if memo.IsWishlist != existingMemo.IsWishlist {
+			updates["is_wishlist"] = memo.IsWishlist
+		}
 
 		// Pointer 필드는 nil이 아닐 때만 업데이트
-		if memo.ImageURL != "" {
+		if memo.ImageURL != "" && memo.ImageURL != existingMemo.ImageURL {
 			updates["image_url"] = memo.ImageURL
 		}
 		if memo.Latitude != nil {
@@ -126,9 +142,16 @@ func (r *UpdateMemoRepository) UpdateMemoWithCategories(ctx context.Context, mem
 			updates["business_address"] = memo.BusinessAddress
 		}
 
-		result := tx.Model(&mysql.Memo{}).
-			Where("id = ? AND user_id = ?", memoID, userID).
-			Updates(updates)
+		// 업데이트할 필드가 있을 때만 실행
+		var result *gorm.DB
+		if len(updates) > 0 {
+			result = tx.Model(&mysql.Memo{}).
+				Where("id = ? AND user_id = ?", memoID, userID).
+				Updates(updates)
+		} else {
+			// 업데이트할 필드가 없으면 성공으로 처리
+			result = &gorm.DB{RowsAffected: 1}
+		}
 
 		if result.Error != nil {
 			return result.Error
