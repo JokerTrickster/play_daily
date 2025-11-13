@@ -29,7 +29,7 @@ class RoomDiscoveryViewModel @Inject constructor(
 
     // Pagination state
     private var currentPage = 1
-    private val pageSize = 20
+    private val pageSize = 10  // Limited to 10 items per page for better UX
     private val _hasMore = MutableStateFlow(true)
     val hasMore: StateFlow<Boolean> = _hasMore.asStateFlow()
 

@@ -263,7 +263,8 @@ fun ProfileScreen(
         ModalBottomSheet(
             onDismissRequest = { showRoomDiscoveryModal = false },
             sheetState = sheetState,
-            modifier = Modifier.fillMaxHeight(0.95f)
+            modifier = Modifier.fillMaxHeight(0.95f),
+            dragHandle = null  // Disable drag handle to prevent accidental dismissal while scrolling
         ) {
             com.dailymemo.presentation.room.RoomDiscoveryScreen(
                 onNavigateToRoomDetail = { roomId ->

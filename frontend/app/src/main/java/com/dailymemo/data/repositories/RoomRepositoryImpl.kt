@@ -185,10 +185,12 @@ class RoomRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val dto = response.body()!!
                 val rooms = dto.rooms.map { roomDto ->
+                    val publicStatus = if (roomDto.isPublic) "공개방" else "비공개방"
+                    val likesInfo = if (roomDto.likesCount > 0) " · ❤️ ${roomDto.likesCount}" else ""
                     RoomCardData(
                         id = roomDto.id.toString(),
                         title = roomDto.name,
-                        description = "Room Code: ${roomDto.roomCode}",
+                        description = "$publicStatus$likesInfo",
                         participantCount = 0, // Backend doesn't return participant count yet
                         categories = emptyList(), // Backend doesn't return categories yet
                         thumbnailUrl = null,
@@ -221,10 +223,12 @@ class RoomRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val dto = response.body()!!
                 val rooms = dto.rooms.map { roomDto ->
+                    val publicStatus = if (roomDto.isPublic) "공개방" else "비공개방"
+                    val likesInfo = if (roomDto.likesCount > 0) " · ❤️ ${roomDto.likesCount}" else ""
                     RoomCardData(
                         id = roomDto.id.toString(),
                         title = roomDto.name,
-                        description = "Room Code: ${roomDto.roomCode}",
+                        description = "$publicStatus$likesInfo",
                         participantCount = 0, // Backend doesn't return participant count yet
                         categories = emptyList(), // Backend doesn't return categories yet
                         thumbnailUrl = null,
