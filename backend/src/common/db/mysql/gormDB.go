@@ -52,7 +52,7 @@ type Memo struct {
 	// Content field removed - using categories instead
 	CreationMode string   `json:"creation_mode" gorm:"column:creation_mode;type:enum('map','list');not null;default:'list';comment:생성 방식 (map/list)"` // NEW
 	ImageURL     string   `json:"image_url" gorm:"column:image_url;type:varchar(500);comment:메모 이미지 URL"`
-	Rating       uint8    `json:"rating" gorm:"column:rating;type:tinyint unsigned;default:0;index;comment:평점 (0-5) 또는 관심도 (1-5)"`
+	Rating       float32  `json:"rating" gorm:"column:rating;type:float;default:0;index;comment:평점 (0-5, 0.5 단위) 또는 관심도 (1-5)"`
 	IsPinned     bool     `json:"is_pinned" gorm:"column:is_pinned;default:false;index;comment:고정 여부"`
 	LikesCount   uint     `json:"likes_count" gorm:"column:likes_count;type:int unsigned;default:0;index;comment:좋아요 개수"`
 	Latitude     *float64 `json:"latitude" gorm:"column:latitude;type:double;comment:위도"`

@@ -246,6 +246,18 @@ fun EditMemoScreen(
                             singleLine = true
                         )
 
+                        // Content
+                        OutlinedTextField(
+                            value = content,
+                            onValueChange = viewModel::onContentChange,
+                            label = { Text("내용") },
+                            placeholder = { Text("메모 내용을 입력하세요") },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = hasEditPermission,
+                            minLines = 4,
+                            maxLines = 8
+                        )
+
                         // Image Section - Only show when image exists
                         val displayImageUri = imageUri ?: existingImageUrl?.takeIf { it.isNotBlank() }?.let { Uri.parse(it) }
 

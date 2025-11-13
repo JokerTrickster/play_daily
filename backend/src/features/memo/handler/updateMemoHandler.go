@@ -72,6 +72,7 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		}
+		fmt.Printf("[UpdateMemo] Parsed request - Title: %s, Rating: %d, CategoryIds: %v\n", req.Title, req.Rating, req.CategoryIds)
 	} else {
 		// Multipart Form 데이터로 받는 경우 (이미지 직접 업로드 시)
 		req = request.ReqUpdateMemo{
@@ -79,11 +80,10 @@ func (h *UpdateMemoHandler) UpdateMemo(c echo.Context) error {
 			Content: c.FormValue("content"),
 		}
 
-		// Rating 파싱 (Float로 받아서 uint8로 변환)
+		// Rating 파싱 (Float로 받음, 소수점 지원)
 		if ratingStr := c.FormValue("rating"); ratingStr != "" {
-			if rating, err := strconv.ParseFloat(ratingStr, 64); err == nil {
-				// 반올림하여 uint8로 변환 (0-5 범위)
-				req.Rating = uint8(rating + 0.5)
+			if rating, err := strconv.ParseFloat(ratingStr, 32); err == nil {
+				req.Rating = float32(rating)
 			}
 		}
 

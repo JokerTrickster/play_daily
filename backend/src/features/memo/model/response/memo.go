@@ -22,7 +22,7 @@ type ResMemo struct {
 	CreationMode    string                       `json:"creation_mode"` // NEW: map or list
 	Categories      []ResCategory                `json:"categories"` // NEW: 선택된 카테고리 배열
 	ImageURL        string                       `json:"image_url"`
-	Rating          uint8                        `json:"rating"`
+	Rating          float32                      `json:"rating"` // Changed from uint8 to float32 for decimal support
 	IsPinned        bool                         `json:"is_pinned"`
 	LikesCount      uint                         `json:"likes_count"`
 	IsLiked         bool                         `json:"is_liked"`

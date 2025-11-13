@@ -293,6 +293,7 @@ class ProfileViewModel @Inject constructor(
         val currentProfile = (_uiState.value as? ProfileUiState.Success)?.profile
         val hasChanges = currentProfile?.let {
             _nickname.value.trim() != it.nickname ||
+                    _bio.value.trim() != (it.bio ?: "") ||
                     _newPassword.value.isNotBlank() ||
                     _selectedImageUri.value != null
         } ?: true

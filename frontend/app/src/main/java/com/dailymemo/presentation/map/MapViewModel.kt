@@ -240,13 +240,18 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             _isSearching.value = true
             val location = _currentLocation.value
-            android.util.Log.d("MapViewModel", "Current location: ${location?.latitude}, ${location?.longitude}")
+
+            // 위치 정보가 없으면 서울 중심 좌표를 기본값으로 사용
+            val searchLat = location?.latitude ?: 37.5665
+            val searchLon = location?.longitude ?: 126.9780
+
+            android.util.Log.d("MapViewModel", "Current location: $searchLat, $searchLon ${if (location == null) "(default: Seoul)" else ""}")
             android.util.Log.d("MapViewModel", "Searching within 20km radius")
 
             searchPlacesUseCase(
                 query = query,
-                longitude = location?.longitude,
-                latitude = location?.latitude,
+                longitude = searchLon,
+                latitude = searchLat,
                 radius = 20000  // 20km 반경으로 검색
             ).fold(
                 onSuccess = { places ->

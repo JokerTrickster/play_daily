@@ -82,11 +82,10 @@ func (h *CreateMemoHandler) CreateMemo(c echo.Context) error {
 		// Content field removed - deprecated, using categories instead
 	}
 
-	// Rating 파싱 (Float로 받아서 uint8로 변환)
+	// Rating 파싱 (Float로 받음, 소수점 지원)
 	if ratingStr := c.FormValue("rating"); ratingStr != "" {
-		if rating, err := strconv.ParseFloat(ratingStr, 64); err == nil {
-			// 반올림하여 uint8로 변환 (0-5 범위)
-			req.Rating = uint8(rating + 0.5)
+		if rating, err := strconv.ParseFloat(ratingStr, 32); err == nil {
+			req.Rating = float32(rating)
 		}
 	}
 

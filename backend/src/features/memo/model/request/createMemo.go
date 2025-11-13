@@ -11,7 +11,7 @@ type ReqCreateMemo struct {
 	ImageURL        string                `json:"image_url"`
 	ImageFile       multipart.File        `json:"-"` // S3 업로드용 파일
 	ImageHeader     *multipart.FileHeader `json:"-"` // 파일 메타데이터
-	Rating          uint8                 `json:"rating"`
+	Rating          float32               `json:"rating"` // Changed from uint8 to float32 for decimal support
 	IsPinned        bool                  `json:"is_pinned"`
 	Latitude        *float64              `json:"latitude"`
 	Longitude       *float64              `json:"longitude"`

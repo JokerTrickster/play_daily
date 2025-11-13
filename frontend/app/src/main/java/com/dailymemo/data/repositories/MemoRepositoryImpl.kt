@@ -180,7 +180,7 @@ class MemoRepositoryImpl @Inject constructor(
     ): Result<Memo> {
         return try {
             android.util.Log.d("MemoRepository", "updateMemo 시작 - ID: $id")
-            android.util.Log.d("MemoRepository", "Request: title=$title, content=${content.take(50)}..., categoryIds=$categoryIds")
+            android.util.Log.d("MemoRepository", "Request: title=$title, content=${content.take(50)}..., rating=$rating, categoryIds=$categoryIds")
 
             val request = UpdateMemoRequestDto(
                 title = title,

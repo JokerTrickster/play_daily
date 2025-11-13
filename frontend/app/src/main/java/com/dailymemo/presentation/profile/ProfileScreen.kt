@@ -110,12 +110,14 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Profile Header - Shows MY room info only
+            val bio by viewModel.bio.collectAsState()
             ProfileHeader(
                 roomId = myRoomId?.toString() ?: "로딩 중...",
                 roomPassword = roomPassword,
                 memoCount = memoCount,
                 receivedLikesCount = receivedLikesCount,
-                profileImageUrl = profileImageUrl
+                profileImageUrl = profileImageUrl,
+                bio = bio
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -283,7 +285,8 @@ fun ProfileHeader(
     roomPassword: String,
     memoCount: Int,
     receivedLikesCount: Int,
-    profileImageUrl: String?
+    profileImageUrl: String?,
+    bio: String = ""
 ) {
     Card(
         modifier = Modifier
@@ -367,6 +370,23 @@ fun ProfileHeader(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
+
+                // Bio display (if provided)
+                if (bio.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "자기소개",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = bio,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 3
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
