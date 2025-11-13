@@ -144,6 +144,13 @@ fun MapScreen(
         }
     }
 
+    // 검색 결과가 표시될 때 메모 목록 닫기
+    LaunchedEffect(showSearchResults) {
+        if (showSearchResults && searchResults.isNotEmpty()) {
+            showMemoList = false
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
