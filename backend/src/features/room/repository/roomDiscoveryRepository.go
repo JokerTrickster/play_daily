@@ -36,13 +36,14 @@ func (r *RoomDiscoveryRepository) GetPopularRooms(ctx context.Context, offset in
 	return rooms, nil
 }
 
-// GetRecentRooms retrieves public rooms sorted by created_at DESC, likes_count DESC
-// Uses composite index: idx_rooms_discovery (is_public, likes_count DESC, created_at DESC)
+// GetRecentRooms retrieves public rooms sorted by owner's user.created_at ASC (oldest users first)
+// Joins with users table to get owner creation date
 func (r *RoomDiscoveryRepository) GetRecentRooms(ctx context.Context, offset int, limit int) ([]mysql.Room, error) {
 	var rooms []mysql.Room
 	result := r.GormDB.WithContext(ctx).
-		Where("is_public = ?", true).
-		Order("created_at DESC, likes_count DESC").
+		Joins("JOIN users ON users.id = rooms.owner_user_id").
+		Where("rooms.is_public = ?", true).
+		Order("users.created_at ASC").
 		Offset(offset).
 		Limit(limit).
 		Find(&rooms)
