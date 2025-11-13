@@ -7,6 +7,7 @@ interface ProfileRepository {
     suspend fun updateProfile(
         currentPassword: String,
         nickname: String? = null,
+        bio: String? = null,
         newPassword: String? = null,
         profileImageUrl: String? = null
     ): Result<Profile>

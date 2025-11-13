@@ -10,6 +10,7 @@ class UpdateProfileUseCase @Inject constructor(
     suspend operator fun invoke(
         currentPassword: String,
         nickname: String? = null,
+        bio: String? = null,
         newPassword: String? = null,
         confirmPassword: String? = null,
         profileImageUrl: String? = null
@@ -38,6 +39,7 @@ class UpdateProfileUseCase @Inject constructor(
         return profileRepository.updateProfile(
             currentPassword = currentPassword,
             nickname = nickname?.trim(),
+            bio = bio?.trim(),
             newPassword = newPassword,
             profileImageUrl = profileImageUrl
         )

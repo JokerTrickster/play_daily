@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName
  * @property userId 사용자 ID
  * @property accountId 계정 ID
  * @property nickname 닉네임
+ * @property bio 자기소개
  * @property profileImageUrl 프로필 이미지 URL
  * @property defaultRoomId 기본 방 ID
  * @property roomPassword 방 비밀번호 (4자리)
@@ -21,6 +22,9 @@ data class ProfileResponse(
 
     @SerializedName("nickname")
     val nickname: String,
+
+    @SerializedName("bio")
+    val bio: String? = null,
 
     @SerializedName("profile_image_url")
     val profileImageUrl: String? = null,
@@ -42,6 +46,7 @@ data class ProfileResponse(
             userId = userId,
             accountId = accountId,
             nickname = nickname,
+            bio = bio,
             profileImageUrl = profileImageUrl,
             defaultRoomId = defaultRoomId,
             roomPassword = roomPassword,

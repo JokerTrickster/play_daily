@@ -39,6 +39,7 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun updateProfile(
         currentPassword: String,
         nickname: String?,
+        bio: String?,
         newPassword: String?,
         profileImageUrl: String?
     ): Result<Profile> {
@@ -46,6 +47,7 @@ class ProfileRepositoryImpl @Inject constructor(
             val request = UpdateProfileRequest(
                 currentPassword = currentPassword,
                 nickname = nickname,
+                bio = bio,
                 newPassword = newPassword,
                 profileImageUrl = profileImageUrl
             )

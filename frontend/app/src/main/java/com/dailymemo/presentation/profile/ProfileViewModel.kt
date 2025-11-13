@@ -44,6 +44,9 @@ class ProfileViewModel @Inject constructor(
     private val _nickname = MutableStateFlow("")
     val nickname: StateFlow<String> = _nickname.asStateFlow()
 
+    private val _bio = MutableStateFlow("")
+    val bio: StateFlow<String> = _bio.asStateFlow()
+
     private val _currentPassword = MutableStateFlow("")
     val currentPassword: StateFlow<String> = _currentPassword.asStateFlow()
 
@@ -125,6 +128,7 @@ class ProfileViewModel @Inject constructor(
                 onSuccess = { profile ->
                     _uiState.value = ProfileUiState.Success(profile)
                     _nickname.value = profile.nickname
+                    _bio.value = profile.bio ?: ""
                     _profileImageUrl.value = profile.profileImageUrl
                     _roomPassword.value = profile.roomPassword
                     _receivedLikesCount.value = profile.receivedLikesCount
@@ -160,6 +164,11 @@ class ProfileViewModel @Inject constructor(
 
     fun updateNickname(value: String) {
         _nickname.value = value
+        clearMessages()
+    }
+
+    fun updateBio(value: String) {
+        _bio.value = value
         clearMessages()
     }
 
@@ -215,6 +224,7 @@ class ProfileViewModel @Inject constructor(
             updateProfileUseCase(
                 currentPassword = _currentPassword.value,
                 nickname = if (_nickname.value.isNotBlank()) _nickname.value else null,
+                bio = if (_bio.value.isNotBlank()) _bio.value else null,
                 newPassword = if (_newPassword.value.isNotBlank()) _newPassword.value else null,
                 confirmPassword = if (_confirmPassword.value.isNotBlank()) _confirmPassword.value else null,
                 profileImageUrl = uploadedImageUrl

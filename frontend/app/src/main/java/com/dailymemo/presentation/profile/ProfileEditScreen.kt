@@ -44,6 +44,7 @@ fun ProfileEditScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val nickname by viewModel.nickname.collectAsState()
+    val bio by viewModel.bio.collectAsState()
     val currentPassword by viewModel.currentPassword.collectAsState()
     val newPassword by viewModel.newPassword.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
@@ -165,6 +166,26 @@ fun ProfileEditScreen(
                     label = { Text("이름") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Bio Field
+                OutlinedTextField(
+                    value = bio,
+                    onValueChange = { viewModel.updateBio(it) },
+                    label = { Text("자기소개") },
+                    placeholder = { Text("다른 사용자에게 보여질 자기소개를 작성해주세요") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next
                     ),
