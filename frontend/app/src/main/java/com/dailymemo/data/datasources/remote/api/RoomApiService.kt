@@ -4,6 +4,7 @@ import com.dailymemo.data.models.request.JoinRoomRequestDto
 import com.dailymemo.data.models.request.KickUserRequestDto
 import com.dailymemo.data.models.response.JoinRoomResponseDto
 import com.dailymemo.data.models.response.ResetPasswordResponseDto
+import com.dailymemo.data.models.response.RoomDetailResponseDto
 import com.dailymemo.data.models.response.RoomDiscoveryResponseDto
 import com.dailymemo.data.models.response.RoomMembersResponseDto
 import retrofit2.Response
@@ -58,4 +59,10 @@ interface RoomApiService {
     suspend fun resetRoomPassword(
         @Path("id") roomId: Long
     ): Response<ResetPasswordResponseDto>
+
+    // Room detail endpoint
+    @GET("/v0.1/rooms/{id}/detail")
+    suspend fun getRoomDetail(
+        @Path("id") roomId: Long
+    ): Response<RoomDetailResponseDto>
 }
