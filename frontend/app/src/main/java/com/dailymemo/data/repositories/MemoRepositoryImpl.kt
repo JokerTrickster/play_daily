@@ -180,32 +180,48 @@ class MemoRepositoryImpl @Inject constructor(
     ): Result<Memo> {
         return try {
             android.util.Log.d("MemoRepository", "updateMemo 시작 - ID: $id")
-            android.util.Log.d("MemoRepository", "Request: title=$title, content=${content.take(50)}..., rating=$rating, categoryIds=$categoryIds")
+            android.util.Log.d("MemoRepository", "Request: title=$title, rating=$rating (Float), isPinned=$isPinned, categoryIds=$categoryIds")
 
-            val request = UpdateMemoRequestDto(
-                title = title,
-                content = content,
-                imageUrl = imageUrl,
-                rating = rating,
-                isPinned = isPinned,
-                latitude = latitude,
-                longitude = longitude,
-                locationName = locationName,
-                isWishlist = isWishlist,
-                businessName = businessName,
-                businessPhone = businessPhone,
-                businessAddress = businessAddress,
-                categoryIds = categoryIds
-            )
+            // multipart/form-data 요청 파라미터 생성
+            val titlePart = title.toRequestBody("text/plain".toMediaTypeOrNull())
+            val contentPart = content.toRequestBody("text/plain".toMediaTypeOrNull())
+            val ratingPart = rating.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val isPinnedPart = isPinned.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val latitudePart = latitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val longitudePart = longitude?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val locationNamePart = locationName?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val isWishlistPart = isWishlist.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessNamePart = businessName?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessPhonePart = businessPhone?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val businessAddressPart = businessAddress?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val categoryIdsPart = com.google.gson.Gson().toJson(categoryIds).toRequestBody("text/plain".toMediaTypeOrNull())
 
+            android.util.Log.d("MemoRepository", "FormData 생성 완료 - rating=$rating (type: Float)")
             android.util.Log.d("MemoRepository", "API 호출 중...")
-            val response = memoApiService.updateMemo(id, request)
+
+            val response = memoApiService.updateMemo(
+                id = id,
+                title = titlePart,
+                content = contentPart,
+                rating = ratingPart,
+                isPinned = isPinnedPart,
+                latitude = latitudePart,
+                longitude = longitudePart,
+                locationName = locationNamePart,
+                isWishlist = isWishlistPart,
+                businessName = businessNamePart,
+                businessPhone = businessPhonePart,
+                businessAddress = businessAddressPart,
+                categoryIds = categoryIdsPart,
+                image = null  // TODO: 이미지 업데이트 기능 추가 필요 시 구현
+            )
 
             android.util.Log.d("MemoRepository", "API 응답: code=${response.code()}, successful=${response.isSuccessful}")
 
             if (response.isSuccessful && response.body() != null) {
-                android.util.Log.d("MemoRepository", "메모 업데이트 성공!")
-                Result.success(response.body()!!.toDomain())
+                val updatedMemo = response.body()!!.toDomain()
+                android.util.Log.d("MemoRepository", "메모 업데이트 성공! rating=${updatedMemo.rating}")
+                Result.success(updatedMemo)
             } else {
                 val errorBody = response.errorBody()?.string()
                 android.util.Log.e("MemoRepository", "메모 업데이트 실패 - code: ${response.code()}, error: $errorBody")

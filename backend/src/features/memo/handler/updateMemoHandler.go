@@ -35,7 +35,7 @@ func NewUpdateMemoHandler(c *echo.Echo, useCase _interface.IUpdateMemoUseCase) _
 // @Param title formData string false "메모 제목"
 // @Param content formData string false "메모 내용"
 // @Param image formData file false "이미지 파일"
-// @Param rating formData integer false "평점 (0-5)"
+// @Param rating formData number false "평점 (0-5, 소수점 지원)"
 // @Param is_pinned formData boolean false "고정 여부"
 // @Param latitude formData number false "위도"
 // @Param longitude formData number false "경도"

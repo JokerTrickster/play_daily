@@ -46,10 +46,23 @@ interface MemoApiService {
         @Part image: MultipartBody.Part?
     ): Response<MemoDto>
 
+    @Multipart
     @PUT("/v0.1/memo/{id}")
     suspend fun updateMemo(
         @Path("id") id: Long,
-        @Body request: UpdateMemoRequestDto
+        @Part("title") title: RequestBody,
+        @Part("content") content: RequestBody?,
+        @Part("rating") rating: RequestBody?,
+        @Part("is_pinned") isPinned: RequestBody?,
+        @Part("latitude") latitude: RequestBody?,
+        @Part("longitude") longitude: RequestBody?,
+        @Part("location_name") locationName: RequestBody?,
+        @Part("is_wishlist") isWishlist: RequestBody?,
+        @Part("business_name") businessName: RequestBody?,
+        @Part("business_phone") businessPhone: RequestBody?,
+        @Part("business_address") businessAddress: RequestBody?,
+        @Part("category_ids") categoryIds: RequestBody?,
+        @Part image: MultipartBody.Part?
     ): Response<MemoDto>
 
     @DELETE("/v0.1/memo/{id}")
