@@ -6,60 +6,45 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.*
-import androidx.compose.ui.text.input.ImeAction
-import coil.compose.AsyncImage
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.runtime.*
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.dailymemo.R
 import com.dailymemo.domain.models.PlaceCategory
+import com.dailymemo.presentation.map.components.CreateMemoButton
+import com.dailymemo.presentation.map.components.DistanceFilterChips
+import com.dailymemo.presentation.map.components.MapSearchBar
+import com.dailymemo.presentation.map.components.MemoListBarSimplified
+import com.dailymemo.presentation.map.components.MyLocationButton
+import com.dailymemo.presentation.map.components.PlaceSelectionDialog
+import com.dailymemo.presentation.map.components.ToggleMemoListButton
+import com.dailymemo.presentation.map.components.WishlistFilterChips
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.LatLng
@@ -68,6 +53,7 @@ import com.kakao.vectormap.MapView
 import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelStyles
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,8 +76,6 @@ fun MapScreen(
     val showPopupCard by viewModel.showPopupCard.collectAsState()
     val showSearchResults by viewModel.showSearchResults.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
-    val showJoinRoomDialog by viewModel.showJoinRoomDialog.collectAsState()
-    val joinRoomState by viewModel.joinRoomState.collectAsState()
     val wishlistFilter by viewModel.wishlistFilter.collectAsState()
     val selectedSearchPlace by viewModel.selectedSearchPlace.collectAsState()
     val canCreateMemo by viewModel.canCreateMemo.collectAsState()
@@ -326,161 +310,51 @@ fun MapScreen(
                 }
             }
 
-            // Search UI - No category filters, just search bar
+            // Search UI and Filters
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // Search Bar with Button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { newQuery ->
-                            viewModel.updateSearchQuery(newQuery)
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .shadow(4.dp, RoundedCornerShape(28.dp)),
-                        placeholder = { Text(stringResource(R.string.search_placeholder)) },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.clearSearch() }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.clear))
-                                }
-                            }
-                        },
-                        shape = RoundedCornerShape(28.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = Color.Transparent
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Search
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onSearch = {
-                                if (searchQuery.length >= 2) {
-                                    focusManager.clearFocus()
-                                    viewModel.searchPlaces(searchQuery)
-                                }
-                            }
-                        )
-                    )
-
-                    // Search Button
-                    Button(
-                        onClick = {
-                            if (searchQuery.length >= 2) {
-                                focusManager.clearFocus()
-                                viewModel.searchPlaces(searchQuery)
-                            }
-                        },
-                        enabled = searchQuery.length >= 2 && !isSearching,
-                        modifier = Modifier.height(56.dp),
-                        shape = RoundedCornerShape(28.dp)
-                    ) {
-                        if (isSearching) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Text(stringResource(R.string.search))
-                        }
-                    }
-                }
+                // Search Bar
+                MapSearchBar(
+                    searchQuery = searchQuery,
+                    isSearching = isSearching,
+                    onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+                    onSearch = {
+                        focusManager.clearFocus()
+                        viewModel.searchPlaces(searchQuery)
+                    },
+                    onClearSearch = { viewModel.clearSearch() }
+                )
 
                 // Wishlist Filter Chips
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = wishlistFilter == com.dailymemo.presentation.map.WishlistFilter.ALL,
-                        onClick = { viewModel.setWishlistFilter(com.dailymemo.presentation.map.WishlistFilter.ALL) },
-                        label = { Text(stringResource(R.string.wishlist_filter_all)) }
-                    )
-                    FilterChip(
-                        selected = wishlistFilter == com.dailymemo.presentation.map.WishlistFilter.WISHLIST_ONLY,
-                        onClick = { viewModel.setWishlistFilter(com.dailymemo.presentation.map.WishlistFilter.WISHLIST_ONLY) },
-                        label = { Text(stringResource(R.string.wishlist_filter_wishlist)) }
-                    )
-                    FilterChip(
-                        selected = wishlistFilter == com.dailymemo.presentation.map.WishlistFilter.VISITED_ONLY,
-                        onClick = { viewModel.setWishlistFilter(com.dailymemo.presentation.map.WishlistFilter.VISITED_ONLY) },
-                        label = { Text(stringResource(R.string.wishlist_filter_visited)) }
-                    )
-                }
+                WishlistFilterChips(
+                    selectedFilter = wishlistFilter,
+                    onFilterSelected = { viewModel.setWishlistFilter(it) }
+                )
 
                 // Floating Action Buttons with Distance Filter - Below Filter Chips
                 Spacer(modifier = Modifier.height(12.dp))
-                // Memo List Button with Distance Filter - Same height
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Toggle Memo List Button
-                    FloatingActionButton(
-                        onClick = {
-                            showMemoList = !showMemoList
-                        },
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.List,
-                            contentDescription = "메모 목록",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    ToggleMemoListButton(
+                        showMemoList = showMemoList,
+                        onClick = { showMemoList = !showMemoList }
+                    )
 
                     // Distance filter chips (only visible when memo list is active)
                     if (showMemoList) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            DistanceFilterChip(
-                                label = "전체",
-                                selected = distanceFilter == DistanceFilter.ALL,
-                                onClick = { viewModel.setDistanceFilter(DistanceFilter.ALL) }
-                            )
-                            DistanceFilterChip(
-                                label = "5km",
-                                selected = distanceFilter == DistanceFilter.WITHIN_5KM,
-                                onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_5KM) }
-                            )
-                            DistanceFilterChip(
-                                label = "10km",
-                                selected = distanceFilter == DistanceFilter.WITHIN_10KM,
-                                onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_10KM) }
-                            )
-                            DistanceFilterChip(
-                                label = "20km",
-                                selected = distanceFilter == DistanceFilter.WITHIN_20KM,
-                                onClick = { viewModel.setDistanceFilter(DistanceFilter.WITHIN_20KM) }
-                            )
-                        }
+                        DistanceFilterChips(
+                            selectedFilter = distanceFilter,
+                            onFilterSelected = { viewModel.setDistanceFilter(it) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
 
@@ -491,7 +365,7 @@ fun MapScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // My Location Button
-                    FloatingActionButton(
+                    MyLocationButton(
                         onClick = {
                             currentLocation?.let { location ->
                                 kakaoMap?.moveCamera(
@@ -505,20 +379,11 @@ fun MapScreen(
                                 // If no location yet, request it
                                 viewModel.getCurrentLocation()
                             }
-                        },
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.MyLocation,
-                            contentDescription = "내 위치",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                        }
+                    )
 
                     // Create Memo Button
-                    FloatingActionButton(
+                    CreateMemoButton(
                         onClick = {
                             if (canCreateMemo) {
                                 onNavigateToCreateMemo()
@@ -531,16 +396,8 @@ fun MapScreen(
                                 }
                             }
                         },
-                        containerColor = if (canCreateMemo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                        contentColor = if (canCreateMemo) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = "메모 추가",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                        canCreateMemo = canCreateMemo
+                    )
                 }
 
                 // Search Results List (below search bar) - only show if showSearchResults is true
@@ -798,13 +655,14 @@ fun MapScreen(
                                 // Location
                                 memo.locationName?.let { location ->
                                     Row(
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
                                     ) {
                                         Icon(
                                             Icons.Filled.Place,
                                             contentDescription = null,
-                                            modifier = Modifier.size(16.dp),
-                                            tint = MaterialTheme.colorScheme.primary
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
@@ -812,47 +670,40 @@ fun MapScreen(
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
-                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f, fill = false)
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                     }
                                 }
 
                                 // Rating
-                                if (memo.rating > 0) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.Star,
-                                            contentDescription = "평점",
-                                            modifier = Modifier.size(16.dp),
-                                            tint = Color(0xFFFFB800)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = String.format("%.1f", memo.rating),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFFFFB800)
-                                        )
-                                    }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFC107),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "${memo.rating}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                            // View details button
+                            // Detail Button
                             Button(
-                                onClick = {
-                                    viewModel.dismissPopupCard()
-                                    onNavigateToDetail(memo.id)
-                                },
+                                onClick = { onNavigateToDetail(memo.id) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
-                                Text("자세히 보기")
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("상세 보기")
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
                                     Icons.Filled.ArrowForward,
                                     contentDescription = null,
@@ -864,565 +715,11 @@ fun MapScreen(
                 }
             }
         }
-    }
 
-    // JoinRoom Dialog
-    if (showJoinRoomDialog) {
-        com.dailymemo.presentation.map.components.JoinRoomDialog(
-            joinRoomState = joinRoomState,
-            onJoinRoom = { roomId, password ->
-                viewModel.joinRoom(roomId, password)
-            },
-            onDismiss = {
-                viewModel.dismissJoinRoomDialog()
-            }
+        // Snackbar Host
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
-    }
-}
-
-@Composable
-fun PlaceSelectionDialog(
-    place: com.dailymemo.domain.models.Place,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    // 하단 시트 스타일로 변경 - 지도가 위에 보이도록
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Transparent)
-    ) {
-        // 반투명 배경 (지도가 잘 보이도록 살짝만 투명)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.1f))
-                .clickable(onClick = onDismiss)
-        )
-
-        // 하단 카드
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 20.dp, bottomEnd = 20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    // 제목
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "이 장소로 메모를 작성하시겠습니까?",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.close))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // 장소 정보
-                    Text(
-                        text = place.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = place.category,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = place.address,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    if (place.phone != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "📞 ${place.phone}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 버튼
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(stringResource(R.string.cancel))
-                        }
-                        Button(
-                            onClick = onConfirm,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("메모 작성")
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MemoListBar(
-    memos: List<com.dailymemo.domain.models.Memo>,
-    selectedMemoId: Long?,
-    onMemoClick: (com.dailymemo.domain.models.Memo) -> Unit
-) {
-    val listState = rememberLazyListState()
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📍 메모 목록",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Badge(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Text(
-                        text = "${memos.size}",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Horizontal scrollable list
-            LazyRow(
-                state = listState,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp)
-            ) {
-                items(memos) { memo ->
-                    MemoCardCompact(
-                        memo = memo,
-                        isSelected = memo.id == selectedMemoId,
-                        onClick = { onMemoClick(memo) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MemoCardCompact(
-    memo: com.dailymemo.domain.models.Memo,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val borderColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        Color.Transparent
-    }
-
-    Card(
-        modifier = Modifier
-            .width(200.dp)
-            .height(100.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = if (isSelected) 2.dp else 0.dp,
-            color = borderColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 4.dp else 1.dp
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Left side: Text content
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Category icon + Title
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = memo.category.icon,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = memo.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                }
-
-                // Location (if exists)
-                memo.locationName?.let { location ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Place,
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = location,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                // Rating (if > 0)
-                if (memo.rating > 0) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = "평점",
-                            modifier = Modifier.size(14.dp),
-                            tint = Color(0xFFFFB800)
-                        )
-                        Text(
-                            text = String.format("%.1f", memo.rating),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFB800)
-                        )
-                    }
-                }
-            }
-
-            // Right side: Thumbnail image (if exists)
-            if (!memo.imageUrl.isNullOrBlank()) {
-                Spacer(modifier = Modifier.width(8.dp))
-                AsyncImage(
-                    model = memo.imageUrl,
-                    contentDescription = "메모 이미지",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DistanceFilterChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label) },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-    )
-}
-
-@Composable
-fun MemoListBarWithDistance(
-    memosWithDistance: List<MemoWithDistance>,
-    selectedMemoId: Long?,
-    showFilterOptions: Boolean,
-    onToggleFilterOptions: () -> Unit,
-    formatDistance: (Double?) -> String,
-    onMemoClick: (com.dailymemo.domain.models.Memo) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
-    ) {
-        Column {
-            // Header with filter toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "메모 목록 (${memosWithDistance.size})",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = onToggleFilterOptions) {
-                    Icon(
-                        if (showFilterOptions) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = if (showFilterOptions) "필터 숨기기" else "필터 보기"
-                    )
-                }
-            }
-
-            // Horizontal scrollable list
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = memosWithDistance,
-                    key = { it.memo.id }
-                ) { memoWithDistance ->
-                    MemoCardWithDistance(
-                        memo = memoWithDistance.memo,
-                        distance = memoWithDistance.distance,
-                        formatDistance = formatDistance,
-                        isSelected = memoWithDistance.memo.id == selectedMemoId,
-                        onClick = { onMemoClick(memoWithDistance.memo) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MemoCardWithDistance(
-    memo: com.dailymemo.domain.models.Memo,
-    distance: Double?,
-    formatDistance: (Double?) -> String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .height(100.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                MaterialTheme.colorScheme.primaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 6.dp else 2.dp
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp)
-        ) {
-            // Left side: Content
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    // Title
-                    Text(
-                        text = memo.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = if (isSelected)
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // Distance
-                    if (distance != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = formatDistance(distance),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                // Rating
-                if (memo.rating > 0) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = null,
-                            tint = Color(0xFFFFB800),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = memo.rating.toString(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected)
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Right side: Thumbnail image (if exists)
-            if (!memo.imageUrl.isNullOrBlank()) {
-                Spacer(modifier = Modifier.width(8.dp))
-                AsyncImage(
-                    model = memo.imageUrl,
-                    contentDescription = "메모 이미지",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MemoListBarSimplified(
-    memosWithDistance: List<MemoWithDistance>,
-    selectedMemoId: Long?,
-    formatDistance: (Double?) -> String,
-    onMemoClick: (com.dailymemo.domain.models.Memo) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
-    ) {
-        Column {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "메모 목록",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Badge(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Text(
-                        text = "${memosWithDistance.size}",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            }
-
-            // Horizontal scrollable list
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = memosWithDistance,
-                    key = { it.memo.id }
-                ) { memoWithDistance ->
-                    MemoCardWithDistance(
-                        memo = memoWithDistance.memo,
-                        distance = memoWithDistance.distance,
-                        formatDistance = formatDistance,
-                        isSelected = memoWithDistance.memo.id == selectedMemoId,
-                        onClick = { onMemoClick(memoWithDistance.memo) }
-                    )
-                }
-            }
-        }
     }
 }
